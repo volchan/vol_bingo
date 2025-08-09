@@ -1,22 +1,37 @@
-import { Hono } from "hono";
-import { cors } from "hono/cors";
-import type { ApiResponse } from "shared/dist";
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+import { logger } from 'hono/logger'
+import type { ApiResponse } from 'shared/dist'
+import env from './config/env'
+import { auth } from './routes'
 
 export const app = new Hono()
 
-.use(cors())
+app.use(
+	cors({
+		origin: ['http://localhost:5173'], // Vite dev server
+		credentials: true
+	})
+)
 
-.get("/", (c) => {
-	return c.text("Hello Hono!");
+app.use(logger())
+
+app.get('/', (c) => {
+	return c.text('Hello Hono!')
 })
 
-.get("/hello", async (c) => {
+app.get('/hello', async (c) => {
 	const data: ApiResponse = {
-		message: "Hello BHVR!",
-		success: true,
-	};
+		message: 'Hello World!',
+		success: true
+	}
 
-	return c.json(data, { status: 200 });
-});
+	return c.json(data, { status: 200 })
+})
 
-export default app;
+app.route('/auth', auth)
+
+export default {
+	port: env.APP_PORT,
+	fetch: app.fetch
+}
