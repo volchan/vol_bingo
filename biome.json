@@ -11,7 +11,17 @@
   "formatter": {
     "enabled": true
   },
-
+  "overrides": [
+    {
+      "includes": ["client/src/routeTree.gen.ts"],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "enabled": false
+      }
+    }
+  ],
   "linter": {
     "enabled": true,
     "rules": {

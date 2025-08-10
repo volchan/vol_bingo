@@ -1,5 +1,5 @@
 import env from '@server/config/env'
-import { UserRepository } from '@server/repositories/user'
+import userRepository from '@server/repositories/user'
 import type { User } from '@shared/types/models/user'
 import type {
 	AuthResult,
@@ -91,7 +91,6 @@ export class TwitchAuthService {
 			}
 
 			// store user data in the database if it does not exist
-			const userRepository = new UserRepository()
 			let user = await userRepository.findByTwitchId(userData.twitchId)
 			if (!user) {
 				user = await userRepository.create(userData)

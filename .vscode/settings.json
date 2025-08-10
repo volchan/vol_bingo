@@ -7,4 +7,10 @@
     "source.organizeImports.biome": "explicit"
   },
   "files.autoSave": "onFocusChange",
+  "[typescriptreact][json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
 }

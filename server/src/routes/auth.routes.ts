@@ -1,12 +1,13 @@
+import userRepository from '@server/repositories/user'
+import type { User } from '@shared/types'
 import { Hono } from 'hono'
-import type { TwitchUser } from 'shared/dist'
 import { createTwitchAuthService } from '../services/auth/twitch-auth.service'
 
-const auth = new Hono()
+const router = new Hono()
 const twitchAuth = createTwitchAuthService()
 
 // Initiate OAuth flow or handle callback
-auth.get('/twitch', async (c) => {
+router.get('/twitch', async (c) => {
 	const code = c.req.query('code')
 	const state = c.req.query('state')
 	const error = c.req.query('error')
@@ -37,7 +38,7 @@ auth.get('/twitch', async (c) => {
 })
 
 // Get current user (protected route)
-auth.get('/me', async (c) => {
+router.get('/me', async (c) => {
 	const authHeader = c.req.header('Authorization')
 
 	if (!authHeader?.startsWith('Bearer ')) {
@@ -51,21 +52,16 @@ auth.get('/me', async (c) => {
 		return c.json({ error: 'Unauthorized' }, 401)
 	}
 
-	// Convert to your shared type format
-	const twitchUser: TwitchUser = {
-		id: userData.id,
-		login: userData.login,
-		display_name: userData.display_name,
-		email: userData.email || '',
-		profile_image_url: userData.profile_image_url,
-		created_at: userData.created_at
+	const user = await userRepository.findByTwitchId(userData.id)
+	if (!user) {
+		return c.json({ error: 'User not found' }, 404)
 	}
 
-	return c.json({ user: twitchUser })
+	return c.json(user)
 })
 
 // Refresh token
-auth.post('/refresh', async (c) => {
+router.post('/refresh', async (c) => {
 	const body = await c.req.json().catch(() => ({}))
 	const refreshToken = body.refresh_token
 
@@ -87,7 +83,7 @@ auth.post('/refresh', async (c) => {
 })
 
 // Logout
-auth.post('/logout', async (c) => {
+router.post('/logout', async (c) => {
 	const authHeader = c.req.header('Authorization')
 
 	if (authHeader?.startsWith('Bearer ')) {
@@ -98,4 +94,4 @@ auth.post('/logout', async (c) => {
 	return c.json({ message: 'Logged out successfully' })
 })
 
-export default auth
+export default router

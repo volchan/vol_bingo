@@ -4,6 +4,7 @@ import auth from './auth.routes'
 
 const app = new Hono()
 
-app.route('/auth', auth)
+const routes = app.route('/auth', auth)
 
+export type AppType = typeof routes
 export default app
