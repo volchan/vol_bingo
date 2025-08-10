@@ -1,14 +1,14 @@
 import { MoonIcon, SunIcon, TwitchIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
-import type { ApiResponse, TwitchUser } from "shared";
+import type { ApiResponse, User } from "shared";
 import { Button } from "./components/ui/button";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000";
 
 function App() {
   const [data, setData] = useState<ApiResponse | undefined>();
-  const [user, setUser] = useState<TwitchUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -117,15 +117,14 @@ function App() {
         <div className="auth-section">
           <div className="user-info">
             <img
-              src={user.profile_image_url}
-              alt={user.display_name}
+              src={user.profileImageUrl}
+              alt={user.displayName}
               className="profile-image"
               style={{ width: "50px", height: "50px", borderRadius: "50%" }}
             />
             <div>
-              <h3>Welcome, {user.display_name}!</h3>
+              <h3>Welcome, {user.displayName}!</h3>
               <p>@{user.login}</p>
-              <p>Email: {user.email}</p>
             </div>
           </div>
           <div className="auth-actions">

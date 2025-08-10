@@ -48,7 +48,7 @@ auth.get('/me', async (c) => {
 	const userData = await twitchAuth.validateToken(token)
 
 	if (!userData) {
-		return c.json({ error: 'Invalid token' }, 401)
+		return c.json({ error: 'Unauthorized' }, 401)
 	}
 
 	// Convert to your shared type format

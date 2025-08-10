@@ -2,8 +2,9 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import type { ApiResponse } from 'shared/dist'
+import { checkDatabaseConnection } from './config/database'
 import env from './config/env'
-import { auth } from './routes'
+import router from './routes'
 
 export const app = new Hono()
 
@@ -15,6 +16,8 @@ app.use(
 )
 
 app.use(logger())
+
+await checkDatabaseConnection()
 
 app.get('/', (c) => {
 	return c.text('Hello Hono!')
@@ -29,7 +32,7 @@ app.get('/hello', async (c) => {
 	return c.json(data, { status: 200 })
 })
 
-app.route('/auth', auth)
+app.route('/', router)
 
 export default {
 	port: env.APP_PORT,

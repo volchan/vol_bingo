@@ -1,3 +1,5 @@
+export * from './models/user'
+
 export interface ApiResponse {
 	message: string
 	success: boolean

@@ -2,6 +2,7 @@
 const requiredEnvVars = [
 	'APP_URL',
 	'APP_PORT',
+	'DATABASE_URL',
 	'FRONTEND_URL',
 	'TWITCH_API_URL',
 	'TWITCH_OAUTH_URL',
@@ -25,21 +26,11 @@ const twitchRedirectUri = Bun.env.TWITCH_REDIRECT_PATH!.replace(
 	appUrl
 )
 
-type ENV = {
-	APP_URL: string
-	APP_PORT: number
-	FRONTEND_URL: string
-	TWITCH_API_URL: string
-	TWITCH_OAUTH_URL: string
-	TWITCH_ID: string
-	TWITCH_SECRET: string
-	TWITCH_REDIRECT_URI: string
-	TWITCH_OAUTH_SCOPES: string[]
-}
-
-const env: ENV = {
+const env = {
 	APP_URL: appUrl!,
 	APP_PORT: Number(Bun.env.APP_PORT),
+
+	DATABASE_URL: Bun.env.DATABASE_URL!,
 
 	FRONTEND_URL: Bun.env.FRONTEND_URL!,
 

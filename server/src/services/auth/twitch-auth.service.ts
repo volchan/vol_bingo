@@ -1,4 +1,6 @@
 import env from '@server/config/env'
+import { UserRepository } from '@server/repositories/user'
+import type { User } from '@shared/types/models/user'
 import type {
 	AuthResult,
 	TwitchApiResponse,
@@ -88,16 +90,27 @@ export class TwitchAuthService {
 				}
 			}
 
+			// store user data in the database if it does not exist
+			const userRepository = new UserRepository()
+			let user = await userRepository.findByTwitchId(userData.twitchId)
+			if (!user) {
+				user = await userRepository.create(userData)
+			} else {
+				user = await userRepository.update(user.id, userData)
+			}
+
+			console.log(tokenData)
+
 			return {
 				success: true,
 				data: {
-					user: userData,
+					user,
 					token: tokenData.access_token,
 					refreshToken: tokenData.refresh_token
 				},
 				redirectUrl: buildSuccessRedirectUrl(
 					this.config.frontendUrl,
-					userData,
+					user,
 					tokenData.access_token,
 					tokenData.refresh_token
 				)
@@ -215,9 +228,26 @@ export class TwitchAuthService {
 		}
 	}
 
+	private formatUserData(
+		userData: TwitchUserData
+	): Omit<User, 'id' | 'createdAt' | 'updatedAt'> {
+		return {
+			login: userData.login,
+			displayName: userData.display_name,
+			type: userData.type,
+			broadcasterType: userData.broadcaster_type,
+			description: userData.description,
+			profileImageUrl: userData.profile_image_url,
+			offlineImageUrl: userData.offline_image_url,
+			viewCount: String(userData.view_count),
+			twitchId: userData.id,
+			twitchCreatedAt: new Date(userData.created_at)
+		}
+	}
+
 	private async getUserData(
 		accessToken: string
-	): Promise<TwitchUserData | null> {
+	): Promise<Omit<User, 'id' | 'createdAt' | 'updatedAt'> | null> {
 		try {
 			const response = await fetch(`${this.config.apiUrl}/users`, {
 				headers: {
@@ -239,7 +269,7 @@ export class TwitchAuthService {
 				return null
 			}
 
-			return userData.data[0] as TwitchUserData
+			return this.formatUserData(userData.data[0]!)
 		} catch (error) {
 			console.error('User fetch error:', error)
 			return null

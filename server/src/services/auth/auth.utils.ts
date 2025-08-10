@@ -1,4 +1,5 @@
 import env from '@server/config/env'
+import type { User } from '@shared/types/models/user'
 import type { StateManager, TwitchUserData } from './auth.types'
 
 // In-memory state manager (use Redis in production)
@@ -62,7 +63,7 @@ export function buildErrorRedirectUrl(
 
 export function buildSuccessRedirectUrl(
 	frontendUrl: string,
-	user: TwitchUserData,
+	user: User,
 	token: string,
 	refreshToken?: string
 ): string {

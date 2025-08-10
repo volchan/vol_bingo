@@ -1,3 +1,5 @@
+import type { User } from '@shared/types/models/user'
+
 export interface TwitchTokenResponse {
 	access_token: string
 	refresh_token?: string
@@ -27,7 +29,7 @@ export interface TwitchApiResponse {
 export interface AuthResult {
 	success: boolean
 	data?: {
-		user: TwitchUserData
+		user: User
 		token: string
 		refreshToken?: string
 	}
