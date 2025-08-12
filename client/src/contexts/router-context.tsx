@@ -19,14 +19,12 @@ export async function validateAuth(): Promise<{
 			return { user: null, isAuthenticated: false }
 		}
 
-		// Try to get current user (this will handle token refresh automatically)
 		const user = await apiClient.getCurrentUser()
 		return {
 			user,
 			isAuthenticated: true
 		}
 	} catch (error) {
-		// If validation fails, clear invalid tokens and log the error
 		console.error('Authentication validation failed:', error)
 		localStorage.removeItem('twitch_tokens')
 		return { user: null, isAuthenticated: false }

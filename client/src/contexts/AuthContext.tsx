@@ -62,16 +62,9 @@ export function AuthProvider({
 		refetchOnMount: true // Always refetch on mount
 	})
 
-	const login = useCallback(() => {
-		apiClient.initiateLogin()
-	}, [])
+	const login = useCallback(() => apiClient.initiateLogin(), [])
 
-	const logout = useCallback(async () => {
-		await apiClient.logout()
-		// Clear the query cache
-		queryClient.invalidateQueries({ queryKey: ['auth'] })
-		queryClient.removeQueries({ queryKey: ['auth'] })
-	}, [queryClient])
+	const logout = useCallback(async () => apiClient.logout(), [])
 
 	const refetch = useCallback(() => {
 		queryRefetch()

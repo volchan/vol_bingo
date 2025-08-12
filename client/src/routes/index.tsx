@@ -10,9 +10,18 @@ export const Route = createFileRoute('/')({
 		const hasError = 'error' in search
 		if (hasError) return
 
-		const userFromStorage = localStorage.getItem('twitch_tokens')
-		if (userFromStorage) {
-			return redirect({ to: '/dashboard' })
+		const tokensFromStorage = localStorage.getItem('twitch_tokens')
+		if (tokensFromStorage) {
+			try {
+				// Parse the tokens to make sure they're valid JSON
+				const tokens = JSON.parse(tokensFromStorage)
+				if (tokens?.access_token) {
+					return redirect({ to: '/dashboard' })
+				}
+			} catch {
+				// Invalid tokens, remove them
+				localStorage.removeItem('twitch_tokens')
+			}
 		}
 	}
 })

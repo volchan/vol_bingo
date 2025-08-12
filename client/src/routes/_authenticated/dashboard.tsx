@@ -1,14 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useAuth } from '@/contexts/AuthContext'
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
-	component: RouteComponent
+	component: RouteComponent,
+	loader: ({ context }) => context
 })
 
 function RouteComponent() {
-	const { user } = useAuth()
-
-	console.log('Dashboard user:', user)
+	const { authentication } = Route.useLoaderData()
+	const { user } = authentication
 
 	return (
 		<div className="p-4">

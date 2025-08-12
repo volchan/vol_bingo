@@ -98,10 +98,9 @@ class ApiClient {
 				headers: this.getAuthHeader()
 			})
 		} catch {
-			// Ignore logout errors
 		} finally {
 			this.storeTokens(null)
-			this.queryClient?.invalidateQueries({ queryKey: ['auth'] })
+			this.queryClient?.removeQueries({ queryKey: ['auth'] })
 		}
 	}
 

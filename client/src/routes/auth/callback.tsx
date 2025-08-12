@@ -34,10 +34,9 @@ function RouteComponent() {
 				try {
 					localStorage.setItem('twitch_tokens', JSON.stringify(tokens))
 
-					await refetch()
+					refetch()
 
-					const redirectUrl =
-						sessionStorage.getItem('auth_redirect') || '/dashboard'
+					const redirectUrl = sessionStorage.getItem('auth_redirect') || '/'
 					sessionStorage.removeItem('auth_redirect')
 
 					navigate({ to: redirectUrl })

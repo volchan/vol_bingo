@@ -1,13 +1,7 @@
 import { BlockGameIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Link } from '@tanstack/react-router'
-import {
-	Frame,
-	LayoutDashboard,
-	LogOut,
-	Map as MapIcon,
-	PieChart
-} from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { LayoutDashboard, LogOut } from 'lucide-react'
 import type * as React from 'react'
 import { NavMain } from '@/components/nav-main'
 import { NavProjects } from '@/components/nav-projects'
@@ -45,9 +39,16 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-	const { user } = useAuth()
+	const { user, logout } = useAuth()
+	const navigate = useNavigate()
+
+	const handleLogout = async () => {
+		await logout()
+		navigate({ to: '/' })
+	}
+
 	if (!user) {
-		return null
+		return handleLogout()
 	}
 
 	return (
@@ -75,7 +76,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			<SidebarContent>
 				<NavMain items={data.navMain} />
 				{data.projects.length > 0 && <NavProjects projects={data.projects} />}
-				<NavSecondary items={data.navSecondary} className="mt-auto" />
+				<NavSecondary
+					items={data.navSecondary}
+					className="mt-auto"
+					onLogout={handleLogout}
+				/>
 			</SidebarContent>
 			<SidebarFooter>
 				<NavUser user={user} />

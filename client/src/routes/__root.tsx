@@ -1,15 +1,7 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import { AppSidebar } from '@/components/app-sidebar'
-import {
-	SidebarInset,
-	SidebarProvider,
-	SidebarTrigger
-} from '@/components/ui/sidebar'
-import { useAuth } from '@/contexts/AuthContext'
 import type { RouterContext } from '@/contexts/router-context'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { NotFound } from '../pages/NotFound'
 
 export const Route = createRootRoute({
@@ -28,6 +20,7 @@ function RootComponent() {
 	return (
 		<>
 			<Outlet />
+			<ReactQueryDevtools initialIsOpen={false} position="right" />
 			<TanStackRouterDevtools position="bottom-right" />
 		</>
 	)
