@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { validateAuth } from '@/contexts/router-context'
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 
 export const Route = createFileRoute('/_authenticated')({
 	beforeLoad: async ({ context, location }) => {
@@ -24,5 +25,9 @@ export const Route = createFileRoute('/_authenticated')({
 			}
 		}
 	},
-	component: () => <Outlet />
+	component: () => (
+		<AuthenticatedLayout>
+			<Outlet />
+		</AuthenticatedLayout>
+	)
 })
