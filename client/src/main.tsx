@@ -12,18 +12,18 @@ export const router = createRouter({
 		authentication: {
 			user: null,
 			isAuthenticated: false,
-			isLoading: true
-		}
-	}
+			isLoading: true,
+		},
+	},
 })
 
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
 			retry: 1,
-			staleTime: 5 * 60 * 1000
-		}
-	}
+			staleTime: 5 * 60 * 1000,
+		},
+	},
 })
 
 createRoot(document.getElementById('root')!).render(
@@ -33,5 +33,5 @@ createRoot(document.getElementById('root')!).render(
 				<RouterProvider router={router} />
 			</AuthProvider>
 		</QueryClientProvider>
-	</StrictMode>
+	</StrictMode>,
 )

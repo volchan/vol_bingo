@@ -6,7 +6,7 @@ import { Avatar, AvatarImage } from '@/components/ui/avatar'
 import {
 	SidebarMenu,
 	SidebarMenuButton,
-	SidebarMenuItem
+	SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
 interface NavUserProps {

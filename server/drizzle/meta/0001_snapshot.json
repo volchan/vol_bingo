@@ -1,0 +1,178 @@
+{
+	"id": "9d9d8182-c2ea-4324-be46-0899e616e83d",
+	"prevId": "f1859cff-5d58-4387-872c-906ef23d0a97",
+	"version": "7",
+	"dialect": "postgresql",
+	"tables": {
+		"public.games": {
+			"name": "games",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"title": {
+					"name": "title",
+					"type": "varchar",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"creator_id": {
+					"name": "creator_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {
+				"games_creator_id_fkey": {
+					"name": "games_creator_id_fkey",
+					"tableFrom": "games",
+					"tableTo": "users",
+					"columnsFrom": ["creator_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.users": {
+			"name": "users",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"login": {
+					"name": "login",
+					"type": "varchar",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"display_name": {
+					"name": "display_name",
+					"type": "varchar",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"type": {
+					"name": "type",
+					"type": "varchar",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"broadcaster_type": {
+					"name": "broadcaster_type",
+					"type": "varchar",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"description": {
+					"name": "description",
+					"type": "varchar",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"profile_image_url": {
+					"name": "profile_image_url",
+					"type": "varchar",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"offline_image_url": {
+					"name": "offline_image_url",
+					"type": "varchar",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"view_count": {
+					"name": "view_count",
+					"type": "varchar",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"twitch_id": {
+					"name": "twitch_id",
+					"type": "varchar",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"twitch_created_at": {
+					"name": "twitch_created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {
+				"users_login_unique": {
+					"name": "users_login_unique",
+					"nullsNotDistinct": false,
+					"columns": ["login"]
+				},
+				"users_twitchId_unique": {
+					"name": "users_twitchId_unique",
+					"nullsNotDistinct": false,
+					"columns": ["twitch_id"]
+				}
+			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		}
+	},
+	"enums": {},
+	"schemas": {},
+	"sequences": {},
+	"roles": {},
+	"policies": {},
+	"views": {},
+	"_meta": {
+		"columns": {},
+		"schemas": {},
+		"tables": {}
+	}
+}

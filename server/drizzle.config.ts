@@ -6,11 +6,10 @@ export default defineConfig({
 	schema: './src/db/schemas',
 	casing: 'snake_case',
 	strict: true,
-	verbose: true,
 	dbCredentials: {
-		url: process.env.DATABASE_URL!
+		url: process.env.DATABASE_URL!,
 	},
 	migrations: {
-		schema: 'public'
-	}
+		schema: 'public',
+	},
 })

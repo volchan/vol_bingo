@@ -8,7 +8,7 @@ const requiredEnvVars = [
 	'TWITCH_OAUTH_URL',
 	'TWITCH_ID',
 	'TWITCH_SECRET',
-	'TWITCH_REDIRECT_PATH'
+	'TWITCH_REDIRECT_PATH',
 ]
 
 const missingEnvVars = requiredEnvVars.filter((varName) => !Bun.env[varName])
@@ -23,7 +23,7 @@ if (missingEnvVars.length > 0) {
 const appUrl = Bun.env.APP_URL!.replace('<port>', String(Bun.env.APP_PORT))
 const twitchRedirectUri = Bun.env.TWITCH_REDIRECT_PATH!.replace(
 	'<appUrl>',
-	appUrl
+	appUrl,
 )
 
 const env = {
@@ -39,7 +39,7 @@ const env = {
 	TWITCH_ID: Bun.env.TWITCH_ID!,
 	TWITCH_SECRET: Bun.env.TWITCH_SECRET!,
 	TWITCH_REDIRECT_URI: twitchRedirectUri!,
-	TWITCH_OAUTH_SCOPES: Bun.env.TWITCH_OAUTH_SCOPES?.split(',') || []
+	TWITCH_OAUTH_SCOPES: Bun.env.TWITCH_OAUTH_SCOPES?.split(',') || [],
 } as const
 
 export default env

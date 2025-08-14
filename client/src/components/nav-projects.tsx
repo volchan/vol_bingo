@@ -3,7 +3,7 @@ import {
 	type LucideIcon,
 	MoreHorizontal,
 	Share,
-	Trash2
+	Trash2,
 } from 'lucide-react'
 
 import {
@@ -11,7 +11,7 @@ import {
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuSeparator,
-	DropdownMenuTrigger
+	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
 	SidebarGroup,
@@ -20,11 +20,11 @@ import {
 	SidebarMenuAction,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	useSidebar
+	useSidebar,
 } from '@/components/ui/sidebar'
 
 export function NavProjects({
-	projects
+	projects,
 }: {
 	readonly projects: {
 		readonly name: string

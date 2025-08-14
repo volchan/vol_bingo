@@ -1,8 +1,7 @@
 import { pgTable, timestamp, varchar } from 'drizzle-orm/pg-core'
-
 import baseFields from './base'
 
-export default pgTable('users', {
+export const users = pgTable('users', {
 	...baseFields,
 	login: varchar().notNull().unique(),
 	displayName: varchar().notNull(),
@@ -13,5 +12,5 @@ export default pgTable('users', {
 	offlineImageUrl: varchar().notNull(),
 	viewCount: varchar().notNull(),
 	twitchId: varchar().notNull().unique(),
-	twitchCreatedAt: timestamp().notNull()
+	twitchCreatedAt: timestamp().notNull(),
 })

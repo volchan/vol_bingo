@@ -1,10 +1,16 @@
 import { Hono } from 'hono'
 
-import auth from './auth.routes'
+import authRoutes from './auth'
+import gamesRoutes from './games'
 
 const app = new Hono()
 
-const routes = app.route('/auth', auth)
+app.get('/health', (c) => {
+	return c.json({ status: 'ok' })
+})
 
-export type AppType = typeof routes
+app.route('/auth', authRoutes)
+app.route('/games', gamesRoutes)
+
+export type AppType = typeof app
 export default app

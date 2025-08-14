@@ -1,5 +1,5 @@
 export function ContentContainer({
-	children
+	children,
 }: {
 	readonly children: React.ReactNode
 }) {

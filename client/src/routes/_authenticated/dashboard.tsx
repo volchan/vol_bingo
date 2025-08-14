@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
 	component: RouteComponent,
-	loader: ({ context }) => context
+	loader: ({ context }) => context,
 })
 
 function RouteComponent() {

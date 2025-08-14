@@ -22,7 +22,7 @@ export async function validateAuth(): Promise<{
 		const user = await apiClient.getCurrentUser()
 		return {
 			user,
-			isAuthenticated: true
+			isAuthenticated: true,
 		}
 	} catch (error) {
 		console.error('Authentication validation failed:', error)

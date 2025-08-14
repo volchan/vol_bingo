@@ -46,7 +46,7 @@ export function buildAuthUrl(config: {
 		redirect_uri: config.redirectUri,
 		response_type: 'code',
 		scope: config.scopes.join(' '),
-		state: config.state
+		state: config.state,
 	})
 
 	return `${env.TWITCH_OAUTH_URL}/authorize?${params.toString()}`
@@ -54,7 +54,7 @@ export function buildAuthUrl(config: {
 
 export function buildErrorRedirectUrl(
 	frontendUrl: string,
-	error: string
+	error: string,
 ): string {
 	const url = new URL(frontendUrl)
 	url.searchParams.set('error', error)
@@ -65,7 +65,7 @@ export function buildSuccessRedirectUrl(
 	frontendUrl: string,
 	user: User,
 	token: string,
-	refreshToken?: string
+	refreshToken?: string,
 ): string {
 	const url = new URL(`${frontendUrl}/auth/callback`)
 	url.searchParams.set('user', JSON.stringify(user))

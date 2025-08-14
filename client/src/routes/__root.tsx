@@ -10,10 +10,10 @@ export const Route = createRootRoute({
 		authentication: {
 			user: null,
 			isAuthenticated: false,
-			isLoading: true
-		}
+			isLoading: true,
+		},
 	}),
-	notFoundComponent: NotFound
+	notFoundComponent: NotFound,
 })
 
 function RootComponent() {

@@ -3,7 +3,7 @@ import { AppSidebar } from '@/components/app-sidebar'
 import {
 	SidebarInset,
 	SidebarProvider,
-	SidebarTrigger
+	SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { useIsMobile } from '@/hooks/use-mobile'
 
@@ -12,7 +12,7 @@ interface AuthenticatedLayoutProps {
 }
 
 export default function AuthenticatedLayout({
-	children
+	children,
 }: AuthenticatedLayoutProps) {
 	const isMobile = useIsMobile()
 

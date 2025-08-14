@@ -5,7 +5,7 @@ import { ChevronRight, type LucideIcon } from 'lucide-react'
 import {
 	Collapsible,
 	CollapsibleContent,
-	CollapsibleTrigger
+	CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import {
 	SidebarGroup,
@@ -16,11 +16,11 @@ import {
 	SidebarMenuItem,
 	SidebarMenuSub,
 	SidebarMenuSubButton,
-	SidebarMenuSubItem
+	SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
 
 export function NavMain({
-	items
+	items,
 }: {
 	readonly items: readonly {
 		readonly title: string

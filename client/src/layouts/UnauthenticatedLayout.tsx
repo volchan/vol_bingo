@@ -5,7 +5,7 @@ interface UnauthenticatedLayoutProps {
 }
 
 export default function UnauthenticatedLayout({
-	children
+	children,
 }: UnauthenticatedLayoutProps) {
 	return (
 		<div className="h-screen w-screen place-content-center">{children}</div>

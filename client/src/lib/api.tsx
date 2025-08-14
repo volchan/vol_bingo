@@ -13,7 +13,10 @@ class ApiClient {
 	private getAuthHeader(): Record<string, string> {
 		const tokens = this.getStoredTokens()
 		if (tokens?.access_token) {
-			return { Authorization: `Bearer ${tokens.access_token}` }
+			return {
+				Authorization: `Bearer ${tokens.access_token}`,
+				'Accept-Encoding': 'gzip',
+			}
 		}
 		return {}
 	}
@@ -37,7 +40,7 @@ class ApiClient {
 
 	async getCurrentUser(): Promise<User> {
 		const response = await fetch(`${API_BASE}/auth/me`, {
-			headers: this.getAuthHeader()
+			headers: this.getAuthHeader(),
 		})
 
 		if (!response.ok) {
@@ -47,7 +50,7 @@ class ApiClient {
 				if (refreshed) {
 					// Retry with new token
 					const retryResponse = await fetch(`${API_BASE}/auth/me`, {
-						headers: this.getAuthHeader()
+						headers: this.getAuthHeader(),
 					})
 					if (retryResponse.ok) {
 						return retryResponse.json()
@@ -67,7 +70,7 @@ class ApiClient {
 		const response = await fetch(`${API_BASE}/auth/refresh`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ refresh_token: refreshToken })
+			body: JSON.stringify({ refresh_token: refreshToken }),
 		})
 
 		if (!response.ok) {
@@ -95,7 +98,7 @@ class ApiClient {
 		try {
 			await fetch(`${API_BASE}/auth/logout`, {
 				method: 'POST',
-				headers: this.getAuthHeader()
+				headers: this.getAuthHeader(),
 			})
 		} catch {
 		} finally {

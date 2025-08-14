@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 
 export const Route = createFileRoute('/auth/callback')({
-	component: RouteComponent
+	component: RouteComponent,
 })
 
 function RouteComponent() {
@@ -18,14 +18,14 @@ function RouteComponent() {
 			const error = urlParams.get('error')
 			const tokens = {
 				access_token: urlParams.get('token'),
-				refresh_token: urlParams.get('refresh_token')
+				refresh_token: urlParams.get('refresh_token'),
 			}
 
 			if (error) {
 				console.error('OAuth error:', error)
 				navigate({
 					to: '/',
-					search: { error }
+					search: { error },
 				})
 				return
 			}
@@ -44,14 +44,14 @@ function RouteComponent() {
 					console.error('Failed to parse tokens:', err)
 					navigate({
 						to: '/',
-						search: { error: 'invalid_tokens' }
+						search: { error: 'invalid_tokens' },
 					})
 				}
 			} else {
 				console.error('No tokens provided in callback')
 				navigate({
 					to: '/',
-					search: { error: 'no_tokens' }
+					search: { error: 'no_tokens' },
 				})
 			}
 		}

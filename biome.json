@@ -35,7 +35,7 @@
 		"formatter": {
 			"enabled": true,
 			"quoteStyle": "single",
-			"trailingCommas": "none",
+			"trailingCommas": "all",
 			"semicolons": "asNeeded"
 		}
 	}

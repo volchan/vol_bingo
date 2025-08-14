@@ -8,15 +8,15 @@ export default defineConfig({
 	plugins: [
 		tanstackRouter({
 			target: 'react',
-			autoCodeSplitting: true
+			autoCodeSplitting: true,
 		}),
 		react(),
-		tailwindcss()
+		tailwindcss(),
 	],
 	resolve: {
 		alias: {
 			'@': path.resolve(__dirname, './src'),
-			'@ui': path.resolve(__dirname, './src/components/ui')
-		}
-	}
+			'@ui': path.resolve(__dirname, './src/components/ui'),
+		},
+	},
 })

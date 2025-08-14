@@ -5,7 +5,7 @@ import env from './env'
 const db = drizzle(env.DATABASE_URL, {
 	logger: true,
 	schema,
-	casing: 'snake_case'
+	casing: 'snake_case',
 })
 
 export const checkDatabaseConnection = async () => {

@@ -5,7 +5,7 @@ import {
 	useContext,
 	useEffect,
 	useMemo,
-	useState
+	useState,
 } from 'react'
 import type { AuthTokens, User } from 'shared'
 import { apiClient } from '../lib/api'
@@ -22,7 +22,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({
-	children
+	children,
 }: {
 	readonly children: React.ReactNode
 }) {
@@ -50,7 +50,7 @@ export function AuthProvider({
 		data: user,
 		isLoading: isQueryLoading,
 		isError,
-		refetch: queryRefetch
+		refetch: queryRefetch,
 	} = useQuery({
 		queryKey: ['auth', 'user'],
 		queryFn: async () => apiClient.getCurrentUser(),
@@ -59,7 +59,7 @@ export function AuthProvider({
 		staleTime: 5 * 60 * 1000, // 5 minutes
 		gcTime: 10 * 60 * 1000, // 10 minutes
 		refetchOnWindowFocus: true, // Refetch when window gains focus
-		refetchOnMount: true // Always refetch on mount
+		refetchOnMount: true, // Always refetch on mount
 	})
 
 	const login = useCallback(() => apiClient.initiateLogin(), [])
@@ -80,9 +80,9 @@ export function AuthProvider({
 			isLoading,
 			login,
 			logout,
-			refetch
+			refetch,
 		}),
-		[user, isAuthenticated, isLoading, login, logout, refetch]
+		[user, isAuthenticated, isLoading, login, logout, refetch],
 	)
 
 	return (

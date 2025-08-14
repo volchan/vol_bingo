@@ -1,5 +1,4 @@
 import userRepository from '@server/repositories/user'
-import type { User } from '@shared/types'
 import { Hono } from 'hono'
 import { createTwitchAuthService } from '../services/auth/twitch-auth.service'
 
@@ -78,7 +77,7 @@ router.post('/refresh', async (c) => {
 	return c.json({
 		access_token: tokenData.access_token,
 		refresh_token: tokenData.refresh_token,
-		expires_in: tokenData.expires_in
+		expires_in: tokenData.expires_in,
 	})
 })
 

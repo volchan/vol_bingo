@@ -5,13 +5,13 @@ import type {
 	AuthResult,
 	TwitchApiResponse,
 	TwitchTokenResponse,
-	TwitchUserData
+	TwitchUserData,
 } from './auth.types'
 import {
 	buildAuthUrl,
 	buildErrorRedirectUrl,
 	buildSuccessRedirectUrl,
-	stateManager
+	stateManager,
 } from './auth.utils'
 
 export class TwitchAuthService {
@@ -22,7 +22,7 @@ export class TwitchAuthService {
 		clientSecret: env.TWITCH_SECRET,
 		redirectUri: env.TWITCH_REDIRECT_URI,
 		scopes: env.TWITCH_OAUTH_SCOPES,
-		frontendUrl: env.FRONTEND_URL
+		frontendUrl: env.FRONTEND_URL,
 	}
 
 	initiateAuth(): AuthResult {
@@ -32,12 +32,12 @@ export class TwitchAuthService {
 				clientId: this.config.clientId,
 				redirectUri: this.config.redirectUri,
 				scopes: this.config.scopes,
-				state
+				state,
 			})
 
 			return {
 				success: true,
-				redirectUrl: authUrl
+				redirectUrl: authUrl,
 			}
 		} catch (error) {
 			console.error('Failed to initiate auth:', error)
@@ -46,8 +46,8 @@ export class TwitchAuthService {
 				error: 'Failed to initiate authentication',
 				redirectUrl: buildErrorRedirectUrl(
 					this.config.frontendUrl,
-					'auth_init_failed'
-				)
+					'auth_init_failed',
+				),
 			}
 		}
 	}
@@ -61,8 +61,8 @@ export class TwitchAuthService {
 					error: 'Invalid state parameter',
 					redirectUrl: buildErrorRedirectUrl(
 						this.config.frontendUrl,
-						'invalid_state'
-					)
+						'invalid_state',
+					),
 				}
 			}
 
@@ -73,8 +73,8 @@ export class TwitchAuthService {
 					error: 'Failed to exchange code for token',
 					redirectUrl: buildErrorRedirectUrl(
 						this.config.frontendUrl,
-						'token_exchange_failed'
-					)
+						'token_exchange_failed',
+					),
 				}
 			}
 
@@ -85,8 +85,8 @@ export class TwitchAuthService {
 					error: 'Failed to fetch user data',
 					redirectUrl: buildErrorRedirectUrl(
 						this.config.frontendUrl,
-						'user_fetch_failed'
-					)
+						'user_fetch_failed',
+					),
 				}
 			}
 
@@ -105,14 +105,14 @@ export class TwitchAuthService {
 				data: {
 					user,
 					token: tokenData.access_token,
-					refreshToken: tokenData.refresh_token
+					refreshToken: tokenData.refresh_token,
 				},
 				redirectUrl: buildSuccessRedirectUrl(
 					this.config.frontendUrl,
 					user,
 					tokenData.access_token,
-					tokenData.refresh_token
-				)
+					tokenData.refresh_token,
+				),
 			}
 		} catch (error) {
 			console.error('OAuth callback error:', error)
@@ -121,8 +121,8 @@ export class TwitchAuthService {
 				error: 'Authentication failed',
 				redirectUrl: buildErrorRedirectUrl(
 					this.config.frontendUrl,
-					'auth_failed'
-				)
+					'auth_failed',
+				),
 			}
 		}
 	}
@@ -132,8 +132,8 @@ export class TwitchAuthService {
 			const response = await fetch(`${env.TWITCH_API_URL}/users`, {
 				headers: {
 					Authorization: `Bearer ${token}`,
-					'Client-Id': this.config.clientId
-				}
+					'Client-Id': this.config.clientId,
+				},
 			})
 
 			if (!response.ok) {
@@ -149,20 +149,20 @@ export class TwitchAuthService {
 	}
 
 	async refreshToken(
-		refreshToken: string
+		refreshToken: string,
 	): Promise<TwitchTokenResponse | null> {
 		try {
 			const response = await fetch(`${this.config.oauthUrl}/token`, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded'
+					'Content-Type': 'application/x-www-form-urlencoded',
 				},
 				body: new URLSearchParams({
 					client_id: this.config.clientId,
 					client_secret: this.config.clientSecret,
 					refresh_token: refreshToken,
-					grant_type: 'refresh_token'
-				})
+					grant_type: 'refresh_token',
+				}),
 			})
 
 			if (!response.ok) {
@@ -181,7 +181,7 @@ export class TwitchAuthService {
 		try {
 			const response = await fetch(
 				`${this.config.oauthUrl}/revoke?client_id=${this.config.clientId}&token=${token}`,
-				{ method: 'POST' }
+				{ method: 'POST' },
 			)
 			return response.ok
 		} catch (error) {
@@ -191,21 +191,21 @@ export class TwitchAuthService {
 	}
 
 	private async exchangeCodeForToken(
-		code: string
+		code: string,
 	): Promise<TwitchTokenResponse | null> {
 		try {
 			const response = await fetch(`${this.config.oauthUrl}/token`, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded'
+					'Content-Type': 'application/x-www-form-urlencoded',
 				},
 				body: new URLSearchParams({
 					client_id: this.config.clientId,
 					client_secret: this.config.clientSecret,
 					code,
 					grant_type: 'authorization_code',
-					redirect_uri: this.config.redirectUri
-				})
+					redirect_uri: this.config.redirectUri,
+				}),
 			})
 
 			if (!response.ok) {
@@ -228,7 +228,7 @@ export class TwitchAuthService {
 	}
 
 	private formatUserData(
-		userData: TwitchUserData
+		userData: TwitchUserData,
 	): Omit<User, 'id' | 'createdAt' | 'updatedAt'> {
 		return {
 			login: userData.login,
@@ -240,19 +240,19 @@ export class TwitchAuthService {
 			offlineImageUrl: userData.offline_image_url,
 			viewCount: String(userData.view_count),
 			twitchId: userData.id,
-			twitchCreatedAt: new Date(userData.created_at)
+			twitchCreatedAt: new Date(userData.created_at),
 		}
 	}
 
 	private async getUserData(
-		accessToken: string
+		accessToken: string,
 	): Promise<Omit<User, 'id' | 'createdAt' | 'updatedAt'> | null> {
 		try {
 			const response = await fetch(`${this.config.apiUrl}/users`, {
 				headers: {
 					Authorization: `Bearer ${accessToken}`,
-					'Client-Id': this.config.clientId
-				}
+					'Client-Id': this.config.clientId,
+				},
 			})
 
 			if (!response.ok) {

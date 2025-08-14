@@ -10,8 +10,8 @@ export const Route = createFileRoute('/_authenticated')({
 			throw redirect({
 				to: '/',
 				search: {
-					redirect: location.href
-				}
+					redirect: location.href,
+				},
 			})
 		}
 
@@ -21,13 +21,13 @@ export const Route = createFileRoute('/_authenticated')({
 			authentication: {
 				user,
 				isAuthenticated: true,
-				isLoading: false
-			}
+				isLoading: false,
+			},
 		}
 	},
 	component: () => (
 		<AuthenticatedLayout>
 			<Outlet />
 		</AuthenticatedLayout>
-	)
+	),
 })

@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm'
 
 export default {
 	async create(
-		data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>
+		data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>,
 	): Promise<User> {
 		const [user] = await db.insert(users).values(data).returning()
 		if (!user) throw new Error('Failed to create user')
@@ -18,21 +18,24 @@ export default {
 
 	async findById(id: string): Promise<User | null> {
 		const user = await db.query.users.findFirst({
-			where: eq(users.id, id)
+			where: eq(users.id, id),
 		})
 		return user ?? null
 	},
 
 	async findByTwitchId(twitchId: string): Promise<User | null> {
 		const user = await db.query.users.findFirst({
-			where: eq(users.twitchId, twitchId)
+			where: eq(users.twitchId, twitchId),
+			with: {
+				createdGames: true,
+			},
 		})
 		return user ?? null
 	},
 
 	async update(
 		id: string,
-		data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>
+		data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>,
 	): Promise<User> {
 		const [user] = await db
 			.update(users)
@@ -46,5 +49,5 @@ export default {
 
 	async delete(id: string) {
 		return await db.delete(users).where(eq(users.id, id))
-	}
+	},
 }

@@ -23,7 +23,7 @@ export const Route = createFileRoute('/')({
 				localStorage.removeItem('twitch_tokens')
 			}
 		}
-	}
+	},
 })
 
 function RouteComponent() {

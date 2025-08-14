@@ -14,7 +14,7 @@ import {
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
-	SidebarMenuItem
+	SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -24,18 +24,18 @@ const data = {
 			title: 'Dashboard',
 			url: '/dashboard',
 			icon: LayoutDashboard,
-			isActive: true
-		}
+			isActive: true,
+		},
 	],
 	navSecondary: [
 		{
 			title: 'Log Out',
 			url: '/logout',
 			icon: LogOut,
-			textColor: 'text-destructive'
-		}
+			textColor: 'text-destructive',
+		},
 	],
-	projects: []
+	projects: [],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
