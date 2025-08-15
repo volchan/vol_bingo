@@ -100,18 +100,30 @@ export class TwitchAuthService {
 
 			console.log(tokenData)
 
+			// Create token pair using our auth service
+			const { authService } = await import('./auth.service')
+			const twitchExpiresAt = new Date(
+				Date.now() + (tokenData.expires_in || 3600) * 1000,
+			)
+
+			const tokenPair = await authService.createTokenPair({
+				userId: user.id,
+				twitchAccessToken: tokenData.access_token,
+				twitchRefreshToken: tokenData.refresh_token || '',
+				twitchExpiresAt,
+			})
+
 			return {
 				success: true,
 				data: {
 					user,
-					token: tokenData.access_token,
-					refreshToken: tokenData.refresh_token,
+					token: tokenPair.accessToken,
+					refreshToken: tokenPair.refreshToken,
 				},
 				redirectUrl: buildSuccessRedirectUrl(
 					this.config.frontendUrl,
-					user,
-					tokenData.access_token,
-					tokenData.refresh_token,
+					tokenPair.accessToken,
+					tokenPair.refreshToken,
 				),
 			}
 		} catch (error) {
@@ -129,9 +141,29 @@ export class TwitchAuthService {
 
 	async validateToken(token: string): Promise<TwitchUserData | null> {
 		try {
+			// For JWT token validation, we need to import verify function
+			// or use Hono's JWT middleware in the routes directly
+			// For now, let's decode the token manually to get the Twitch token
+			const parts = token.split('.')
+			if (parts.length !== 3) {
+				return null
+			}
+
+			const payload = JSON.parse(atob(parts[1]!)) as {
+				exp: number
+				twitchToken: string
+			}
+
+			// Check expiration
+			const now = Math.floor(Date.now() / 1000)
+			if (payload.exp < now) {
+				return null
+			}
+
+			// Use the wrapped Twitch token to validate with Twitch API
 			const response = await fetch(`${env.TWITCH_API_URL}/users`, {
 				headers: {
-					Authorization: `Bearer ${token}`,
+					Authorization: `Bearer ${payload.twitchToken}`,
 					'Client-Id': this.config.clientId,
 				},
 			})

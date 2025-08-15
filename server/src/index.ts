@@ -6,6 +6,7 @@ import { checkDatabaseConnection } from './config/database'
 import env from './config/env'
 import { errorLoggerMiddleware, loggerMiddleware } from './middlewares'
 import router from './routes'
+import authRoutes from './routes/auth'
 
 export const app = new Hono()
 
@@ -24,7 +25,11 @@ app.onError(errorLoggerMiddleware)
 
 await checkDatabaseConnection()
 
-app.route('/', router)
+// Mount OAuth callback at root level (required by Twitch OAuth)
+app.route('/auth', authRoutes)
+
+// Mount API routes under /api
+app.route('/api', router)
 
 export default {
 	port: env.APP_PORT,

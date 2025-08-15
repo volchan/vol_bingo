@@ -20,7 +20,7 @@ export interface AuthResponse {
 }
 
 export interface AuthTokens {
-	access_token: string
+	access_token: string // This is the JWT token (for backward compatibility)
 	refresh_token: string
 	expires_in: number
 }

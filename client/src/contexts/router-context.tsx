@@ -1,4 +1,4 @@
-import type { User } from 'shared'
+import type { AuthTokens, User } from 'shared'
 import { apiClient } from '@/lib/api'
 
 export interface RouterContext {
@@ -14,8 +14,25 @@ export async function validateAuth(): Promise<{
 	isAuthenticated: boolean
 }> {
 	try {
-		const stored = localStorage.getItem('twitch_tokens')
+		const stored = localStorage.getItem('auth_tokens')
 		if (!stored) {
+			return { user: null, isAuthenticated: false }
+		}
+
+		// Try to parse stored tokens to validate they're valid JSON
+		let parsedTokens: AuthTokens
+		try {
+			parsedTokens = JSON.parse(stored)
+		} catch (parseError) {
+			console.error('Invalid JSON in stored tokens:', parseError)
+			localStorage.removeItem('auth_tokens')
+			return { user: null, isAuthenticated: false }
+		}
+
+		// Check if we have an access token
+		if (!parsedTokens?.access_token) {
+			console.warn('No access token found in stored tokens')
+			localStorage.removeItem('auth_tokens')
 			return { user: null, isAuthenticated: false }
 		}
 
@@ -26,7 +43,7 @@ export async function validateAuth(): Promise<{
 		}
 	} catch (error) {
 		console.error('Authentication validation failed:', error)
-		localStorage.removeItem('twitch_tokens')
+		localStorage.removeItem('auth_tokens')
 		return { user: null, isAuthenticated: false }
 	}
 }

@@ -38,7 +38,7 @@ export function AuthProvider({
 	// Check for stored tokens
 	const getStoredTokens = useCallback((): AuthTokens | null => {
 		try {
-			const stored = localStorage.getItem('twitch_tokens')
+			const stored = localStorage.getItem('auth_tokens')
 			return stored ? JSON.parse(stored) : null
 		} catch {
 			return null

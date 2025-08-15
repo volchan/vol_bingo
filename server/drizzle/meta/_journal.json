@@ -15,6 +15,13 @@
 			"when": 1755044250655,
 			"tag": "0001_flowery_roxanne_simpson",
 			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1755215846138,
+			"tag": "0002_large_wild_pack",
+			"breakpoints": true
 		}
 	]
 }

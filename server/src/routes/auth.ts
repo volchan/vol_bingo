@@ -1,5 +1,6 @@
-import userRepository from '@server/repositories/user'
+import { jwtAuth, jwtAuthWithTwitchSync } from '@server/middlewares/jwtAuth'
 import { Hono } from 'hono'
+import { authService } from '../services/auth/auth.service'
 import { createTwitchAuthService } from '../services/auth/twitch-auth.service'
 
 const router = new Hono()
@@ -36,58 +37,49 @@ router.get('/twitch', async (c) => {
 	return c.json({ error: result.error }, 400)
 })
 
-// Get current user (protected route)
-router.get('/me', async (c) => {
-	const authHeader = c.req.header('Authorization')
-
-	if (!authHeader?.startsWith('Bearer ')) {
-		return c.json({ error: 'Unauthorized' }, 401)
-	}
-
-	const token = authHeader.substring(7)
-	const userData = await twitchAuth.validateToken(token)
-
-	if (!userData) {
-		return c.json({ error: 'Unauthorized' }, 401)
-	}
-
-	const user = await userRepository.findByTwitchId(userData.id)
-	if (!user) {
-		return c.json({ error: 'User not found' }, 404)
-	}
-
+// Get current user (protected route) - uses Twitch sync for fresh data
+router.get('/me', jwtAuthWithTwitchSync, async (c) => {
+	// User is already set by the auth middleware
+	const user = c.get('user')
 	return c.json(user)
 })
 
-// Refresh token
-router.post('/refresh', async (c) => {
-	const body = await c.req.json().catch(() => ({}))
-	const refreshToken = body.refresh_token
+// Refresh token - uses our custom refresh token system
+router.post('/refresh', jwtAuth, async (c) => {
+	const refreshToken = c.get('refreshToken')
 
 	if (!refreshToken) {
-		return c.json({ error: 'Refresh token required' }, 400)
+		return c.json({ error: 'No refresh token available' }, 400)
 	}
 
-	const tokenData = await twitchAuth.refreshToken(refreshToken)
+	const newTokenPair = await authService.refreshTokenPair(refreshToken)
 
-	if (!tokenData) {
+	if (!newTokenPair) {
 		return c.json({ error: 'Failed to refresh token' }, 400)
 	}
 
 	return c.json({
-		access_token: tokenData.access_token,
-		refresh_token: tokenData.refresh_token,
-		expires_in: tokenData.expires_in,
+		access_token: newTokenPair.accessToken,
+		refresh_token: newTokenPair.refreshToken,
+		expires_in: newTokenPair.expiresIn,
 	})
 })
 
-// Logout
-router.post('/logout', async (c) => {
-	const authHeader = c.req.header('Authorization')
+// Logout - revoke our custom refresh token and optionally Twitch tokens
+router.post('/logout', jwtAuth, async (c) => {
+	const refreshToken = c.get('refreshToken')
 
-	if (authHeader?.startsWith('Bearer ')) {
-		const token = authHeader.substring(7)
-		await twitchAuth.revokeToken(token)
+	if (refreshToken) {
+		// Get Twitch tokens before revoking our refresh token
+		const twitchTokens = await authService.getTwitchTokens(refreshToken)
+
+		// Revoke our custom refresh token
+		await authService.revokeRefreshToken(refreshToken)
+
+		// Optionally revoke Twitch token
+		if (twitchTokens?.accessToken) {
+			await twitchAuth.revokeToken(twitchTokens.accessToken)
+		}
 	}
 
 	return c.json({ message: 'Logged out successfully' })

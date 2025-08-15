@@ -1,0 +1,68 @@
+import { createMiddleware } from 'hono/factory'
+import { jwt, verify } from 'hono/jwt'
+import env from '../config/env'
+import userRepository from '../repositories/user'
+import { authService } from '../services/auth/auth.service'
+
+export const jwtAuth = createMiddleware(async (c, next) => {
+	const jwtMiddleware = jwt({
+		secret: env.JWT_SECRET,
+	})
+
+	try {
+		await jwtMiddleware(c, next)
+
+		const payload = c.get('jwtPayload')
+
+		if (!payload?.userId || !payload?.refreshToken) {
+			return c.json({ error: 'Invalid token payload' }, 401)
+		}
+
+		const user = await userRepository.findById(payload.userId)
+		if (!user) {
+			return c.json({ error: 'User not found' }, 401)
+		}
+
+		c.set('user', user)
+		c.set('refreshToken', payload.refreshToken)
+	} catch (error) {
+		console.error('JWT authentication failed:', error)
+		return c.json({ error: 'Invalid or expired token' }, 401)
+	}
+})
+
+export const jwtAuthWithTwitchSync = createMiddleware(async (c, next) => {
+	try {
+		const token = c.req.header('Authorization')?.replace('Bearer ', '')
+		if (!token) {
+			return c.json({ error: 'No token provided' }, 401)
+		}
+
+		const payload = await verify(token, env.JWT_SECRET)
+		if (!payload?.userId || !payload?.refreshToken) {
+			return c.json({ error: 'Invalid token payload' }, 401)
+		}
+
+		const user = await userRepository.findById(payload.userId as string)
+		if (!user) {
+			return c.json({ error: 'User not found' }, 401)
+		}
+
+		c.set('user', user)
+		c.set('refreshToken', payload.refreshToken as string)
+
+		const twitchTokens = await authService.getTwitchTokens(
+			payload.refreshToken as string,
+		)
+		if (!twitchTokens) {
+			return c.json({ error: 'No valid Twitch tokens' }, 401)
+		}
+
+		console.log('Would sync user data from Twitch for user:', user.id)
+
+		await next()
+	} catch (error) {
+		console.error('JWT auth with Twitch sync failed:', error)
+		return c.json({ error: 'Invalid or expired token' }, 401)
+	}
+})

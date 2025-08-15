@@ -1,2 +1,2 @@
-export { default as authMiddleware } from './auth'
+export { jwtAuth, jwtAuthWithTwitchSync } from './jwtAuth'
 export { errorLoggerMiddleware, loggerMiddleware } from './logger'

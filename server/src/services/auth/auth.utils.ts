@@ -1,6 +1,5 @@
 import env from '@server/config/env'
-import type { User } from '@shared/types/models/user'
-import type { StateManager, TwitchUserData } from './auth.types'
+import type { StateManager } from './auth.types'
 
 // In-memory state manager (use Redis in production)
 class InMemoryStateManager implements StateManager {
@@ -63,15 +62,12 @@ export function buildErrorRedirectUrl(
 
 export function buildSuccessRedirectUrl(
 	frontendUrl: string,
-	user: User,
 	token: string,
-	refreshToken?: string,
+	refreshToken: string,
 ): string {
 	const url = new URL(`${frontendUrl}/auth/callback`)
-	url.searchParams.set('user', JSON.stringify(user))
+	// Always include both tokens
 	url.searchParams.set('token', token)
-	if (refreshToken) {
-		url.searchParams.set('refresh_token', refreshToken)
-	}
+	url.searchParams.set('refresh_token', refreshToken)
 	return url.toString()
 }

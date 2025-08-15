@@ -9,6 +9,7 @@ const requiredEnvVars = [
 	'TWITCH_ID',
 	'TWITCH_SECRET',
 	'TWITCH_REDIRECT_PATH',
+	'JWT_SECRET',
 ]
 
 const missingEnvVars = requiredEnvVars.filter((varName) => !Bun.env[varName])
@@ -40,6 +41,8 @@ const env = {
 	TWITCH_SECRET: Bun.env.TWITCH_SECRET!,
 	TWITCH_REDIRECT_URI: twitchRedirectUri!,
 	TWITCH_OAUTH_SCOPES: Bun.env.TWITCH_OAUTH_SCOPES?.split(',') || [],
+
+	JWT_SECRET: Bun.env.JWT_SECRET!,
 } as const
 
 export default env
