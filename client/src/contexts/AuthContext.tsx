@@ -29,13 +29,11 @@ export function AuthProvider({
 	const queryClient = useQueryClient()
 	const [isInitialized, setIsInitialized] = useState(false)
 
-	// Set query client reference for API client
 	useEffect(() => {
 		apiClient.setQueryClient(queryClient)
 		setIsInitialized(true)
 	}, [queryClient])
 
-	// Check for stored tokens
 	const getStoredTokens = useCallback((): AuthTokens | null => {
 		try {
 			const stored = localStorage.getItem('auth_tokens')

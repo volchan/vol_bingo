@@ -13,13 +13,11 @@ export const Route = createFileRoute('/')({
 		const tokensFromStorage = localStorage.getItem('auth_tokens')
 		if (tokensFromStorage) {
 			try {
-				// Parse the tokens to make sure they're valid JSON
 				const tokens = JSON.parse(tokensFromStorage)
 				if (tokens?.access_token) {
 					return redirect({ to: '/dashboard' })
 				}
 			} catch {
-				// Invalid tokens, remove them
 				localStorage.removeItem('auth_tokens')
 			}
 		}

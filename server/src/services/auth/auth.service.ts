@@ -4,6 +4,7 @@ import {
 	type CreateRefreshTokenData,
 	refreshTokenRepository,
 } from '../../repositories/refresh-tokens'
+import { createTwitchAuthService } from './twitch-auth.service'
 
 export interface JwtPayload {
 	userId: string
@@ -21,6 +22,7 @@ export interface TokenPair {
 
 class AuthService {
 	private readonly jwtExpirationMinutes = 10
+	private readonly twitchAuth = createTwitchAuthService()
 
 	private async generateJwtToken(
 		userId: string,
@@ -66,7 +68,27 @@ class AuthService {
 		}
 
 		if (refreshTokenRepository.isTwitchTokenExpired(tokenData)) {
-			console.log('Twitch token needs refreshing for user:', tokenData.userId)
+			try {
+				const refreshedTokens = await this.twitchAuth.refreshToken(
+					tokenData.twitchRefreshToken,
+				)
+
+				if (refreshedTokens) {
+					await this.updateTwitchTokens(
+						refreshToken,
+						refreshedTokens.access_token,
+						refreshedTokens.refresh_token || tokenData.twitchRefreshToken,
+						refreshedTokens.expires_in,
+					)
+				} else {
+					await refreshTokenRepository.delete(refreshToken)
+					return null
+				}
+			} catch (error) {
+				console.error('Failed to refresh Twitch token:', error)
+				await refreshTokenRepository.delete(refreshToken)
+				return null
+			}
 		}
 
 		const accessToken = await this.generateJwtToken(
@@ -96,6 +118,39 @@ class AuthService {
 		const tokenData = await refreshTokenRepository.findByToken(refreshToken)
 		if (!tokenData || refreshTokenRepository.isExpired(tokenData)) {
 			return null
+		}
+
+		if (refreshTokenRepository.isTwitchTokenExpired(tokenData)) {
+			try {
+				const refreshedTokens = await this.twitchAuth.refreshToken(
+					tokenData.twitchRefreshToken,
+				)
+
+				if (refreshedTokens) {
+					await this.updateTwitchTokens(
+						refreshToken,
+						refreshedTokens.access_token,
+						refreshedTokens.refresh_token || tokenData.twitchRefreshToken,
+						refreshedTokens.expires_in,
+					)
+
+					return {
+						accessToken: refreshedTokens.access_token,
+						refreshToken:
+							refreshedTokens.refresh_token || tokenData.twitchRefreshToken,
+					}
+				} else {
+					await refreshTokenRepository.delete(refreshToken)
+					return null
+				}
+			} catch (error) {
+				console.error(
+					'Failed to refresh Twitch token in getTwitchTokens:',
+					error,
+				)
+				await refreshTokenRepository.delete(refreshToken)
+				return null
+			}
 		}
 
 		return {

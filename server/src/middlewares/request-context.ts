@@ -10,12 +10,10 @@ export const requestContextMiddleware = async (c: Context, next: Next) => {
 	const timestamp = new Date().toISOString()
 
 	if (requestId) {
-		// Set up the request context for this async operation
 		await requestContextStorage.run({ requestId, timestamp }, async () => {
 			await next()
 		})
 	} else {
-		// If no requestId is available, just continue without context
 		await next()
 	}
 }

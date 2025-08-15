@@ -24,7 +24,6 @@ app.use(
 app.use(requestId())
 app.use(secureHeaders())
 
-// Set up request context for Drizzle logger integration
 app.use('*', requestContextMiddleware)
 app.use('*', loggerMiddleware)
 app.onError(errorLoggerMiddleware)

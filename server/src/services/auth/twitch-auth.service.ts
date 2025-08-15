@@ -90,7 +90,6 @@ export class TwitchAuthService {
 				}
 			}
 
-			// store user data in the database if it does not exist
 			let user = await userRepository.findByTwitchId(userData.twitchId)
 			if (!user) {
 				user = await userRepository.create(userData)
@@ -98,7 +97,6 @@ export class TwitchAuthService {
 				user = await userRepository.update(user.id, userData)
 			}
 
-			// Create token pair using our auth service
 			const { authService } = await import('./auth.service')
 			// Twitch access tokens are valid for 4 hours (14400 seconds)
 			const twitchExpiresAt = new Date(
@@ -153,13 +151,11 @@ export class TwitchAuthService {
 				twitchToken: string
 			}
 
-			// Check expiration
 			const now = Math.floor(Date.now() / 1000)
 			if (payload.exp < now) {
 				return null
 			}
 
-			// Use the wrapped Twitch token to validate with Twitch API
 			const response = await fetch(`${env.TWITCH_API_URL}/users`, {
 				headers: {
 					Authorization: `Bearer ${payload.twitchToken}`,

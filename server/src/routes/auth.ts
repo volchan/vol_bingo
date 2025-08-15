@@ -12,14 +12,12 @@ app.get('/twitch', async (c) => {
 	const state = c.req.query('state')
 	const error = c.req.query('error')
 
-	// Handle OAuth errors
 	if (error) {
 		console.error('OAuth error:', error)
 		return c.redirect('http://localhost:5173/?error=oauth_error')
 	}
 
 	if (!code || !state) {
-		// Initiate OAuth flow
 		const result = twitchAuth.initiateAuth()
 		if (result.success && result.redirectUrl) {
 			return c.redirect(result.redirectUrl)
@@ -27,7 +25,6 @@ app.get('/twitch', async (c) => {
 		return c.redirect('http://localhost:5173/?error=auth_init_failed')
 	}
 
-	// Handle callback
 	const result = await twitchAuth.handleCallback(code, state)
 
 	if (result.redirectUrl) {
@@ -37,7 +34,6 @@ app.get('/twitch', async (c) => {
 	return c.json({ error: result.error }, 400)
 })
 
-// Get current user info
 app.get('/me', jwtAuthWithTwitchSync, async (c) => {
 	const user = c.get('user')
 	return c.json({ user })
@@ -53,7 +49,6 @@ app.post('/refresh', jwtAuth, async (c) => {
 			return c.json({ error: 'Failed to refresh tokens' }, 401)
 		}
 
-		// Return new tokens
 		return c.json({
 			accessToken: tokenPair.accessToken,
 			refreshToken: tokenPair.refreshToken,
@@ -70,13 +65,10 @@ app.post('/logout', jwtAuth, async (c) => {
 		const refreshToken = c.get('refreshToken')
 
 		if (refreshToken) {
-			// Get Twitch tokens before revoking our refresh token
 			const twitchTokens = await authService.getTwitchTokens(refreshToken)
 
-			// Revoke our custom refresh token
 			await authService.revokeRefreshToken(refreshToken)
 
-			// Optionally revoke Twitch token
 			if (twitchTokens?.accessToken) {
 				await twitchAuth.revokeToken(twitchTokens.accessToken)
 			}

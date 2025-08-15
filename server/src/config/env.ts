@@ -1,4 +1,3 @@
-// check if env variables are set
 const requiredEnvVars = [
 	'APP_URL',
 	'APP_PORT',

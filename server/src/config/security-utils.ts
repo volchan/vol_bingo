@@ -88,7 +88,6 @@ export const redactSensitiveParams = (params: unknown[]): unknown[] => {
 
 		// Redact string values that look sensitive
 		if (typeof param === 'string') {
-			// Check against sensitive value patterns
 			if (isSensitiveValue(param)) {
 				return getRedactionType(param)
 			}

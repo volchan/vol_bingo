@@ -13,14 +13,10 @@ function RouteComponent() {
 	useEffect(() => {
 		const handleCallback = async () => {
 			const urlParams = new URLSearchParams(window.location.search)
-			console.log('Callback URL:', window.location.href)
-			console.log('URL params:', Object.fromEntries(urlParams.entries()))
 
 			const error = urlParams.get('error')
 			const jwtToken = urlParams.get('token')
 			const refreshToken = urlParams.get('refresh_token')
-
-			console.log('Extracted values:', { error, jwtToken, refreshToken })
 
 			if (error) {
 				console.error('OAuth error:', error)
@@ -31,28 +27,20 @@ function RouteComponent() {
 				return
 			}
 
-			// Only proceed if we have valid tokens from OAuth callback
 			if (jwtToken && refreshToken) {
 				try {
-					// Store tokens from successful OAuth callback
 					const tokens = {
 						access_token: jwtToken,
 						refresh_token: refreshToken,
 						expires_in: 600,
 					}
-					console.log('Storing OAuth tokens:', tokens)
 					localStorage.setItem('auth_tokens', JSON.stringify(tokens))
-
-					// Verify storage
-					const stored = localStorage.getItem('auth_tokens')
-					console.log('Stored tokens verification:', stored)
 
 					refetch()
 
 					const redirectUrl = sessionStorage.getItem('auth_redirect') || '/'
 					sessionStorage.removeItem('auth_redirect')
 
-					console.log('Redirecting to:', redirectUrl)
 					navigate({ to: redirectUrl })
 				} catch (err) {
 					console.error('Failed to process tokens:', err)

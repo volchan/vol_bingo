@@ -58,8 +58,6 @@ export const jwtAuthWithTwitchSync = createMiddleware(async (c, next) => {
 			return c.json({ error: 'No valid Twitch tokens' }, 401)
 		}
 
-		console.log('Would sync user data from Twitch for user:', user.id)
-
 		await next()
 	} catch (error) {
 		console.error('JWT auth with Twitch sync failed:', error)

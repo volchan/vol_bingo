@@ -29,7 +29,6 @@ export async function validateAuth(): Promise<{
 			return { user: null, isAuthenticated: false }
 		}
 
-		// Check if we have an access token
 		if (!parsedTokens?.access_token) {
 			console.warn('No access token found in stored tokens')
 			localStorage.removeItem('auth_tokens')

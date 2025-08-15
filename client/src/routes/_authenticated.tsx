@@ -15,7 +15,6 @@ export const Route = createFileRoute('/_authenticated')({
 			})
 		}
 
-		// Return updated context with validated user data
 		return {
 			...context,
 			authentication: {
