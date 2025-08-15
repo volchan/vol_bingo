@@ -1,4 +1,4 @@
-import { games } from './game'
+import { games } from './games'
 import { refreshTokens } from './refresh-tokens'
 import {
 	gameRelations,

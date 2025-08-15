@@ -1,4 +1,4 @@
-import { refreshTokenRepository } from '../repositories/refresh-token'
+import { refreshTokenRepository } from '../repositories/refresh-tokens'
 
 /**
  * Cleanup script to remove expired refresh tokens

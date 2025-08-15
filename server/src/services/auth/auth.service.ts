@@ -3,7 +3,7 @@ import env from '../../config/env'
 import {
 	type CreateRefreshTokenData,
 	refreshTokenRepository,
-} from '../../repositories/refresh-token'
+} from '../../repositories/refresh-tokens'
 
 export interface JwtPayload {
 	userId: string

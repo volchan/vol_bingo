@@ -105,7 +105,8 @@ class ApiClient {
 
 	private async parseJsonResponse<T = unknown>(response: Response): Promise<T> {
 		try {
-			return await response.json()
+			const { user } = await response.json()
+			return user
 		} catch (jsonError) {
 			console.error('Failed to parse JSON from response:', jsonError)
 			throw new Error('Invalid JSON response from server')

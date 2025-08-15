@@ -1,7 +1,7 @@
 import { createMiddleware } from 'hono/factory'
 import { jwt, verify } from 'hono/jwt'
 import env from '../config/env'
-import userRepository from '../repositories/user'
+import userRepository from '../repositories/users'
 import { authService } from '../services/auth/auth.service'
 
 export const jwtAuth = createMiddleware(async (c, next) => {

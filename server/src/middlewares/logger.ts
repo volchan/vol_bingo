@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 import type { Context, Next } from 'hono'
 import { isProduction, redactSensitiveObject } from '../config/security-utils'
 

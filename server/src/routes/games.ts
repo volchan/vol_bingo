@@ -1,12 +1,12 @@
-import { jwtAuth } from '@server/middlewares/jwtAuth'
+import { jwtAuth } from '@server/middlewares/jwt-auth'
 import { Hono } from 'hono'
 
-const router = new Hono()
+const app = new Hono()
 
-router.use('/*', jwtAuth)
+app.use('/*', jwtAuth)
 
-router.get('/', (c) => {
+app.get('/', (c) => {
 	return c.json({ message: 'Welcome to the Games API' })
 })
 
-export default router
+export default app

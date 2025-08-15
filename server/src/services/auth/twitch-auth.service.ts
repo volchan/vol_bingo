@@ -1,5 +1,5 @@
 import env from '@server/config/env'
-import userRepository from '@server/repositories/user'
+import userRepository from '@server/repositories/users'
 import type { User } from '@shared/types/models/user'
 import type {
 	AuthResult,

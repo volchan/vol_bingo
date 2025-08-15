@@ -273,7 +273,7 @@ export class DrizzleHonoLoggerCompact implements Logger {
 		)
 
 		const paramsString = redactedParams.length
-			? ` ${dim('[' + redactedParams.length + ' params]')}`
+			? ` ${dim(`[${redactedParams.length} params]`)}`
 			: ''
 
 		console.log(

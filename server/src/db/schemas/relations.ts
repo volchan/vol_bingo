@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm'
-import { games } from './game'
+import { games } from './games'
 import { refreshTokens } from './refresh-tokens'
 import { users } from './users'
 
