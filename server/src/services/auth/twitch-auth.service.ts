@@ -98,8 +98,6 @@ export class TwitchAuthService {
 				user = await userRepository.update(user.id, userData)
 			}
 
-			console.log(tokenData)
-
 			// Create token pair using our auth service
 			const { authService } = await import('./auth.service')
 			const twitchExpiresAt = new Date(

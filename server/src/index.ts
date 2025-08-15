@@ -4,7 +4,11 @@ import { requestId } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
 import { checkDatabaseConnection } from './config/database'
 import env from './config/env'
-import { errorLoggerMiddleware, loggerMiddleware } from './middlewares'
+import {
+	errorLoggerMiddleware,
+	loggerMiddleware,
+	requestContextMiddleware,
+} from './middlewares'
 import router from './routes'
 import authRoutes from './routes/auth'
 
@@ -20,6 +24,8 @@ app.use(
 app.use(requestId())
 app.use(secureHeaders())
 
+// Set up request context for Drizzle logger integration
+app.use('*', requestContextMiddleware)
 app.use('*', loggerMiddleware)
 app.onError(errorLoggerMiddleware)
 

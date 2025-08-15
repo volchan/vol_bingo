@@ -1,9 +1,10 @@
 import { drizzle } from 'drizzle-orm/node-postgres'
 import * as schema from '../db/schemas'
 import env from './env'
+import { createDrizzleLogger } from './logger'
 
 const db = drizzle(env.DATABASE_URL, {
-	logger: true,
+	logger: createDrizzleLogger(),
 	schema,
 	casing: 'snake_case',
 })

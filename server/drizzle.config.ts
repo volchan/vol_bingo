@@ -6,6 +6,7 @@ export default defineConfig({
 	schema: './src/db/schemas',
 	casing: 'snake_case',
 	strict: true,
+	verbose: true, // Enable verbose logging for migrations
 	dbCredentials: {
 		url: process.env.DATABASE_URL!,
 	},

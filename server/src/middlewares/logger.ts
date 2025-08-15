@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto'
 import type { Context, Next } from 'hono'
+import { isProduction, redactSensitiveObject } from '../config/security-utils'
 
 const colors = {
 	reset: '\x1b[0m',
@@ -93,7 +94,7 @@ export const loggerMiddleware = async (c: Context, next: Next) => {
 	console.log(`
 ${timestampDimmed} ${requestIdColored} Started ${methodColored} "${urlColored}"`)
 
-	const isProduction = Bun.env.APP_ENV === 'production'
+	const isProd = isProduction()
 
 	const authHeader = c.req.header('authorization')
 	const apiKeyHeader = c.req.header('x-api-key')
@@ -104,10 +105,9 @@ ${timestampDimmed} ${requestIdColored} Started ${methodColored} "${urlColored}"`
 		'User-Agent': userAgent,
 		Accept: c.req.header('accept'),
 		'Content-Type': c.req.header('content-type'),
-		Authorization: authHeader && ((isProduction && '[FILTERED]') || authHeader),
-		'X-API-Key':
-			apiKeyHeader && ((isProduction && '[FILTERED]') || apiKeyHeader),
-		Cookie: cookieHeader && ((isProduction && '[FILTERED]') || cookieHeader),
+		Authorization: authHeader && ((isProd && '[FILTERED]') || authHeader),
+		'X-API-Key': apiKeyHeader && ((isProd && '[FILTERED]') || apiKeyHeader),
+		Cookie: cookieHeader && ((isProd && '[FILTERED]') || cookieHeader),
 		'X-Forwarded-For': c.req.header('x-forwarded-for'),
 		'X-Real-IP': c.req.header('x-real-ip'),
 	}
@@ -138,7 +138,7 @@ ${timestampDimmed} ${requestIdColored} Started ${methodColored} "${urlColored}"`
 			'Processing request with JSON payload',
 		)
 
-		if (isProduction) {
+		if (isProd) {
 			console.log(
 				`${currentTimestampDimmed} ${currentRequestIdColored} ${processingMessage}`,
 			)
@@ -149,8 +149,9 @@ ${timestampDimmed} ${requestIdColored} Started ${methodColored} "${urlColored}"`
 			try {
 				const body = await c.req.text()
 				const parsedBody = JSON.parse(body)
+				const redactedBody = redactSensitiveObject(parsedBody)
 				const bodyColored = colorize('cyan', 'Body:')
-				const bodyFormatted = JSON.stringify(parsedBody, null, 2)
+				const bodyFormatted = JSON.stringify(redactedBody, null, 2)
 				console.log(
 					`${currentTimestampDimmed} ${currentRequestIdColored} ${bodyColored} ${bodyFormatted}`,
 				)
@@ -203,7 +204,7 @@ ${timestampDimmed} ${requestIdColored} Started ${methodColored} "${urlColored}"`
 export const errorLoggerMiddleware = (err: Error, c: Context) => {
 	const requestId = c.get('requestId') || 'unknown'
 	const timestamp = new Date().toISOString()
-	const isProduction = Bun.env.APP_ENV === 'production'
+	const isProd = isProduction()
 
 	const timestampDimmed = dim(timestamp)
 	const requestIdColored = colorize('magenta', `[${requestId}]`)
@@ -213,7 +214,7 @@ export const errorLoggerMiddleware = (err: Error, c: Context) => {
 		`${timestampDimmed} ${requestIdColored} ${errorLabel} ${err.message}`,
 	)
 
-	const shouldShowStack = !isProduction && err.stack
+	const shouldShowStack = !isProd && err.stack
 	if (shouldShowStack) {
 		const stackLabel = colorize('red', 'Stack trace:')
 		console.log(`${timestampDimmed} ${requestIdColored} ${stackLabel}`)
@@ -226,10 +227,10 @@ export const errorLoggerMiddleware = (err: Error, c: Context) => {
 	}
 	console.log('')
 
-	const errorResponse = (isProduction && 'Internal Server Error') || err.message
+	const errorResponse = (isProd && 'Internal Server Error') || err.message
 	const responseData = {
 		error: errorResponse,
-		...(isProduction ? {} : { stack: err.stack }),
+		...(isProd ? {} : { stack: err.stack }),
 	}
 
 	return c.json(responseData, 500)
