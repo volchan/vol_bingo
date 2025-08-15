@@ -1,14 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-	createContext,
-	useCallback,
-	useContext,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react'
+import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import type { AuthTokens, User } from 'shared'
-import { apiClient } from '../lib/api'
+import { apiClient } from '@/lib/api'
 
 interface AuthContextType {
 	user: User | null
@@ -21,11 +14,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-export function AuthProvider({
-	children,
-}: {
+export { AuthContext }
+
+interface AuthProviderProps {
 	readonly children: React.ReactNode
-}) {
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
 	const queryClient = useQueryClient()
 	const [isInitialized, setIsInitialized] = useState(false)
 
@@ -43,26 +38,39 @@ export function AuthProvider({
 		}
 	}, [])
 
-	// Main auth query - this uses the same /auth/me endpoint that routes use
 	const {
 		data: user,
 		isLoading: isQueryLoading,
 		isError,
 		refetch: queryRefetch,
+		error,
 	} = useQuery({
 		queryKey: ['auth', 'user'],
 		queryFn: async () => apiClient.getCurrentUser(),
 		enabled: isInitialized && !!getStoredTokens()?.access_token,
-		retry: false,
-		staleTime: 5 * 60 * 1000, // 5 minutes
-		gcTime: 10 * 60 * 1000, // 10 minutes
-		refetchOnWindowFocus: true, // Refetch when window gains focus
-		refetchOnMount: true, // Always refetch on mount
+		retry: (failureCount, error) => {
+			if (error?.message.includes('Unauthorized')) return false
+			return failureCount < 2
+		},
+		staleTime: 5 * 60 * 1000,
+		gcTime: 10 * 60 * 1000,
+		refetchOnWindowFocus: true,
+		refetchOnMount: true,
+		throwOnError: false,
 	})
+
+	useEffect(() => {
+		if (error?.message.includes('Unauthorized')) {
+			localStorage.removeItem('auth_tokens')
+		}
+	}, [error])
 
 	const login = useCallback(() => apiClient.initiateLogin(), [])
 
-	const logout = useCallback(async () => apiClient.logout(), [])
+	const logout = useCallback(async () => {
+		await apiClient.logout()
+		queryClient.removeQueries({ queryKey: ['auth'] })
+	}, [queryClient])
 
 	const refetch = useCallback(() => {
 		queryRefetch()
@@ -88,10 +96,4 @@ export function AuthProvider({
 	)
 }
 
-export function useAuth() {
-	const context = useContext(AuthContext)
-	if (!context) {
-		throw new Error('useAuth must be used within an AuthProvider')
-	}
-	return context
-}
+AuthProvider.displayName = 'AuthProvider'

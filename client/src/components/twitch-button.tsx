@@ -1,7 +1,7 @@
 import { TwitchIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { useAuth } from '@/contexts/AuthContext'
-import { Button } from './ui/button'
+import { Button } from '@/components/ui/button'
+import { useAuth } from '@/hooks/use-auth'
 
 export function TwitchButton() {
 	const { login } = useAuth()

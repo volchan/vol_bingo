@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/use-auth'
 
 export const Route = createFileRoute('/auth/callback')({
 	component: RouteComponent,
@@ -19,7 +19,6 @@ function RouteComponent() {
 			const refreshToken = urlParams.get('refresh_token')
 
 			if (error) {
-				console.error('OAuth error:', error)
 				navigate({
 					to: '/',
 					search: { error },
@@ -42,15 +41,13 @@ function RouteComponent() {
 					sessionStorage.removeItem('auth_redirect')
 
 					navigate({ to: redirectUrl })
-				} catch (err) {
-					console.error('Failed to process tokens:', err)
+				} catch (_err) {
 					navigate({
 						to: '/',
 						search: { error: 'invalid_tokens' },
 					})
 				}
 			} else {
-				console.error('No valid tokens provided in callback')
 				navigate({
 					to: '/',
 					search: { error: 'no_tokens' },

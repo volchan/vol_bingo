@@ -1,12 +1,17 @@
 import type { AuthTokens, User } from 'shared'
 import { apiClient } from '@/lib/api'
 
+export interface AuthenticationContext {
+	user: User | null
+	isAuthenticated: boolean
+	isLoading: boolean
+	login: () => void
+	logout: () => Promise<void>
+	refetch: () => void
+}
+
 export interface RouterContext {
-	authentication: {
-		user: User | null
-		isAuthenticated: boolean
-		isLoading: boolean
-	}
+	authentication: AuthenticationContext
 }
 
 export async function validateAuth(): Promise<{
@@ -19,18 +24,15 @@ export async function validateAuth(): Promise<{
 			return { user: null, isAuthenticated: false }
 		}
 
-		// Try to parse stored tokens to validate they're valid JSON
 		let parsedTokens: AuthTokens
 		try {
 			parsedTokens = JSON.parse(stored)
-		} catch (parseError) {
-			console.error('Invalid JSON in stored tokens:', parseError)
+		} catch {
 			localStorage.removeItem('auth_tokens')
 			return { user: null, isAuthenticated: false }
 		}
 
 		if (!parsedTokens?.access_token) {
-			console.warn('No access token found in stored tokens')
 			localStorage.removeItem('auth_tokens')
 			return { user: null, isAuthenticated: false }
 		}
@@ -40,8 +42,7 @@ export async function validateAuth(): Promise<{
 			user,
 			isAuthenticated: true,
 		}
-	} catch (error) {
-		console.error('Authentication validation failed:', error)
+	} catch {
 		localStorage.removeItem('auth_tokens')
 		return { user: null, isAuthenticated: false }
 	}

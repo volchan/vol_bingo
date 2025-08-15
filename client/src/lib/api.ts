@@ -1,6 +1,12 @@
 import type { QueryClient } from '@tanstack/react-query'
 import type { AuthTokens, User } from 'shared'
-import { isJwtExpired } from './jwt'
+import {
+	ApiError,
+	AuthError,
+	isAuthenticationError,
+	NetworkError,
+} from '@/lib/errors'
+import { isJwtExpired } from '@/lib/jwt'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
@@ -9,6 +15,76 @@ class ApiClient {
 
 	setQueryClient(queryClient: QueryClient) {
 		this.queryClient = queryClient
+	}
+
+	private async handleResponse<T>(response: Response): Promise<T> {
+		if (!response.ok) {
+			const errorMessage = await this.getErrorMessage(response)
+
+			if (isAuthenticationError(response.status)) {
+				throw new AuthError(response.status, response.statusText, errorMessage)
+			}
+
+			throw new ApiError(response.status, response.statusText, errorMessage)
+		}
+
+		try {
+			const contentType = response.headers.get('content-type')
+			if (contentType?.includes('application/json')) {
+				const data = await response.json()
+				return data.user || data.data || data
+			}
+			return null as T
+		} catch (error) {
+			throw new ApiError(
+				response.status,
+				'Invalid JSON response',
+				String(error),
+			)
+		}
+	}
+
+	private async getErrorMessage(response: Response): Promise<string> {
+		try {
+			const data = await response.json()
+			return data.message || data.error || `HTTP ${response.status}`
+		} catch {
+			return `HTTP ${response.status}: ${response.statusText}`
+		}
+	}
+
+	private async fetchWithRetry(
+		url: string,
+		options: RequestInit = {},
+		retries = 1,
+	): Promise<Response> {
+		try {
+			const response = await fetch(url, {
+				...options,
+				headers: {
+					'Content-Type': 'application/json',
+					...options.headers,
+				},
+			})
+			return response
+		} catch (error) {
+			if (retries > 0 && this.isRetryableError(error)) {
+				await this.delay(1000)
+				return this.fetchWithRetry(url, options, retries - 1)
+			}
+			throw new NetworkError(String(error))
+		}
+	}
+
+	private isRetryableError(error: unknown): boolean {
+		return (
+			error instanceof TypeError ||
+			(error instanceof Error && error.message.includes('fetch'))
+		)
+	}
+
+	private delay(ms: number): Promise<void> {
+		return new Promise((resolve) => setTimeout(resolve, ms))
 	}
 
 	private async getAuthHeaderWithRefresh(): Promise<Record<string, string>> {
@@ -68,70 +144,31 @@ class ApiClient {
 
 	async getCurrentUser(): Promise<User> {
 		const headers = await this.getAuthHeaderWithRefresh()
-		const response = await fetch(`${API_BASE}/auth/me`, {
+		const response = await this.fetchWithRetry(`${API_BASE}/auth/me`, {
 			headers,
 		})
 
-		if (response.ok) {
-			return this.parseJsonResponse<User>(response)
-		}
-
-		if (response.status === 401) {
-			return this.handleUnauthorizedResponse()
-		}
-
-		throw new Error(`HTTP ${response.status}`)
-	}
-
-	private async handleUnauthorizedResponse(): Promise<User> {
-		const refreshed = await this.tryRefreshToken()
-		if (!refreshed) {
-			this.storeTokens(null)
-			throw new Error('Unauthorized')
-		}
-
-		const newHeaders = this.getAuthHeader()
-		const retryResponse = await fetch(`${API_BASE}/auth/me`, {
-			headers: newHeaders,
-		})
-
-		if (!retryResponse.ok) {
-			this.storeTokens(null)
-			throw new Error('Unauthorized')
-		}
-
-		return this.parseJsonResponse<User>(retryResponse)
-	}
-
-	private async parseJsonResponse<T = unknown>(response: Response): Promise<T> {
-		try {
-			const { user } = await response.json()
-			return user
-		} catch (jsonError) {
-			console.error('Failed to parse JSON from response:', jsonError)
-			throw new Error('Invalid JSON response from server')
-		}
+		return this.handleResponse<User>(response)
 	}
 
 	async refreshToken(): Promise<AuthTokens> {
 		const currentTokens = this.getStoredTokens()
 		if (!currentTokens?.access_token) {
-			throw new Error('No access token available for refresh')
+			throw new AuthError(
+				401,
+				'Unauthorized',
+				'No access token available for refresh',
+			)
 		}
 
-		const response = await fetch(`${API_BASE}/auth/refresh`, {
+		const response = await this.fetchWithRetry(`${API_BASE}/auth/refresh`, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json',
 				Authorization: `Bearer ${currentTokens.access_token}`,
 			},
 		})
 
-		if (!response.ok) {
-			throw new Error(`Failed to refresh token: ${response.status}`)
-		}
-
-		const tokens = await this.parseJsonResponse<AuthTokens>(response)
+		const tokens = await this.handleResponse<AuthTokens>(response)
 		this.storeTokens(tokens)
 		return tokens
 	}
@@ -143,8 +180,7 @@ class ApiClient {
 
 			await this.refreshToken()
 			return true
-		} catch (error) {
-			console.error('Token refresh failed:', error)
+		} catch {
 			this.storeTokens(null)
 			return false
 		}
@@ -153,7 +189,7 @@ class ApiClient {
 	async logout(): Promise<void> {
 		try {
 			const headers = this.getAuthHeader()
-			await fetch(`${API_BASE}/auth/logout`, {
+			await this.fetchWithRetry(`${API_BASE}/auth/logout`, {
 				method: 'POST',
 				headers,
 			})
