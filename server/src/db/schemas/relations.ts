@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm'
 import { games } from './game'
+import { refreshTokens } from './refresh-tokens'
 import { users } from './users'
 
 export const userRelations = relations(users, ({ many }) => ({
@@ -11,5 +12,12 @@ export const gameRelations = relations(games, ({ one }) => ({
 		fields: [games.creatorId],
 		references: [users.id],
 		relationName: 'creator',
+	}),
+}))
+
+export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+	user: one(users, {
+		fields: [refreshTokens.userId],
+		references: [users.id],
 	}),
 }))

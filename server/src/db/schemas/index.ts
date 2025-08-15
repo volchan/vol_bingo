@@ -1,6 +1,10 @@
 import { games } from './game'
-import { refreshTokens, refreshTokensRelations } from './refresh-tokens'
-import { gameRelations, userRelations } from './relations'
+import { refreshTokens } from './refresh-tokens'
+import {
+	gameRelations,
+	refreshTokensRelations,
+	userRelations,
+} from './relations'
 import { users } from './users'
 
 export {

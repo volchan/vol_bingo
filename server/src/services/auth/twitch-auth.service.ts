@@ -100,8 +100,9 @@ export class TwitchAuthService {
 
 			// Create token pair using our auth service
 			const { authService } = await import('./auth.service')
+			// Twitch access tokens are valid for 4 hours (14400 seconds)
 			const twitchExpiresAt = new Date(
-				Date.now() + (tokenData.expires_in || 3600) * 1000,
+				Date.now() + (tokenData.expires_in || 14400) * 1000,
 			)
 
 			const tokenPair = await authService.createTokenPair({

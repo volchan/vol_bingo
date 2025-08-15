@@ -17,7 +17,7 @@ export interface CreateRefreshTokenData {
 	twitchAccessToken: string
 	twitchRefreshToken: string
 	twitchExpiresAt: Date
-	expiresInDays?: number // Default to 30 days
+	expiresInDays?: number // Default to 1 day
 }
 
 class RefreshTokenRepository {
@@ -34,7 +34,8 @@ class RefreshTokenRepository {
 	async create(data: CreateRefreshTokenData): Promise<RefreshTokenData> {
 		const token = this.generateToken()
 		const expiresAt = new Date()
-		expiresAt.setDate(expiresAt.getDate() + (data.expiresInDays || 30))
+		// App refresh tokens are valid for 1 day
+		expiresAt.setDate(expiresAt.getDate() + (data.expiresInDays || 1))
 
 		const [created] = await db
 			.insert(refreshTokens)

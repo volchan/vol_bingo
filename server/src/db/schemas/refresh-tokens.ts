@@ -1,4 +1,3 @@
-import { relations } from 'drizzle-orm'
 import { pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
 import baseFields from './base'
 import { users } from './users'
@@ -14,10 +13,3 @@ export const refreshTokens = pgTable('refresh_tokens', {
 	twitchRefreshToken: varchar().notNull(),
 	twitchExpiresAt: timestamp().notNull(),
 })
-
-export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
-	user: one(users, {
-		fields: [refreshTokens.userId],
-		references: [users.id],
-	}),
-}))
