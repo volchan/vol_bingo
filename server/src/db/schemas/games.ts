@@ -1,6 +1,12 @@
-import { foreignKey, pgTable, uuid, varchar } from 'drizzle-orm/pg-core'
+import { foreignKey, pgEnum, pgTable, uuid, varchar } from 'drizzle-orm/pg-core'
 import baseFields from './base'
 import { users } from './users'
+
+export const statusEnum = pgEnum('game_status', [
+	'draft',
+	'active',
+	'completed',
+])
 
 export const games = pgTable(
 	'games',
@@ -9,6 +15,7 @@ export const games = pgTable(
 		title: varchar().notNull(),
 		creatorId: uuid().notNull(),
 		friendlyId: varchar().notNull().unique(),
+		status: statusEnum().default('draft').notNull(),
 	},
 	(table) => [
 		foreignKey({

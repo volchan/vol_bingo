@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useNavigate } from '@tanstack/react-router'
 import { Loader2, Plus } from 'lucide-react'
 import { Suspense } from 'react'
 import { useForm } from 'react-hook-form'
@@ -30,15 +31,17 @@ export default function NewGameForm() {
 	})
 
 	const createGameMutation = useCreateGame()
+	const navigate = useNavigate()
 
 	function onSubmitForm(data: z.infer<typeof FormSchema>) {
 		createGameMutation.mutate(
 			{ title: data.title },
 			{
 				onSuccess: (newGame) => {
-					// Handle success - maybe show a toast notification
-					console.log('Game created successfully:', newGame)
-					form.reset() // Reset the form
+					navigate({
+						to: '/games/$id',
+						params: { id: newGame.friendlyId },
+					})
 				},
 				onError: (error) => {
 					// Handle error - maybe show an error toast

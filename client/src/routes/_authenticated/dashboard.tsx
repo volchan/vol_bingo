@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { Suspense } from 'react'
 import { ErrorBoundary } from '@/components/error-boundary'
 import JoinGameForm from '@/components/forms/join-game'
@@ -85,14 +85,19 @@ function DashboardContent() {
 					) : (
 						<ul className="space-y-4">
 							{listGamesQuery.data.map((game) => (
-								<li key={game.id} className="p-4 rounded-lg border bg-card">
+								<Link
+									to={`/games/$id`}
+									params={{ id: game.friendlyId }}
+									key={game.friendlyId}
+									className="p-4 rounded-lg border bg-card"
+								>
 									<h3 className="font-semibold">{game.title}</h3>
 									<p className="text-muted-foreground">
 										ID: {game.friendlyId} | Created at:{' '}
 										{formatLocal(game.createdAt)} | Creator:{' '}
 										{game.creator.displayName}
 									</p>
-								</li>
+								</Link>
 							))}
 						</ul>
 					))}

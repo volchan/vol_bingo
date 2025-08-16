@@ -5,4 +5,5 @@ export interface Game {
 	updatedAt: Date | null
 	creatorId: string
 	friendlyId: string
+	status: 'draft' | 'active' | 'completed'
 }

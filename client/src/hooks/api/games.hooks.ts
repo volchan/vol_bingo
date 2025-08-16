@@ -3,8 +3,10 @@ import { apiClient } from '@/lib/api'
 
 export const authKeys = {
 	all: ['games'] as const,
-	list: () => [...authKeys.all, 'list'] as const,
-	create: () => [...authKeys.all, 'create'] as const,
+	list: () => [...authKeys.all, 'games'] as const,
+	detail: (friendlyId: string) =>
+		[...authKeys.all, 'game', friendlyId] as const,
+	create: () => [...authKeys.all, 'game'] as const,
 }
 
 export function useListGames() {
@@ -22,6 +24,22 @@ export function useListGames() {
 	})
 }
 
+export function useGame(friendlyId: string) {
+	return useQuery({
+		queryKey: authKeys.detail(friendlyId),
+		queryFn: () => apiClient.getGameByFriendlyId(friendlyId),
+		staleTime: 5 * 60 * 1000,
+		gcTime: 10 * 60 * 1000,
+		refetchOnWindowFocus: false, // Reduce aggressive refetching
+		refetchOnMount: true,
+		retry: (failureCount, error) => {
+			if (error?.message.includes('Unauthorized')) return false
+			return failureCount < 2
+		},
+		enabled: !!friendlyId, // Only run query if friendlyId is provided
+	})
+}
+
 export function useCreateGame() {
 	const queryClient = useQueryClient()
 
@@ -30,11 +48,47 @@ export function useCreateGame() {
 		mutationFn: (gameData: { title: string; friendlyId?: string }) =>
 			apiClient.createGame(gameData),
 		onSuccess: (newGame) => {
-			queryClient.invalidateQueries({ queryKey: authKeys.all })
 			queryClient.setQueryData(authKeys.create(), newGame)
 		},
 		onError: () => {
 			queryClient.removeQueries({ queryKey: authKeys.create() })
+		},
+	})
+}
+
+export function useStartGame() {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: (friendlyId: string) => apiClient.startGame(friendlyId),
+		onSuccess: (updatedGame) => {
+			try {
+				// Update the individual game cache with the complete data
+				queryClient.setQueryData(
+					authKeys.detail(updatedGame.friendlyId),
+					updatedGame,
+				)
+				// Invalidate the games list to refresh it
+				queryClient.invalidateQueries({
+					queryKey: authKeys.list(),
+					exact: true,
+				})
+			} catch (error) {
+				console.warn('Cache update failed:', error)
+				// Fallback to invalidating all game queries
+				queryClient.invalidateQueries({ queryKey: authKeys.all })
+			}
+		},
+		onError: (_error, friendlyId) => {
+			try {
+				// Only invalidate the specific game query on error
+				queryClient.invalidateQueries({
+					queryKey: authKeys.detail(friendlyId),
+					exact: true,
+				})
+			} catch (error) {
+				console.warn('Cache invalidation failed:', error)
+			}
 		},
 	})
 }

@@ -1,5 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query'
-import type { AuthTokens, Game, GameListResponse, User } from 'shared'
+import type { AuthTokens, Game, GameWithCreator, User } from 'shared'
 import {
 	ApiError,
 	AuthError,
@@ -30,10 +30,9 @@ class ApiClient {
 
 		try {
 			const contentType = response.headers.get('content-type')
-			if (contentType?.includes('application/json')) {
-				const data = await response.json()
-				return data.user || data.data || data
-			}
+			if (contentType?.includes('application/json'))
+				return await response.json()
+
 			return null as T
 		} catch (error) {
 			throw new ApiError(
@@ -205,12 +204,22 @@ class ApiClient {
 		window.location.href = `${API_BASE}/auth/twitch`
 	}
 
-	async getGames(): Promise<GameListResponse['games']> {
+	async getGames(): Promise<GameWithCreator[]> {
 		const headers = await this.getAuthHeaderWithRefresh()
 		const response = await this.fetchWithRetry(`${API_BASE}/games`, { headers })
 
-		const data = await this.handleResponse<GameListResponse>(response)
-		return data.games || []
+		const data = await this.handleResponse<GameWithCreator[]>(response)
+		return data || []
+	}
+
+	async getGameByFriendlyId(friendlyId: string): Promise<GameWithCreator> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/games/${friendlyId}`,
+			{ headers },
+		)
+
+		return this.handleResponse<GameWithCreator>(response)
 	}
 
 	async createGame(data: Pick<Game, 'title'>): Promise<Game> {
@@ -222,6 +231,19 @@ class ApiClient {
 		})
 
 		return this.handleResponse<Game>(response)
+	}
+
+	async startGame(friendlyId: string): Promise<GameWithCreator> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/games/${friendlyId}/start`,
+			{
+				method: 'PATCH',
+				headers,
+			},
+		)
+
+		return this.handleResponse<GameWithCreator>(response)
 	}
 }
 

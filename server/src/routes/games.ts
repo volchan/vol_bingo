@@ -16,8 +16,52 @@ app.get('/', async (c) => {
 		return c.json({ error: 'Failed to fetch games' }, 500)
 	}
 
-	return c.json({ games }, 200)
+	return c.json(games, 200)
 })
+
+const GameDetailSchema = z.object({
+	friendlyId: z.string(),
+})
+
+app.get('/:friendlyId', zValidator('param', GameDetailSchema), async (c) => {
+	const { friendlyId } = c.req.valid('param')
+	const game = await gamesRepository.getByFriendlyId(friendlyId)
+
+	if (!game) {
+		return c.json({ error: 'Game not found' }, 404)
+	}
+
+	return c.json(game, 200)
+})
+
+app.patch(
+	'/:friendlyId/start',
+	zValidator('param', GameDetailSchema),
+	async (c) => {
+		const { friendlyId } = c.req.valid('param')
+		const user = c.get('currentUser')
+		const game = await gamesRepository.getByFriendlyId(friendlyId, user.id)
+
+		if (!game) {
+			return c.json({ error: 'Game not found' }, 404)
+		}
+
+		if (game.status !== 'draft') {
+			return c.json({ error: 'Game cannot be started' }, 400)
+		}
+
+		const updatedGame = await gamesRepository.update({
+			...game,
+			status: 'active',
+		})
+
+		if (!updatedGame) {
+			return c.json({ error: 'Failed to start game' }, 500)
+		}
+
+		return c.json(updatedGame, 200)
+	},
+)
 
 const CreateGameSchema = z.object({
 	title: z.string().min(10),
@@ -35,7 +79,7 @@ app.post('/', zValidator('form', CreateGameSchema), async (c) => {
 		return c.json({ error: 'Failed to create game' }, 500)
 	}
 
-	return c.json({ game: newGame }, 201)
+	return c.json(newGame, 201)
 })
 
 export default app
