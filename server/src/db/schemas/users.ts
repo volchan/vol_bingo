@@ -12,5 +12,5 @@ export const users = pgTable('users', {
 	offlineImageUrl: varchar().notNull(),
 	viewCount: varchar().notNull(),
 	twitchId: varchar().notNull().unique(),
-	twitchCreatedAt: timestamp().notNull(),
+	twitchCreatedAt: timestamp({ withTimezone: true }).notNull(),
 })

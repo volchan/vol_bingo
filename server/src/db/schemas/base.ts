@@ -2,9 +2,8 @@ import { timestamp, uuid } from 'drizzle-orm/pg-core'
 
 export const baseFields = {
 	id: uuid().primaryKey().defaultRandom(),
-	createdAt: timestamp().defaultNow().notNull(),
-	updatedAt: timestamp(),
+	createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+	updatedAt: timestamp({ withTimezone: true }),
 }
 
-// For backward compatibility
 export default baseFields

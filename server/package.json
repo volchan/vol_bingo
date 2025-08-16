@@ -9,8 +9,8 @@
 	},
 	"dependencies": {
 		"@hono/zod-validator": "^0.7.2",
-		"hono": "^4.9.0",
 		"drizzle-orm": "^0.44.4",
+		"hono": "^4.9.0",
 		"pg": "^8.16.3",
 		"shared": "workspace:*"
 	},

@@ -1,5 +1,6 @@
 import db from '@server/config/database'
 import { games } from '@server/db/schemas'
+import type { GameWithCreator } from '@shared/types/api/games'
 import type { Game } from '@shared/types/models/game'
 
 export type CreateGameData = Omit<Game, 'id' | 'createdAt' | 'updatedAt'>

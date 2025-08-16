@@ -5,6 +5,7 @@ import JoinGameForm from '@/components/forms/join-game'
 import NewGameForm from '@/components/forms/new-game'
 import { DashboardSkeleton } from '@/components/loading'
 import { useListGames } from '@/hooks/api/games.hooks'
+import { formatLocal } from '@/lib/date-utils'
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
 	component: RouteComponent,
@@ -88,7 +89,7 @@ function DashboardContent() {
 									<h3 className="font-semibold">{game.title}</h3>
 									<p className="text-muted-foreground">
 										ID: {game.friendlyId} | Created at:{' '}
-										{new Date(game.createdAt).toLocaleString()} | Creator:{' '}
+										{formatLocal(game.createdAt)} | Creator:{' '}
 										{game.creator.displayName}
 									</p>
 								</li>

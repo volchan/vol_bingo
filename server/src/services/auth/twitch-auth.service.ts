@@ -98,7 +98,7 @@ export class TwitchAuthService {
 			}
 
 			const { authService } = await import('./auth.service')
-			// Twitch access tokens are valid for 4 hours (14400 seconds)
+
 			const twitchExpiresAt = new Date(
 				Date.now() + (tokenData.expires_in || 14400) * 1000,
 			)
@@ -138,9 +138,6 @@ export class TwitchAuthService {
 
 	async validateToken(token: string): Promise<TwitchUserData | null> {
 		try {
-			// For JWT token validation, we need to import verify function
-			// or use Hono's JWT middleware in the routes directly
-			// For now, let's decode the token manually to get the Twitch token
 			const parts = token.split('.')
 			if (parts.length !== 3) {
 				return null

@@ -1,7 +1,6 @@
 import env from '@server/config/env'
 import type { StateManager } from './auth.types'
 
-// In-memory state manager (use Redis in production)
 class InMemoryStateManager implements StateManager {
 	private readonly states = new Set<string>()
 	private readonly maxStates = 1000
@@ -66,7 +65,7 @@ export function buildSuccessRedirectUrl(
 	refreshToken: string,
 ): string {
 	const url = new URL(`${frontendUrl}/auth/callback`)
-	// Always include both tokens
+
 	url.searchParams.set('token', token)
 	url.searchParams.set('refresh_token', refreshToken)
 	return url.toString()

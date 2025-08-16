@@ -3,6 +3,14 @@ import { eq, lt } from 'drizzle-orm'
 import db from '../config/database'
 import { refreshTokens } from '../db/schemas'
 
+const addToNowUtc = (duration: { days?: number }): string => {
+	const now = new Date()
+	if (duration.days) {
+		now.setUTCDate(now.getUTCDate() + duration.days)
+	}
+	return now.toISOString()
+}
+
 export interface RefreshTokenData {
 	token: string
 	userId: string
@@ -17,25 +25,20 @@ export interface CreateRefreshTokenData {
 	twitchAccessToken: string
 	twitchRefreshToken: string
 	twitchExpiresAt: Date
-	expiresInDays?: number // Default to 1 day
+	expiresInDays?: number
 }
 
 class RefreshTokenRepository {
-	/**
-	 * Generate a secure random refresh token
-	 */
 	private generateToken(): string {
 		return randomBytes(32).toString('hex')
 	}
 
-	/**
-	 * Create a new refresh token for a user
-	 */
 	async create(data: CreateRefreshTokenData): Promise<RefreshTokenData> {
 		const token = this.generateToken()
-		const expiresAt = new Date()
-		// App refresh tokens are valid for 1 day
-		expiresAt.setDate(expiresAt.getDate() + (data.expiresInDays || 1))
+
+
+		const expiresAtIso = addToNowUtc({ days: data.expiresInDays || 1 })
+		const expiresAt = new Date(expiresAtIso)
 
 		const [created] = await db
 			.insert(refreshTokens)
@@ -56,9 +59,6 @@ class RefreshTokenRepository {
 		return created
 	}
 
-	/**
-	 * Find a refresh token by token value
-	 */
 	async findByToken(token: string): Promise<RefreshTokenData | null> {
 		const [result] = await db
 			.select()
@@ -69,23 +69,14 @@ class RefreshTokenRepository {
 		return result || null
 	}
 
-	/**
-	 * Delete a refresh token
-	 */
 	async delete(token: string): Promise<void> {
 		await db.delete(refreshTokens).where(eq(refreshTokens.token, token))
 	}
 
-	/**
-	 * Delete all refresh tokens for a user
-	 */
 	async deleteByUserId(userId: string): Promise<void> {
 		await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId))
 	}
 
-	/**
-	 * Update Twitch tokens for a refresh token
-	 */
 	async updateTwitchTokens(
 		token: string,
 		twitchAccessToken: string,
@@ -102,24 +93,15 @@ class RefreshTokenRepository {
 			.where(eq(refreshTokens.token, token))
 	}
 
-	/**
-	 * Clean up expired refresh tokens
-	 */
 	async cleanupExpired(): Promise<void> {
 		const now = new Date()
 		await db.delete(refreshTokens).where(lt(refreshTokens.expiresAt, now))
 	}
 
-	/**
-	 * Check if a refresh token is expired
-	 */
 	isExpired(tokenData: RefreshTokenData): boolean {
 		return new Date() >= tokenData.expiresAt
 	}
 
-	/**
-	 * Check if Twitch token is expired or expires soon
-	 */
 	isTwitchTokenExpired(
 		tokenData: RefreshTokenData,
 		bufferMinutes = 5,

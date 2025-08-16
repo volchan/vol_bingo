@@ -16,7 +16,7 @@ export const app = new Hono()
 
 app.use(
 	cors({
-		origin: ['http://localhost:5173'], // Vite dev server
+		origin: [env.FRONTEND_URL],
 		credentials: true,
 	}),
 )
@@ -30,10 +30,8 @@ app.onError(errorLoggerMiddleware)
 
 await checkDatabaseConnection()
 
-// Mount OAuth callback at root level (required by Twitch OAuth)
 app.route('/auth', authRoutes)
 
-// Mount API routes under /api
 app.route('/api', router)
 
 export default {

@@ -6,7 +6,6 @@ import { createTwitchAuthService } from '../services/auth/twitch-auth.service'
 const app = new Hono()
 const twitchAuth = createTwitchAuthService()
 
-// Initiate OAuth flow or handle callback
 app.get('/twitch', async (c) => {
 	const code = c.req.query('code')
 	const state = c.req.query('state')
@@ -14,7 +13,7 @@ app.get('/twitch', async (c) => {
 
 	if (error) {
 		console.error('OAuth error:', error)
-		return c.redirect('http://localhost:5173/?error=oauth_error')
+		return c.redirect('http://localhost:5173/auth/error')
 	}
 
 	if (!code || !state) {
@@ -22,7 +21,7 @@ app.get('/twitch', async (c) => {
 		if (result.success && result.redirectUrl) {
 			return c.redirect(result.redirectUrl)
 		}
-		return c.redirect('http://localhost:5173/?error=auth_init_failed')
+		return c.redirect('http://localhost:5173/auth/error')
 	}
 
 	const result = await twitchAuth.handleCallback(code, state)
@@ -39,7 +38,6 @@ app.get('/me', jwtAuthWithTwitchSync, async (c) => {
 	return c.json({ user })
 })
 
-// Refresh auth tokens
 app.post('/refresh', jwtAuth, async (c) => {
 	try {
 		const refreshToken = c.get('refreshToken')
@@ -59,7 +57,6 @@ app.post('/refresh', jwtAuth, async (c) => {
 	}
 })
 
-// Logout and revoke tokens
 app.post('/logout', jwtAuth, async (c) => {
 	try {
 		const refreshToken = c.get('refreshToken')

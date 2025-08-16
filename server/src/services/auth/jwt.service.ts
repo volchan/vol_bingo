@@ -18,7 +18,7 @@ export async function generateJwtToken(
 		twitchToken,
 		refreshToken,
 		iat: now,
-		exp: now + 10 * 60, // 10 minutes
+		exp: now + 10 * 60,
 	}
 
 	return await sign(payload, env.JWT_SECRET)
