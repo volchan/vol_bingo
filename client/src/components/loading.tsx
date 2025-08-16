@@ -100,3 +100,12 @@ export function DashboardSkeleton() {
 		</div>
 	)
 }
+
+export function DashboardFormSkeleton() {
+	return (
+		<div className="flex-1 flex flex-col gap-5 p-5 border rounded-lg bg-card">
+			<Skeleton className="h-9 w-full" />
+			<Skeleton className="h-9 w-full" />
+		</div>
+	)
+}

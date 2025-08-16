@@ -35,7 +35,7 @@ app.get('/twitch', async (c) => {
 })
 
 app.get('/me', jwtAuthWithTwitchSync, async (c) => {
-	const user = c.get('user')
+	const user = c.get('currentUser')
 	return c.json({ user })
 })
 

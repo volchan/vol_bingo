@@ -10,21 +10,23 @@ export const jwtAuth = createMiddleware(async (c, next) => {
 	})
 
 	try {
-		await jwtMiddleware(c, next)
+		await jwtMiddleware(c, async () => {
+			const payload = c.get('jwtPayload')
 
-		const payload = c.get('jwtPayload')
+			if (!payload?.userId || !payload?.refreshToken) {
+				throw new Error('Invalid token payload')
+			}
 
-		if (!payload?.userId || !payload?.refreshToken) {
-			return c.json({ error: 'Invalid token payload' }, 401)
-		}
+			const user = await userRepository.findById(payload.userId)
+			if (!user) {
+				throw new Error('User not found')
+			}
 
-		const user = await userRepository.findById(payload.userId)
-		if (!user) {
-			return c.json({ error: 'User not found' }, 401)
-		}
+			c.set('currentUser', user)
+			c.set('refreshToken', payload.refreshToken)
 
-		c.set('user', user)
-		c.set('refreshToken', payload.refreshToken)
+			await next()
+		})
 	} catch (error) {
 		console.error('JWT authentication failed:', error)
 		return c.json({ error: 'Invalid or expired token' }, 401)
@@ -48,7 +50,7 @@ export const jwtAuthWithTwitchSync = createMiddleware(async (c, next) => {
 			return c.json({ error: 'User not found' }, 401)
 		}
 
-		c.set('user', user)
+		c.set('currentUser', user)
 		c.set('refreshToken', payload.refreshToken as string)
 
 		const twitchTokens = await authService.getTwitchTokens(

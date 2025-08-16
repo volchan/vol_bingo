@@ -41,7 +41,8 @@ function RouteComponent() {
 					sessionStorage.removeItem('auth_redirect')
 
 					navigate({ to: redirectUrl })
-				} catch (_err) {
+				} catch (err) {
+					console.error('Failed to process authentication:', err)
 					navigate({
 						to: '/',
 						search: { error: 'invalid_tokens' },

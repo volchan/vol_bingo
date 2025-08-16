@@ -1,3 +1,5 @@
+export * from './api/games'
+export * from './models/game'
 export * from './models/user'
 
 export interface ApiResponse {

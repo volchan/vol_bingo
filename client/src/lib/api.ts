@@ -1,5 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query'
-import type { AuthTokens, User } from 'shared'
+import type { AuthTokens, Game, GameListResponse, User } from 'shared'
 import {
 	ApiError,
 	AuthError,
@@ -62,7 +62,11 @@ class ApiClient {
 			const response = await fetch(url, {
 				...options,
 				headers: {
-					'Content-Type': 'application/json',
+					'Content-Type': ['POST', 'PATCH', 'PUT'].includes(
+						options.method || 'GET',
+					)
+						? 'application/x-www-form-urlencoded'
+						: 'application/json',
 					...options.headers,
 				},
 			})
@@ -101,13 +105,11 @@ class ApiClient {
 
 			return {
 				Authorization: `Bearer ${newTokens.access_token}`,
-				'Accept-Encoding': 'gzip',
 			}
 		}
 
 		return {
 			Authorization: `Bearer ${tokens.access_token}`,
-			'Accept-Encoding': 'gzip',
 		}
 	}
 
@@ -121,7 +123,6 @@ class ApiClient {
 
 		return {
 			Authorization: `Bearer ${tokens.access_token}`,
-			'Accept-Encoding': 'gzip',
 		}
 	}
 
@@ -202,6 +203,25 @@ class ApiClient {
 
 	initiateLogin() {
 		window.location.href = `${API_BASE}/auth/twitch`
+	}
+
+	async getGames(): Promise<GameListResponse['games']> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(`${API_BASE}/games`, { headers })
+
+		const data = await this.handleResponse<GameListResponse>(response)
+		return data.games || []
+	}
+
+	async createGame(data: Pick<Game, 'title'>): Promise<Game> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(`${API_BASE}/games`, {
+			method: 'POST',
+			headers,
+			body: new URLSearchParams(data),
+		})
+
+		return this.handleResponse<Game>(response)
 	}
 }
 

@@ -8,6 +8,7 @@ export const games = pgTable(
 		...baseFields,
 		title: varchar().notNull(),
 		creatorId: uuid().notNull(),
+		friendlyId: varchar().notNull().unique(),
 	},
 	(table) => [
 		foreignKey({
