@@ -1,4 +1,5 @@
 export * from './api/games'
+export * from './models/cell'
 export * from './models/game'
 export * from './models/user'
 

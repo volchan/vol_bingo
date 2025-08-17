@@ -10,8 +10,6 @@ export const zValidator = <
 	schema: T,
 ) =>
 	zv(target, schema, (result, c) => {
-		console.log(`Validation result for ${target}:`, result)
-
 		if (!result.success) {
 			return c.json(
 				{ error: 'Validation failed', issues: result.error.issues },

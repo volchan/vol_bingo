@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCellsRouteImport } from './routes/_authenticated/cells'
 import { Route as AuthenticatedGamesIdRouteImport } from './routes/_authenticated/games/$id'
 
 const AboutRoute = AboutRouteImport.update({
@@ -40,6 +41,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCellsRoute = AuthenticatedCellsRouteImport.update({
+  id: '/cells',
+  path: '/cells',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedGamesIdRoute = AuthenticatedGamesIdRouteImport.update({
   id: '/games/$id',
   path: '/games/$id',
@@ -49,6 +55,7 @@ const AuthenticatedGamesIdRoute = AuthenticatedGamesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/cells': typeof AuthenticatedCellsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/games/$id': typeof AuthenticatedGamesIdRoute
@@ -56,6 +63,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/cells': typeof AuthenticatedCellsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/games/$id': typeof AuthenticatedGamesIdRoute
@@ -65,20 +73,28 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
+  '/_authenticated/cells': typeof AuthenticatedCellsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/games/$id': typeof AuthenticatedGamesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/dashboard' | '/auth/callback' | '/games/$id'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/cells'
+    | '/dashboard'
+    | '/auth/callback'
+    | '/games/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/dashboard' | '/auth/callback' | '/games/$id'
+  to: '/' | '/about' | '/cells' | '/dashboard' | '/auth/callback' | '/games/$id'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/about'
+    | '/_authenticated/cells'
     | '/_authenticated/dashboard'
     | '/auth/callback'
     | '/_authenticated/games/$id'
@@ -128,6 +144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/cells': {
+      id: '/_authenticated/cells'
+      path: '/cells'
+      fullPath: '/cells'
+      preLoaderRoute: typeof AuthenticatedCellsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/games/$id': {
       id: '/_authenticated/games/$id'
       path: '/games/$id'
@@ -139,11 +162,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedCellsRoute: typeof AuthenticatedCellsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGamesIdRoute: typeof AuthenticatedGamesIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedCellsRoute: AuthenticatedCellsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGamesIdRoute: AuthenticatedGamesIdRoute,
 }

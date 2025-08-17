@@ -174,7 +174,7 @@ function BingoCell({
 			onClick={onClick}
 			disabled={disabled}
 			className={cn(
-				'h-full w-full p-2 text-center break-words hyphens-auto transition-all duration-200',
+				'h-full w-full p-2 text-center hyphens-auto transition-all duration-200',
 				!disabled && 'hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg',
 				disabled && 'opacity-50 cursor-not-allowed',
 				cell.isMarked &&
@@ -186,7 +186,7 @@ function BingoCell({
 				className,
 			)}
 		>
-			<span className="leading-tight">{cell.text}</span>
+			<span className="leading-tight text-wrap">{cell.text}</span>
 		</Button>
 	)
 }

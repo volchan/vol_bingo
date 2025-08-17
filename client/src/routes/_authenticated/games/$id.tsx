@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Copy, Crown, Loader2, Play } from 'lucide-react'
 import { useState } from 'react'
 import { BingoGrid } from '@/components/bingo-grid'
+import { CellManager } from '@/components/cell-manager'
 import { Button } from '@/components/ui/button'
 import {
 	Tooltip,
@@ -22,35 +23,6 @@ function RouteComponent() {
 	const { user } = useAuth()
 	const startGameMutation = useStartGame()
 	const [isCopied, setIsCopied] = useState(false)
-
-	// Mock bingo data - this should come from the game data eventually
-	const bingoItems = [
-		'Get a kill',
-		'Find a rare item',
-		'Complete a quest',
-		'Level up',
-		'Die to fall damage',
-		'Get lost',
-		'Find a secret area',
-		'Craft something',
-		'Tame an animal',
-		'Build a house',
-		'Mine diamonds',
-		'Fight a boss',
-		'Trade with villager',
-		'Get achievement',
-		'Use a portal',
-		'Find treasure',
-		'Make a friend',
-		'Get scared',
-		'Break your tool',
-		'Get poisoned',
-		'Ride a horse',
-		'Catch a fish',
-		'Plant crops',
-		'Explore cave',
-		'Find hidden chest',
-	]
 
 	if (isLoading) {
 		return (
@@ -99,6 +71,12 @@ function RouteComponent() {
 			</div>
 		)
 	}
+
+	// Get bingo items from linked game cells
+	const bingoItems =
+		game.gameCells?.map((gc) => gc.cell?.value || '').slice(0, 25) || []
+	const linkedCellsCount = game.gameCells?.length || 0
+	const canStartGame = linkedCellsCount === 25
 
 	const getStatusColor = (status: string) => {
 		switch (status) {
@@ -176,7 +154,7 @@ function RouteComponent() {
 								variant="default"
 								size="sm"
 								onClick={handleStartGame}
-								disabled={startGameMutation.isPending}
+								disabled={startGameMutation.isPending || !canStartGame}
 								className="flex items-center gap-2"
 							>
 								{startGameMutation.isPending ? (
@@ -243,10 +221,37 @@ function RouteComponent() {
 							invite your friends to join the bingo game.
 						</p>
 					</div>
+
+					{/* Cell Count for Creator */}
+					{isGameCreator && game.status === 'draft' && (
+						<div className="text-center">
+							<span className="text-sm text-muted-foreground">
+								{linkedCellsCount}/25 cells linked
+								{!canStartGame && (
+									<span className="block text-xs text-orange-600 dark:text-orange-400 mt-1">
+										Add {25 - linkedCellsCount} more cells to start the game
+									</span>
+								)}
+							</span>
+						</div>
+					)}
 				</div>
 			</div>
 
-			<BingoGrid items={bingoItems} disabled={game.status !== 'active'} />
+			{/* Game Grid and Cell Management */}
+			<div className="flex gap-6">
+				{/* Cell Manager - Only show for creator in draft mode */}
+				{user?.id === game.creator?.id && game.status === 'draft' && (
+					<div className="w-80 flex-shrink-0">
+						<CellManager gameId={game.id} gameCells={game.gameCells || []} />
+					</div>
+				)}
+
+				{/* Bingo Grid */}
+				<div className="flex-1">
+					<BingoGrid items={bingoItems} disabled={game.status !== 'active'} />
+				</div>
+			</div>
 		</div>
 	)
 }

@@ -1,0 +1,12 @@
+version: "3"
+
+tasks:
+  db:generate:
+    desc: Generate database schema files
+    cmds:
+      - bunx drizzle-kit generate
+
+  db:migrate:
+    desc: Run database migrations
+    cmds:
+      - bunx drizzle-kit migrate

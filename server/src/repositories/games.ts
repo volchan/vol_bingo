@@ -1,6 +1,5 @@
 import db from '@server/config/database'
-import { games } from '@server/db/schemas'
-import type { GameWithCreator } from '@shared/types/api/games'
+import { games } from '@server/schemas'
 import type { Game } from '@shared/types/models/game'
 import { eq } from 'drizzle-orm'
 
@@ -70,6 +69,11 @@ export default {
 			with: {
 				creator: {
 					columns: { displayName: true, id: true },
+				},
+				gameCells: {
+					with: {
+						cell: true,
+					},
 				},
 			},
 		})

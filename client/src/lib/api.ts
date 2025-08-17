@@ -1,5 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query'
-import type { AuthTokens, Game, GameWithCreator, User } from 'shared'
+import type { AuthTokens, Cell, Game, GameWithCreator, User } from 'shared'
 import {
 	ApiError,
 	AuthError,
@@ -244,6 +244,84 @@ class ApiClient {
 		)
 
 		return this.handleResponse<GameWithCreator>(response)
+	}
+
+	async getCells(): Promise<Cell[]> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(`${API_BASE}/cells`, { headers })
+
+		const data = await this.handleResponse<Cell[]>(response)
+		return data || []
+	}
+
+	async searchCells(query: string): Promise<Cell[]> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/cells/search?q=${encodeURIComponent(query)}`,
+			{ headers },
+		)
+
+		const data = await this.handleResponse<Cell[]>(response)
+		return data || []
+	}
+
+	async createCell(data: { value: string }): Promise<Cell> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(`${API_BASE}/cells`, {
+			method: 'POST',
+			headers,
+			body: new URLSearchParams(data),
+		})
+
+		return this.handleResponse<Cell>(response)
+	}
+
+	async linkCellToGame(cellId: string, gameId: string): Promise<void> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/cells/${cellId}/link_to_game`,
+			{
+				method: 'POST',
+				headers,
+				body: new URLSearchParams({ gameId }),
+			},
+		)
+
+		return this.handleResponse<void>(response)
+	}
+
+	async unlinkCell(gameCellId: string): Promise<void> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/game_cells/${gameCellId}`,
+			{
+				method: 'DELETE',
+				headers,
+			},
+		)
+
+		return this.handleResponse<void>(response)
+	}
+
+	async deleteCell(cellId: string): Promise<void> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(`${API_BASE}/cells/${cellId}`, {
+			method: 'DELETE',
+			headers,
+		})
+
+		return this.handleResponse<void>(response)
+	}
+
+	async updateCell(id: string, value: string): Promise<Cell> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(`${API_BASE}/cells/${id}`, {
+			method: 'PATCH',
+			headers,
+			body: new URLSearchParams({ value: value }),
+		})
+
+		return this.handleResponse<Cell>(response)
 	}
 }
 

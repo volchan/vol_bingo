@@ -1,5 +1,5 @@
 import db from '@server/config/database'
-import { users } from '@server/db/schemas'
+import { users } from '@server/schemas'
 import type { User } from '@shared/types/models/user'
 import { eq } from 'drizzle-orm'
 

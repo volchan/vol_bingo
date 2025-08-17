@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { eq, lt } from 'drizzle-orm'
 import db from '../config/database'
-import { refreshTokens } from '../db/schemas'
+import { refreshTokens } from '../schemas'
 
 const addToNowUtc = (duration: { days?: number }): string => {
 	const now = new Date()
@@ -35,7 +35,6 @@ class RefreshTokenRepository {
 
 	async create(data: CreateRefreshTokenData): Promise<RefreshTokenData> {
 		const token = this.generateToken()
-
 
 		const expiresAtIso = addToNowUtc({ days: data.expiresInDays || 1 })
 		const expiresAt = new Date(expiresAtIso)

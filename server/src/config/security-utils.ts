@@ -1,4 +1,3 @@
-
 export const isProduction = () => {
 	return Bun.env.NODE_ENV === 'production' || Bun.env.APP_ENV === 'production'
 }
@@ -42,9 +41,7 @@ const getRedactionType = (value: string): string => {
 }
 
 const isSensitiveValue = (value: string): boolean => {
-
 	const patterns = [
-
 		/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/,
 
 		/[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}/,
@@ -64,7 +61,6 @@ export const redactSensitiveParams = (params: unknown[]): unknown[] => {
 		if (param === null || param === undefined) {
 			return param
 		}
-
 
 		if (typeof param === 'string') {
 			if (isSensitiveValue(param)) {
@@ -114,7 +110,6 @@ export const redactSensitiveSQL = (
 
 	let redactedSql = sql
 
-
 	redactedSql = redactedSql.replace(
 		/[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}/g,
 		'[EMAIL]',
@@ -124,7 +119,6 @@ export const redactSensitiveSQL = (
 		/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g,
 		'[JWT_TOKEN]',
 	)
-
 
 	if (isSensitiveSQL(sql)) {
 		return {

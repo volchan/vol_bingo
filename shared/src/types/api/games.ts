@@ -1,3 +1,4 @@
+import type { GameCell } from '../models/cell'
 import type { Game } from '../models/game'
 
 export interface GameWithCreator extends Omit<Game, 'createdAt' | 'updatedAt'> {
@@ -8,6 +9,7 @@ export interface GameWithCreator extends Omit<Game, 'createdAt' | 'updatedAt'> {
 		displayName: string
 		id: string
 	}
+	gameCells?: GameCell[]
 }
 
 export interface GameListResponse {
