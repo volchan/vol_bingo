@@ -13,8 +13,11 @@ export const games = pgTable(
 	{
 		...baseFields,
 		title: varchar().notNull(),
-		creatorId: uuid().notNull(),
+		creatorId: uuid()
+			.references(() => users.id)
+			.notNull(),
 		friendlyId: varchar().notNull().unique(),
+		winnerId: uuid().references(() => users.id),
 		status: statusEnum().default('draft').notNull(),
 	},
 	(table) => [

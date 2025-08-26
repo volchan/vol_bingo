@@ -1,5 +1,11 @@
 import { sql } from 'drizzle-orm'
-import { pgTable, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
+import {
+	foreignKey,
+	pgTable,
+	uniqueIndex,
+	uuid,
+	varchar,
+} from 'drizzle-orm/pg-core'
 import baseFields from './base'
 import { users } from './users'
 
@@ -19,5 +25,10 @@ export const cells = pgTable(
 			table.userId,
 			sql`lower(${table.value})`,
 		),
+		foreignKey({
+			name: 'cells_userId_fkey',
+			columns: [table.userId],
+			foreignColumns: [users.id],
+		}).onDelete('cascade'),
 	],
 )

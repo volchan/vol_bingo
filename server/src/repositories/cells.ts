@@ -3,7 +3,7 @@ import { cells } from '@server/schemas'
 import { eq } from 'drizzle-orm'
 import type { Cell } from 'shared/dist'
 
-export default {
+const cellsRepository = {
 	async getAll(userId: string) {
 		const cells = await db.query.cells.findMany({
 			where: (table, { eq }) => eq(table.userId, userId),
@@ -66,3 +66,5 @@ export default {
 		await db.delete(cells).where(eq(cells.id, id))
 	},
 }
+
+export default cellsRepository

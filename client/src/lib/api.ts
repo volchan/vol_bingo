@@ -1,5 +1,12 @@
 import type { QueryClient } from '@tanstack/react-query'
-import type { AuthTokens, Cell, Game, GameWithCreator, User } from 'shared'
+import type {
+	AuthTokens,
+	Cell,
+	Game,
+	GameWithCreator,
+	PlayedGame,
+	User,
+} from 'shared'
 import {
 	ApiError,
 	AuthError,
@@ -323,6 +330,18 @@ class ApiClient {
 
 		return this.handleResponse<Cell>(response)
 	}
-}
 
+	async getPlayedGames(): Promise<PlayedGame[]> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/users/games/played`,
+			{
+				headers,
+			},
+		)
+
+		const data = await this.handleResponse<PlayedGame[]>(response)
+		return data || []
+	}
+}
 export const apiClient = new ApiClient()

@@ -161,7 +161,7 @@ function CellsPage() {
 
 	return (
 		<ErrorBoundary>
-			<div className="container mx-auto p-4">
+			<div className="p-4 w-full">
 				<h1 className="text-2xl font-bold mb-4">Cells</h1>
 				{errorMsg && (
 					<div className="mb-2 text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2">

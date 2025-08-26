@@ -10,3 +10,8 @@ tasks:
     desc: Run database migrations
     cmds:
       - bunx drizzle-kit migrate
+
+  db:seed:
+    desc: Run database seed
+    cmds:
+      - bunx drizzle-seed

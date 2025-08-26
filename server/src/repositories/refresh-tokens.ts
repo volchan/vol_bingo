@@ -28,13 +28,13 @@ export interface CreateRefreshTokenData {
 	expiresInDays?: number
 }
 
-class RefreshTokenRepository {
-	private generateToken(): string {
-		return randomBytes(32).toString('hex')
-	}
+const generateToken = (): string => {
+	return randomBytes(32).toString('hex')
+}
 
+const refreshTokenRepository = {
 	async create(data: CreateRefreshTokenData): Promise<RefreshTokenData> {
-		const token = this.generateToken()
+		const token = generateToken()
 
 		const expiresAtIso = addToNowUtc({ days: data.expiresInDays || 1 })
 		const expiresAt = new Date(expiresAtIso)
@@ -56,7 +56,7 @@ class RefreshTokenRepository {
 		}
 
 		return created
-	}
+	},
 
 	async findByToken(token: string): Promise<RefreshTokenData | null> {
 		const [result] = await db
@@ -66,15 +66,15 @@ class RefreshTokenRepository {
 			.limit(1)
 
 		return result || null
-	}
+	},
 
 	async delete(token: string): Promise<void> {
 		await db.delete(refreshTokens).where(eq(refreshTokens.token, token))
-	}
+	},
 
 	async deleteByUserId(userId: string): Promise<void> {
 		await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId))
-	}
+	},
 
 	async updateTwitchTokens(
 		token: string,
@@ -90,16 +90,16 @@ class RefreshTokenRepository {
 				twitchExpiresAt,
 			})
 			.where(eq(refreshTokens.token, token))
-	}
+	},
 
 	async cleanupExpired(): Promise<void> {
 		const now = new Date()
 		await db.delete(refreshTokens).where(lt(refreshTokens.expiresAt, now))
-	}
+	},
 
 	isExpired(tokenData: RefreshTokenData): boolean {
 		return new Date() >= tokenData.expiresAt
-	}
+	},
 
 	isTwitchTokenExpired(
 		tokenData: RefreshTokenData,
@@ -108,7 +108,7 @@ class RefreshTokenRepository {
 		const now = new Date()
 		const buffer = bufferMinutes * 60 * 1000
 		return now.getTime() + buffer >= tokenData.twitchExpiresAt.getTime()
-	}
+	},
 }
 
-export const refreshTokenRepository = new RefreshTokenRepository()
+export default refreshTokenRepository

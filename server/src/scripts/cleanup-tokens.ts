@@ -1,4 +1,4 @@
-import { refreshTokenRepository } from '../repositories/refresh-tokens'
+import refreshTokenRepository from '../repositories/refresh-tokens'
 
 export async function cleanupExpiredTokens(): Promise<void> {
 	try {

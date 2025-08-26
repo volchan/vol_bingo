@@ -2,6 +2,7 @@ import db from '@server/config/database'
 import { games } from '@server/schemas'
 import type { Game } from '@shared/types/models/game'
 import { eq } from 'drizzle-orm'
+import type { DbTransaction } from './utils'
 
 export type CreateGameData = Omit<Game, 'id' | 'createdAt' | 'updatedAt'>
 
@@ -37,7 +38,7 @@ const beforeInsert = async (data: CreateGameData): Promise<CreateGameData> => {
 	return data
 }
 
-export default {
+const gamesRepository = {
 	async getAll(userId: string): Promise<Game[]> {
 		const games = await db.query.games.findMany({
 			where: (table, { eq }) => eq(table.creatorId, userId),
@@ -83,9 +84,13 @@ export default {
 		return game
 	},
 
-	async create(data: CreateGameData): Promise<Game> {
+	async create(data: CreateGameData, tx?: DbTransaction): Promise<Game> {
 		const processedData = await beforeInsert(data)
-		const [game] = await db.insert(games).values(processedData).returning()
+		const executor = tx || db
+		const [game] = await executor
+			.insert(games)
+			.values(processedData)
+			.returning()
 		if (!game) throw new Error('Failed to create game')
 
 		return game
@@ -115,3 +120,5 @@ export default {
 		return gameWithCreator
 	},
 }
+
+export default gamesRepository

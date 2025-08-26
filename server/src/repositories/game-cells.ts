@@ -3,7 +3,7 @@ import { cells } from '@server/schemas'
 import { gameCells } from '@server/schemas/game-cells'
 import { and, eq } from 'drizzle-orm'
 
-export default {
+const gameCellsRepository = {
 	async getById(id: string, userId: string) {
 		return await db
 			.select()
@@ -39,3 +39,5 @@ export default {
 		await db.delete(gameCells).where(eq(gameCells.id, id))
 	},
 }
+
+export default gameCellsRepository

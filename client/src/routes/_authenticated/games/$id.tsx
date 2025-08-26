@@ -105,10 +105,8 @@ function RouteComponent() {
 		try {
 			await navigator.clipboard.writeText(gameUrl)
 			setIsCopied(true)
-			setTimeout(() => setIsCopied(false), 2000) // Hide tooltip after 2 seconds
+			setTimeout(() => setIsCopied(false), 2000)
 		} catch {
-			// For browsers that don't support clipboard API, we could show an error
-			// or provide alternative instructions
 			console.warn('Clipboard API not supported')
 			setIsCopied(true)
 			setTimeout(() => setIsCopied(false), 2000)
@@ -134,20 +132,16 @@ function RouteComponent() {
 				</p>
 			</div>
 
-			{/* Game Status Box */}
 			<div className="border rounded-lg p-6 bg-card">
 				<div className="flex justify-between items-start mb-4">
-					{/* Game Status */}
 					<div className="flex items-center gap-2">
 						<div
 							className={`w-2 h-2 rounded-full ${getStatusColor(game.status)}`}
-						></div>
+						/>
 						<span className="font-medium">{getStatusText(game.status)}</span>
 					</div>
 
-					{/* Action Buttons - Top Right of Status Box */}
 					<div className="flex items-center gap-2">
-						{/* Start Game Button - Only show for creator when game is draft */}
 						{isGameCreator && game.status === 'draft' && (
 							<Button
 								type="button"
@@ -171,7 +165,6 @@ function RouteComponent() {
 							</Button>
 						)}
 
-						{/* Copy Button */}
 						<TooltipProvider>
 							<Tooltip open={isCopied}>
 								<TooltipTrigger asChild>
@@ -195,7 +188,6 @@ function RouteComponent() {
 				</div>
 
 				<div className="space-y-4">
-					{/* Players List */}
 					<div>
 						<h3 className="font-semibold mb-2">Players ({1})</h3>
 						<div className="space-y-2">
@@ -213,16 +205,18 @@ function RouteComponent() {
 						</div>
 					</div>
 
-					{/* Invitation Message */}
-					<div className="bg-muted/50 rounded-md p-3">
-						<p className="text-sm text-muted-foreground">
-							🎮 Waiting for the game to start! Share the game code{' '}
-							<strong>{game.friendlyId}</strong> or use the copy button above to
-							invite your friends to join the bingo game.
+					<div className="bg-muted/50 rounded-md p-3 flex items-center gap-3">
+						<Loader2 className="animate-spin" />
+						<p className="text-sm text-muted-foreground flex flex-col">
+							<span>Waiting for the game to start!</span>
+							<span>
+								Share the game code <strong>{game.friendlyId}</strong> or use
+								the copy button above to invite your friends to join the bingo
+								game.
+							</span>
 						</p>
 					</div>
 
-					{/* Cell Count for Creator */}
 					{isGameCreator && game.status === 'draft' && (
 						<div className="text-center">
 							<span className="text-sm text-muted-foreground">
@@ -238,16 +232,13 @@ function RouteComponent() {
 				</div>
 			</div>
 
-			{/* Game Grid and Cell Management */}
 			<div className="flex gap-6">
-				{/* Cell Manager - Only show for creator in draft mode */}
 				{user?.id === game.creator?.id && game.status === 'draft' && (
 					<div className="w-80 flex-shrink-0">
 						<CellManager gameId={game.id} gameCells={game.gameCells || []} />
 					</div>
 				)}
 
-				{/* Bingo Grid */}
 				<div className="flex-1">
 					<BingoGrid items={bingoItems} disabled={game.status !== 'active'} />
 				</div>

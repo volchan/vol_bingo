@@ -1,8 +1,7 @@
 import { sign } from 'hono/jwt'
 import env from '../../config/env'
-import {
+import refreshTokenRepository, {
 	type CreateRefreshTokenData,
-	refreshTokenRepository,
 } from '../../repositories/refresh-tokens'
 import { createTwitchAuthService } from './twitch-auth.service'
 

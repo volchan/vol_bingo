@@ -19,3 +19,24 @@ export interface GameListResponse {
 export interface GameCreateResponse {
 	game: Game
 }
+
+export interface PlayedGame {
+	id: string
+	title: string
+	friendlyId: string
+	status: 'draft' | 'active' | 'completed'
+	createdAt: string
+	updatedAt: string | null
+	creator: {
+		displayName: string
+		id: string
+	}
+	winner?: {
+		displayName: string
+		id: string
+	} | null
+	players: {
+		displayName: string
+		id: string
+	}[]
+}

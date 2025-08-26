@@ -3,16 +3,16 @@ import { apiClient } from '@/lib/api'
 
 export const authKeys = {
 	all: ['games'] as const,
-	list: () => [...authKeys.all, 'games'] as const,
+	played: () => [...authKeys.all, 'played'] as const,
 	detail: (friendlyId: string) =>
 		[...authKeys.all, 'game', friendlyId] as const,
 	create: () => [...authKeys.all, 'game'] as const,
 }
 
-export function useListGames() {
+export function usePlayedGames() {
 	return useQuery({
-		queryKey: authKeys.list(),
-		queryFn: () => apiClient.getGames(),
+		queryKey: authKeys.played(),
+		queryFn: () => apiClient.getPlayedGames(),
 		staleTime: 5 * 60 * 1000,
 		gcTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: true,
@@ -70,7 +70,7 @@ export function useStartGame() {
 				)
 				// Invalidate the games list to refresh it
 				queryClient.invalidateQueries({
-					queryKey: authKeys.list(),
+					queryKey: authKeys.played(),
 					exact: true,
 				})
 			} catch (error) {

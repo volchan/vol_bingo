@@ -1,8 +1,11 @@
+import db from '@server/config/database'
 import { jwtAuth } from '@server/middlewares/jwt-auth'
 import gameCellRepository from '@server/repositories/game-cells'
 import gamesRepository, {
 	type CreateGameData,
 } from '@server/repositories/games'
+import playerBoardsRepository from '@server/repositories/player-boards'
+import type { Game } from '@shared/types'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from './utils'
@@ -107,7 +110,14 @@ app.post('/', zValidator('form', CreateGameSchema), async (c) => {
 
 	data.creatorId = user.id
 
-	const newGame = await gamesRepository.create(data)
+	let newGame: Game | null = null
+	await db.transaction(async (tx) => {
+		newGame = await gamesRepository.create(data, tx)
+		await playerBoardsRepository.create(
+			{ playerId: user.id, gameId: newGame.id },
+			tx,
+		)
+	})
 
 	if (!newGame) {
 		return c.json({ error: 'Failed to create game' }, 500)

@@ -1,9 +1,10 @@
 import db from '@server/config/database'
-import { users } from '@server/schemas'
+import { games, playerBoards, users } from '@server/schemas'
 import type { User } from '@shared/types/models/user'
 import { eq } from 'drizzle-orm'
+import type { Game, GameWithCreator } from 'shared/dist'
 
-export default {
+const usersRepository = {
 	async create(
 		data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>,
 	): Promise<User> {
@@ -51,4 +52,69 @@ export default {
 	async delete(id: string) {
 		return await db.delete(users).where(eq(users.id, id))
 	},
+
+	async getPlayedGames(userId: string) {
+		const boards = await db.query.playerBoards.findMany({
+			where: eq(playerBoards.playerId, userId),
+			columns: {
+				id: true,
+			},
+			with: {
+				game: {
+					columns: {
+						id: true,
+						friendlyId: true,
+						status: true,
+						title: true,
+						createdAt: true,
+						updatedAt: true,
+					},
+					with: {
+						creator: {
+							columns: {
+								displayName: true,
+								id: true,
+							},
+						},
+						winner: {
+							columns: {
+								displayName: true,
+								id: true,
+							},
+						},
+						playerBoards: {
+							columns: {
+								id: true,
+							},
+							with: {
+								player: {
+									columns: {
+										displayName: true,
+										id: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+
+		return boards.map((board) => {
+			const game = board.game
+			return {
+				id: game.id,
+				title: game.title,
+				friendlyId: game.friendlyId,
+				status: game.status,
+				creator: game.creator,
+				winner: game.winner,
+				players: game.playerBoards.map((board) => board.player),
+				createdAt: game.createdAt,
+				updatedAt: game.updatedAt,
+			}
+		})
+	},
 }
+
+export default usersRepository
