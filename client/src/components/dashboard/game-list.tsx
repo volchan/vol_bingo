@@ -1,8 +1,7 @@
-import { GameIcon } from '@hugeicons/core-free-icons'
 import { Link } from '@tanstack/react-router'
 import { Calendar1, Clock, Gamepad2 } from 'lucide-react'
 import type { PlayedGame, User } from 'shared'
-import { formatLocal, formatLocalDate, formatLocalTime } from '@/lib/date-utils'
+import { formatLocal, formatLocalTime } from '@/lib/date-utils'
 import { Badge } from '../ui/badge'
 
 interface GameListProps {

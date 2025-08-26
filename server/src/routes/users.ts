@@ -1,6 +1,5 @@
 import { jwtAuth } from '@server/middlewares'
 import usersRepository from '@server/repositories/users'
-import type { PlayedGame } from '@shared/types'
 import { Hono } from 'hono'
 
 const app = new Hono()

@@ -4,3 +4,20 @@ includes:
   server:
     dir: ./server
     taskfile: ./server/Taskfile.yml
+
+tasks:
+  lint:
+    desc: Lint the codebase
+    cmd: bunx biome lint
+
+  lint:fix:
+    desc: Fix linting errors
+    cmd: bunx biome lint --write
+
+  format:
+    desc: Format the codebase
+    cmd: bunx biome format
+
+  format:fix:
+    desc: Fix formatting errors
+    cmd: bunx biome format --write

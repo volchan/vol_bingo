@@ -49,8 +49,12 @@ function CellsPage() {
 		updateCellMutation(
 			{ id, value: editingValue },
 			{
-				onError: (error: any) => {
-					setErrorMsg(error?.message || 'Failed to update cell.')
+				onError: (error: unknown) => {
+					const message =
+						typeof error === 'object' && error !== null && 'message' in error
+							? (error as { message?: string }).message
+							: undefined
+					setErrorMsg(message || 'Failed to update cell.')
 					if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
 					errorTimeoutRef.current = setTimeout(() => setErrorMsg(null), 4000)
 				},

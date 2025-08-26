@@ -1,8 +1,7 @@
 import db from '@server/config/database'
-import { games, playerBoards, users } from '@server/schemas'
+import { playerBoards, users } from '@server/schemas'
 import type { User } from '@shared/types/models/user'
 import { eq } from 'drizzle-orm'
-import type { Game, GameWithCreator } from 'shared/dist'
 
 const usersRepository = {
 	async create(
