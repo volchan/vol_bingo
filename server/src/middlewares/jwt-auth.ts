@@ -66,3 +66,30 @@ export const jwtAuthWithTwitchSync = createMiddleware(async (c, next) => {
 		return c.json({ error: 'Invalid or expired token' }, 401)
 	}
 })
+
+export const jwtRefreshAuth = createMiddleware(async (c, next) => {
+	try {
+		const token = c.req.header('Authorization')?.replace('Bearer ', '')
+		if (!token) {
+			return c.json({ error: 'No token provided' }, 401)
+		}
+
+		const payload = await verify(token, env.JWT_SECRET, {}).catch(async () => {
+			const parts = token.split('.')
+			if (parts.length !== 3) {
+				throw new Error('Invalid token format')
+			}
+			return JSON.parse(atob(parts[1]!))
+		})
+
+		if (!payload?.refreshToken) {
+			return c.json({ error: 'Invalid token payload' }, 401)
+		}
+
+		c.set('refreshToken', payload.refreshToken as string)
+		await next()
+	} catch (error) {
+		console.error('JWT refresh auth failed:', error)
+		return c.json({ error: 'Invalid token' }, 401)
+	}
+})

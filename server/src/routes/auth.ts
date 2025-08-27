@@ -1,4 +1,8 @@
-import { jwtAuth, jwtAuthWithTwitchSync } from '@server/middlewares/jwt-auth'
+import {
+	jwtAuth,
+	jwtAuthWithTwitchSync,
+	jwtRefreshAuth,
+} from '@server/middlewares/jwt-auth'
 import { Hono } from 'hono'
 import { authService } from '../services/auth/auth.service'
 import { createTwitchAuthService } from '../services/auth/twitch-auth.service'
@@ -38,7 +42,7 @@ app.get('/me', jwtAuthWithTwitchSync, async (c) => {
 	return c.json(user, 200)
 })
 
-app.post('/refresh', jwtAuth, async (c) => {
+app.post('/refresh', jwtRefreshAuth, async (c) => {
 	try {
 		const refreshToken = c.get('refreshToken')
 		const tokenPair = await authService.refreshTokenPair(refreshToken)
@@ -50,6 +54,7 @@ app.post('/refresh', jwtAuth, async (c) => {
 		return c.json({
 			accessToken: tokenPair.accessToken,
 			refreshToken: tokenPair.refreshToken,
+			expiresIn: tokenPair.expiresIn,
 		})
 	} catch (error) {
 		console.error('Refresh error:', error)

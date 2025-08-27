@@ -1,20 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
-import type { AuthTokens, User } from 'shared'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { AuthTokens } from 'shared'
+import { AuthContext } from '@/contexts/auth-context'
 import { apiClient } from '@/lib/api'
-
-interface AuthContextType {
-	user: User | null
-	isAuthenticated: boolean
-	isLoading: boolean
-	login: () => void
-	logout: () => Promise<void>
-	refetch: () => void
-}
-
-const AuthContext = createContext<AuthContextType | null>(null)
-
-export { AuthContext }
 
 interface AuthProviderProps {
 	readonly children: React.ReactNode
@@ -54,8 +42,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		},
 		staleTime: 5 * 60 * 1000,
 		gcTime: 10 * 60 * 1000,
-		refetchOnWindowFocus: true,
-		refetchOnMount: true,
+		refetchOnWindowFocus: false,
+		refetchOnMount: false,
+		refetchOnReconnect: false,
 		throwOnError: false,
 	})
 

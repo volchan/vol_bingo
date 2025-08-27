@@ -63,10 +63,12 @@ export function buildSuccessRedirectUrl(
 	frontendUrl: string,
 	token: string,
 	refreshToken: string,
+	expiresIn: number,
 ): string {
 	const url = new URL(`${frontendUrl}/auth/callback`)
 
 	url.searchParams.set('token', token)
 	url.searchParams.set('refresh_token', refreshToken)
+	url.searchParams.set('expires_in', expiresIn.toString())
 	return url.toString()
 }

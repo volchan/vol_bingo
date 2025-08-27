@@ -3,8 +3,8 @@ import { validateAuth } from '@/contexts/router-context'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 
 export const Route = createFileRoute('/_authenticated')({
-	beforeLoad: async ({ context, location }) => {
-		const { user, isAuthenticated } = await validateAuth()
+	beforeLoad: ({ context, location }) => {
+		const { user, isAuthenticated } = validateAuth()
 
 		if (!isAuthenticated) {
 			throw redirect({

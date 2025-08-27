@@ -1,5 +1,4 @@
 import type { AuthTokens, User } from 'shared'
-import { apiClient } from '@/lib/api'
 
 export interface AuthenticationContext {
 	user: User | null
@@ -14,10 +13,10 @@ export interface RouterContext {
 	authentication: AuthenticationContext
 }
 
-export async function validateAuth(): Promise<{
+export function validateAuth(): {
 	user: User | null
 	isAuthenticated: boolean
-}> {
+} {
 	try {
 		const stored = localStorage.getItem('auth_tokens')
 		if (!stored) {
@@ -37,9 +36,10 @@ export async function validateAuth(): Promise<{
 			return { user: null, isAuthenticated: false }
 		}
 
-		const user = await apiClient.getCurrentUser()
+		// Just check if we have valid tokens, don't make another API call
+		// The AuthContext will handle the actual user fetching
 		return {
-			user,
+			user: null, // Will be populated by AuthContext
 			isAuthenticated: true,
 		}
 	} catch {

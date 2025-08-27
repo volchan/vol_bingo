@@ -17,6 +17,7 @@ function RouteComponent() {
 			const error = urlParams.get('error')
 			const jwtToken = urlParams.get('token')
 			const refreshToken = urlParams.get('refresh_token')
+			const expiresIn = urlParams.get('expires_in')
 
 			if (error) {
 				navigate({
@@ -26,12 +27,12 @@ function RouteComponent() {
 				return
 			}
 
-			if (jwtToken && refreshToken) {
+			if (jwtToken && refreshToken && expiresIn) {
 				try {
 					const tokens = {
 						access_token: jwtToken,
 						refresh_token: refreshToken,
-						expires_in: 600,
+						expires_in: Number.parseInt(expiresIn, 10),
 					}
 					localStorage.setItem('auth_tokens', JSON.stringify(tokens))
 

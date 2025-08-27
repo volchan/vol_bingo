@@ -104,7 +104,12 @@ class ApiClient {
 		if (isJwtExpired(tokens.access_token, 60)) {
 			const refreshed = await this.tryRefreshToken()
 			if (!refreshed) {
-				return {}
+				console.log(
+					'Token refresh failed, using expired token for this request',
+				)
+				return {
+					Authorization: `Bearer ${tokens.access_token}`,
+				}
 			}
 			const newTokens = this.getStoredTokens()
 			if (!newTokens?.access_token) return {}
@@ -175,7 +180,18 @@ class ApiClient {
 			},
 		})
 
-		const tokens = await this.handleResponse<AuthTokens>(response)
+		const serverTokens = await this.handleResponse<{
+			accessToken: string
+			refreshToken: string
+			expiresIn: number
+		}>(response)
+
+		const tokens: AuthTokens = {
+			access_token: serverTokens.accessToken,
+			refresh_token: serverTokens.refreshToken,
+			expires_in: serverTokens.expiresIn,
+		}
+
 		this.storeTokens(tokens)
 		return tokens
 	}
@@ -187,8 +203,18 @@ class ApiClient {
 
 			await this.refreshToken()
 			return true
-		} catch {
-			this.storeTokens(null)
+		} catch (error) {
+			if (
+				error instanceof AuthError &&
+				(error.status === 401 || error.status === 403)
+			) {
+				console.log('Refresh token is invalid, clearing stored tokens')
+				this.storeTokens(null)
+			} else {
+				console.log(
+					'Token refresh failed due to network/server error, keeping tokens',
+				)
+			}
 			return false
 		}
 	}

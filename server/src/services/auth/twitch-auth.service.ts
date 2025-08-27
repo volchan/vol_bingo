@@ -121,6 +121,7 @@ export class TwitchAuthService {
 					this.config.frontendUrl,
 					tokenPair.accessToken,
 					tokenPair.refreshToken,
+					tokenPair.expiresIn,
 				),
 			}
 		} catch (error) {
