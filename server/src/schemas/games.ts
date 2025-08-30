@@ -4,7 +4,8 @@ import { users } from './users'
 
 export const statusEnum = pgEnum('game_status', [
 	'draft',
-	'active',
+	'ready',
+	'playing',
 	'completed',
 ])
 

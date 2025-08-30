@@ -5,6 +5,7 @@ import type {
 	Game,
 	GameWithCreator,
 	PlayedGame,
+	PlayerBoard,
 	User,
 } from 'shared'
 import {
@@ -266,10 +267,36 @@ class ApiClient {
 		return this.handleResponse<Game>(response)
 	}
 
+	async readyGame(friendlyId: string): Promise<GameWithCreator> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/games/${friendlyId}/ready`,
+			{
+				method: 'PATCH',
+				headers,
+			},
+		)
+
+		return this.handleResponse<GameWithCreator>(response)
+	}
+
 	async startGame(friendlyId: string): Promise<GameWithCreator> {
 		const headers = await this.getAuthHeaderWithRefresh()
 		const response = await this.fetchWithRetry(
 			`${API_BASE}/games/${friendlyId}/start`,
+			{
+				method: 'PATCH',
+				headers,
+			},
+		)
+
+		return this.handleResponse<GameWithCreator>(response)
+	}
+
+	async editGame(friendlyId: string): Promise<GameWithCreator> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/games/${friendlyId}/edit`,
 			{
 				method: 'PATCH',
 				headers,
@@ -368,6 +395,46 @@ class ApiClient {
 
 		const data = await this.handleResponse<PlayedGame[]>(response)
 		return data || []
+	}
+
+	async getPlayerBoard(friendlyId: string): Promise<PlayerBoard> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/games/${friendlyId}/player-board`,
+			{ headers },
+		)
+
+		return this.handleResponse<PlayerBoard>(response)
+	}
+
+	async markGameCell(gameCellId: string, marked: boolean): Promise<void> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/game_cells/${gameCellId}/mark`,
+			{
+				method: 'PATCH',
+				headers: {
+					...headers,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ marked }),
+			},
+		)
+
+		return this.handleResponse<void>(response)
+	}
+
+	async shufflePlayerBoard(playerBoardId: string): Promise<PlayerBoard> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/player_boards/${playerBoardId}/shuffle`,
+			{
+				method: 'PATCH',
+				headers,
+			},
+		)
+
+		return this.handleResponse<PlayerBoard>(response)
 	}
 }
 export const apiClient = new ApiClient()

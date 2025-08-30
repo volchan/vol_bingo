@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -23,21 +23,26 @@ export function BingoGrid({
 	const centerIndex = Math.floor(totalCells / 2)
 
 	// Initialize the grid with items
-	const initializeCells = (): BingoCell[] => {
+	const initializeCells = useCallback((): BingoCell[] => {
 		const cells: BingoCell[] = []
 
 		for (let i = 0; i < totalCells; i++) {
 			cells.push({
 				id: `cell-${i}`,
-				text: items[i] || `Item ${i + 1}`,
+				text: items[i] || '',
 				isMarked: false,
 			})
 		}
 
 		return cells
-	}
+	}, [items, totalCells])
 
-	const [cells, setCells] = useState<BingoCell[]>(initializeCells())
+	const [cells, setCells] = useState<BingoCell[]>(() => initializeCells())
+
+	// Update cells when items prop changes
+	useEffect(() => {
+		setCells(initializeCells())
+	}, [initializeCells])
 
 	const toggleCell = (cellId: string) => {
 		if (disabled) return

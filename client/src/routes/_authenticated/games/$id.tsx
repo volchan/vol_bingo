@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Copy, Crown, Loader2, Play } from 'lucide-react'
+import { Copy, Crown, Edit, Loader2, Play } from 'lucide-react'
 import { useState } from 'react'
 import { BingoGrid } from '@/components/bingo-grid'
 import { CellManager } from '@/components/cell-manager'
+import { PlayerBingoGrid } from '@/components/player-bingo-grid'
 import { Button } from '@/components/ui/button'
 import {
 	Tooltip,
@@ -10,7 +11,13 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useGame, useStartGame } from '@/hooks/api/games.hooks'
+import {
+	useEditGame,
+	useGame,
+	useReadyGame,
+	useStartGame,
+} from '@/hooks/api/games.hooks'
+import { usePlayerBoard } from '@/hooks/api/player-boards.hooks'
 import { useAuth } from '@/hooks/use-auth'
 
 export const Route = createFileRoute('/_authenticated/games/$id')({
@@ -19,9 +26,15 @@ export const Route = createFileRoute('/_authenticated/games/$id')({
 
 function RouteComponent() {
 	const params = Route.useParams()
-	const { data: game, isLoading, error } = useGame(params.id)
+	const { data: game, isLoading, error, refetch } = useGame(params.id)
 	const { user } = useAuth()
+	const readyGameMutation = useReadyGame()
 	const startGameMutation = useStartGame()
+	const editGameMutation = useEditGame()
+	const { data: playerBoard } = usePlayerBoard(
+		params.id,
+		game?.status === 'ready' || game?.status === 'playing',
+	)
 	const [isCopied, setIsCopied] = useState(false)
 
 	if (isLoading) {
@@ -82,7 +95,9 @@ function RouteComponent() {
 		switch (status) {
 			case 'draft':
 				return 'bg-yellow-500'
-			case 'active':
+			case 'ready':
+				return 'bg-blue-500'
+			case 'playing':
 				return 'bg-green-500'
 			default:
 				return 'bg-gray-500'
@@ -92,8 +107,10 @@ function RouteComponent() {
 	const getStatusText = (status: string) => {
 		switch (status) {
 			case 'draft':
-				return 'Waiting to Start'
-			case 'active':
+				return 'Setting Up'
+			case 'ready':
+				return 'Ready to Play'
+			case 'playing':
 				return 'Game in Progress'
 			default:
 				return 'Game Completed'
@@ -113,10 +130,22 @@ function RouteComponent() {
 		}
 	}
 
+	const handleReadyGame = () => {
+		if (!game || !user) return
+
+		readyGameMutation.mutate(game.friendlyId)
+	}
+
 	const handleStartGame = () => {
 		if (!game || !user) return
 
 		startGameMutation.mutate(game.friendlyId)
+	}
+
+	const handleEditGame = () => {
+		if (!game || !user) return
+
+		editGameMutation.mutate(game.friendlyId)
 	}
 
 	const isGameCreator =
@@ -147,22 +176,67 @@ function RouteComponent() {
 								type="button"
 								variant="default"
 								size="sm"
-								onClick={handleStartGame}
-								disabled={startGameMutation.isPending || !canStartGame}
+								onClick={handleReadyGame}
+								disabled={readyGameMutation.isPending || !canStartGame}
 								className="flex items-center gap-2"
 							>
-								{startGameMutation.isPending ? (
+								{readyGameMutation.isPending ? (
 									<>
 										<Loader2 className="h-4 w-4 animate-spin" />
-										Starting...
+										Getting Ready...
 									</>
 								) : (
 									<>
 										<Play size={16} />
-										Start Game
+										Make Ready
 									</>
 								)}
 							</Button>
+						)}
+
+						{isGameCreator && game.status === 'ready' && (
+							<>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={handleEditGame}
+									disabled={editGameMutation.isPending}
+									className="flex items-center gap-2"
+								>
+									{editGameMutation.isPending ? (
+										<>
+											<Loader2 className="h-4 w-4 animate-spin" />
+											Editing...
+										</>
+									) : (
+										<>
+											<Edit size={16} />
+											Edit Game
+										</>
+									)}
+								</Button>
+								<Button
+									type="button"
+									variant="default"
+									size="sm"
+									onClick={handleStartGame}
+									disabled={startGameMutation.isPending}
+									className="flex items-center gap-2"
+								>
+									{startGameMutation.isPending ? (
+										<>
+											<Loader2 className="h-4 w-4 animate-spin" />
+											Starting...
+										</>
+									) : (
+										<>
+											<Play size={16} />
+											Start Game
+										</>
+									)}
+								</Button>
+							</>
 						)}
 
 						<TooltipProvider>
@@ -205,17 +279,31 @@ function RouteComponent() {
 						</div>
 					</div>
 
-					<div className="bg-muted/50 rounded-md p-3 flex items-center gap-3">
-						<Loader2 className="animate-spin" />
-						<p className="text-sm text-muted-foreground flex flex-col">
-							<span>Waiting for the game to start!</span>
-							<span>
-								Share the game code <strong>{game.friendlyId}</strong> or use
-								the copy button above to invite your friends to join the bingo
-								game.
-							</span>
-						</p>
-					</div>
+					{game.status === 'draft' && (
+						<div className="bg-muted/50 rounded-md p-3 flex items-center gap-3">
+							<Loader2 className="animate-spin" />
+							<p className="text-sm text-muted-foreground flex flex-col">
+								<span>Setting up the game...</span>
+								<span>
+									Share the game code <strong>{game.friendlyId}</strong> or use
+									the copy button above to invite your friends to join the bingo
+									game.
+								</span>
+							</p>
+						</div>
+					)}
+
+					{game.status === 'ready' && (
+						<div className="bg-blue-50 dark:bg-blue-950 rounded-md p-3 flex items-center gap-3">
+							<div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
+							<p className="text-sm text-blue-700 dark:text-blue-300 flex flex-col">
+								<span>Game is ready! Waiting to start...</span>
+								<span>
+									Players can now see their boards and prepare for the game.
+								</span>
+							</p>
+						</div>
+					)}
 
 					{isGameCreator && game.status === 'draft' && (
 						<div className="text-center">
@@ -233,14 +321,81 @@ function RouteComponent() {
 			</div>
 
 			<div className="flex gap-6">
-				{user?.id === game.creator?.id && game.status === 'draft' && (
+				{isGameCreator && game.status === 'draft' && (
 					<div className="w-80 flex-shrink-0">
-						<CellManager gameId={game.id} gameCells={game.gameCells || []} />
+						<CellManager
+							gameId={game.id}
+							gameCells={game.gameCells || []}
+							onCellLinked={() => refetch()}
+							onCellUnlinked={() => refetch()}
+						/>
 					</div>
 				)}
 
 				<div className="flex-1">
-					<BingoGrid items={bingoItems} disabled={game.status !== 'active'} />
+					{game.status === 'draft' && !isGameCreator ? (
+						<div className="w-full max-w-2xl mx-auto">
+							<div className="text-center p-8 bg-muted/30 rounded-lg border-2 border-dashed border-muted-foreground/30">
+								<Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+								<h3 className="text-lg font-semibold mb-2 text-muted-foreground">
+									Game Being Prepared
+								</h3>
+								<p className="text-sm text-muted-foreground">
+									The game creator is setting up the bingo cells. Your board
+									will appear once the game is ready.
+								</p>
+							</div>
+						</div>
+					) : game.status === 'draft' && isGameCreator ? (
+						<div className="w-full max-w-2xl mx-auto">
+							<div className="mb-4 text-center">
+								<h3 className="text-lg font-semibold mb-2">
+									Game Board Preview
+								</h3>
+								<p className="text-sm text-muted-foreground">
+									Add cells using the manager on the left to see them appear
+									here
+								</p>
+							</div>
+							<BingoGrid items={bingoItems} disabled={true} />
+						</div>
+					) : (game.status === 'ready' || game.status === 'playing') &&
+						playerBoard ? (
+						<PlayerBingoGrid
+							playerBoard={playerBoard}
+							disabled={game.status !== 'playing'}
+							canMark={isGameCreator && game.status === 'playing'}
+							canShuffle={game.status === 'ready'}
+						/>
+					) : (game.status === 'ready' || game.status === 'playing') &&
+						!playerBoard ? (
+						<div className="w-full max-w-2xl mx-auto">
+							<div className="text-center p-8 bg-muted/30 rounded-lg border-2 border-dashed border-muted-foreground/30">
+								<Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+								<h3 className="text-lg font-semibold mb-2 text-muted-foreground">
+									Loading Your Board
+								</h3>
+								<p className="text-sm text-muted-foreground">
+									Preparing your personalized bingo board...
+								</p>
+							</div>
+						</div>
+					) : (
+						<div className="w-full max-w-2xl mx-auto">
+							<div className="grid grid-cols-5 gap-2 aspect-square">
+								{Array.from({ length: 25 }, (_, i) => (
+									<div
+										key={`placeholder-cell-${i + 1}`}
+										className="aspect-square bg-muted/50 rounded border-2 border-dashed border-muted-foreground/30 flex items-center justify-center"
+									>
+										<span className="text-xs text-muted-foreground font-mono">
+											{i + 1}
+										</span>
+									</div>
+								))}
+							</div>
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

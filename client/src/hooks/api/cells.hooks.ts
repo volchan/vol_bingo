@@ -50,7 +50,7 @@ export function useLinkCellToGame() {
 	return useMutation({
 		mutationFn: (data: { cellId: string; gameId: string }) =>
 			apiClient.linkCellToGame(data.cellId, data.gameId),
-		onSuccess: () => {
+		onSuccess: (_, _variables) => {
 			// Invalidate all game queries to refresh linked cells
 			queryClient.invalidateQueries({
 				queryKey: ['games'],
@@ -65,7 +65,7 @@ export function useUnlinkCell() {
 	return useMutation({
 		mutationFn: (data: { gameCellId: string; gameId: string }) =>
 			apiClient.unlinkCell(data.gameCellId),
-		onSuccess: () => {
+		onSuccess: (_, _variables) => {
 			// Invalidate all game queries to refresh linked cells
 			queryClient.invalidateQueries({
 				queryKey: ['games'],

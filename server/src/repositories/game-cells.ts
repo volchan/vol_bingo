@@ -1,15 +1,22 @@
 import db from '@server/config/database'
-import { cells } from '@server/schemas'
 import { gameCells } from '@server/schemas/game-cells'
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 const gameCellsRepository = {
-	async getById(id: string, userId: string) {
-		return await db
-			.select()
-			.from(gameCells)
-			.leftJoin(cells, eq(gameCells.cellId, cells.id))
-			.where(and(eq(gameCells.id, id), eq(cells.userId, userId)))
+	async getById(id: string, userId?: string) {
+		const result = await db.query.gameCells.findFirst({
+			where: eq(gameCells.id, id),
+			with: {
+				cell: true,
+			},
+		})
+
+		// If userId is provided, check ownership
+		if (userId && result && result.cell?.userId !== userId) {
+			return null
+		}
+
+		return result || null
 	},
 
 	async create(gameId: string, cellId: string) {
@@ -37,6 +44,16 @@ const gameCellsRepository = {
 
 	async delete(id: string) {
 		await db.delete(gameCells).where(eq(gameCells.id, id))
+	},
+
+	async markCell(id: string, marked: boolean) {
+		const [updatedGameCell] = await db
+			.update(gameCells)
+			.set({ marked, updatedAt: new Date() })
+			.where(eq(gameCells.id, id))
+			.returning()
+
+		return updatedGameCell || null
 	},
 }
 

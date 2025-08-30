@@ -29,10 +29,31 @@ const GameDetailSchema = z.object({
 
 app.get('/:friendlyId', zValidator('param', GameDetailSchema), async (c) => {
 	const { friendlyId } = c.req.valid('param')
+	const user = c.get('currentUser')
 	const game = await gamesRepository.getByFriendlyId(friendlyId)
 
 	if (!game) {
 		return c.json({ error: 'Game not found' }, 404)
+	}
+
+	// Automatically create a player board for the current user if they don't have one
+	const playerBoard = await playerBoardsRepository.createIfNotExists({
+		playerId: user.id,
+		gameId: game.id,
+	})
+
+	// If game is ready or playing, initialize player board cells if they don't exist
+	if (game.status === 'ready' || game.status === 'playing') {
+		const existingCells = await db.query.playerBoardCells.findFirst({
+			where: (table, { eq }) => eq(table.playerBoardId, playerBoard.id),
+		})
+
+		if (!existingCells) {
+			await playerBoardsRepository.initializePlayerBoardCells(
+				playerBoard.id,
+				game.id,
+			)
+		}
 	}
 
 	return c.json(game, 200)
@@ -50,13 +71,77 @@ app.get(
 			return c.json({ error: 'Game not found' }, 404)
 		}
 
-		if (game.status !== 'active') {
-			return c.json({ error: 'Game is not active' }, 400)
+		if (game.status !== 'playing') {
+			return c.json({ error: 'Game is not playing' }, 400)
 		}
 
 		const cells = await gameCellRepository.getAllByGameId(game.id)
 
 		return c.json(cells, 200)
+	},
+)
+
+app.patch(
+	'/:friendlyId/ready',
+	zValidator('param', GameDetailSchema),
+	async (c) => {
+		const { friendlyId } = c.req.valid('param')
+		const user = c.get('currentUser')
+		const game = await gamesRepository.getByFriendlyId(friendlyId, user.id)
+
+		if (!game) {
+			return c.json({ error: 'Game not found' }, 404)
+		}
+
+		if (game.creatorId !== user.id) {
+			return c.json(
+				{ error: 'Only the game creator can make the game ready' },
+				403,
+			)
+		}
+
+		if (game.status !== 'draft') {
+			return c.json({ error: 'Game cannot be made ready' }, 400)
+		}
+
+		// Check if the game has exactly 25 cells linked (for 5x5 bingo grid)
+		const gameCells = await gameCellRepository.getAllByGameId(game.id)
+		if (gameCells.length !== 25) {
+			return c.json(
+				{
+					error: `Game needs exactly 25 cells to be ready. Currently has ${gameCells.length} cells.`,
+				},
+				400,
+			)
+		}
+
+		let updatedGame: Game | null = null
+		await db.transaction(async (tx) => {
+			// Update game status to ready
+			updatedGame = await gamesRepository.update({
+				...game,
+				status: 'ready',
+			})
+
+			// Initialize player board cells for all existing player boards
+			const existingPlayerBoards = await db.query.playerBoards.findMany({
+				where: (table, { eq }) => eq(table.gameId, game.id),
+			})
+
+			for (const playerBoard of existingPlayerBoards) {
+				await playerBoardsRepository.initializePlayerBoardCells(
+					playerBoard.id,
+					game.id,
+					tx,
+				)
+			}
+		})
+
+		if (!updatedGame) {
+			return c.json({ error: 'Failed to make game ready' }, 500)
+		}
+
+		return c.json(updatedGame, 200)
 	},
 )
 
@@ -72,24 +157,17 @@ app.patch(
 			return c.json({ error: 'Game not found' }, 404)
 		}
 
-		if (game.status !== 'draft') {
-			return c.json({ error: 'Game cannot be started' }, 400)
+		if (game.creatorId !== user.id) {
+			return c.json({ error: 'Only the game creator can start the game' }, 403)
 		}
 
-		// Check if the game has exactly 25 cells linked (for 5x5 bingo grid)
-		const gameCells = await gameCellRepository.getAllByGameId(game.id)
-		if (gameCells.length !== 25) {
-			return c.json(
-				{
-					error: `Game needs exactly 25 cells to start. Currently has ${gameCells.length} cells.`,
-				},
-				400,
-			)
+		if (game.status !== 'ready') {
+			return c.json({ error: 'Game must be in ready state to start' }, 400)
 		}
 
 		const updatedGame = await gamesRepository.update({
 			...game,
-			status: 'active',
+			status: 'playing',
 		})
 
 		if (!updatedGame) {
@@ -100,8 +178,73 @@ app.patch(
 	},
 )
 
+app.patch(
+	'/:friendlyId/edit',
+	zValidator('param', GameDetailSchema),
+	async (c) => {
+		const { friendlyId } = c.req.valid('param')
+		const user = c.get('currentUser')
+		const game = await gamesRepository.getByFriendlyId(friendlyId, user.id)
+
+		if (!game) {
+			return c.json({ error: 'Game not found' }, 404)
+		}
+
+		if (game.creatorId !== user.id) {
+			return c.json({ error: 'Only the game creator can edit the game' }, 403)
+		}
+
+		if (game.status !== 'ready') {
+			return c.json({ error: 'Game must be in ready state to edit' }, 400)
+		}
+
+		const updatedGame = await gamesRepository.update({
+			...game,
+			status: 'draft',
+		})
+
+		if (!updatedGame) {
+			return c.json({ error: 'Failed to switch game to edit mode' }, 500)
+		}
+
+		return c.json(updatedGame, 200)
+	},
+)
+
+app.get(
+	'/:friendlyId/player-board',
+	zValidator('param', GameDetailSchema),
+	async (c) => {
+		const { friendlyId } = c.req.valid('param')
+		const user = c.get('currentUser')
+		const game = await gamesRepository.getByFriendlyId(friendlyId)
+
+		if (!game) {
+			return c.json({ error: 'Game not found' }, 404)
+		}
+
+		if (game.status === 'draft') {
+			return c.json(
+				{ error: 'Player board not available until game is ready' },
+				400,
+			)
+		}
+
+		const playerBoard = await playerBoardsRepository.getPlayerBoardWithCells(
+			user.id,
+			game.id,
+		)
+
+		if (!playerBoard) {
+			return c.json({ error: 'Player board not found' }, 404)
+		}
+
+		return c.json(playerBoard, 200)
+	},
+)
+
 const CreateGameSchema = z.object({
-	title: z.string().min(10),
+	title: z.string().min(1),
 })
 
 app.post('/', zValidator('form', CreateGameSchema), async (c) => {

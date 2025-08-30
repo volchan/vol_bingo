@@ -14,6 +14,10 @@ tasks:
     desc: Fix linting errors
     cmd: bunx biome lint --write
 
+  lint:fix:unsafe:
+    desc: Fix linting errors
+    cmd: bunx biome lint --write --unsafe
+
   format:
     desc: Format the codebase
     cmd: bunx biome format
@@ -21,3 +25,19 @@ tasks:
   format:fix:
     desc: Fix formatting errors
     cmd: bunx biome format --write
+
+  format:fix:unsafe:
+    desc: Fix formatting errors
+    cmd: bunx biome format --write --unsafe
+
+  check:
+    desc: Check the codebase for errors
+    cmd: bunx biome check
+
+  check:fix:
+    desc: Fix codebase errors
+    cmd: bunx biome check --write
+
+  check:fix:unsafe:
+    desc: Fix codebase errors
+    cmd: bunx biome check --write --unsafe

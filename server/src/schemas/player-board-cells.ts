@@ -1,5 +1,4 @@
 import {
-	boolean,
 	foreignKey,
 	integer,
 	pgTable,
@@ -17,7 +16,6 @@ export const playerBoardCells = pgTable(
 		playerBoardId: uuid().references(() => playerBoards.id),
 		gameCellId: uuid().references(() => gameCells.id),
 		position: integer().notNull(),
-		marked: boolean().default(false),
 	},
 	(table) => [
 		uniqueIndex('player_board_cells_playerBoardId_gameCellId_idx').on(

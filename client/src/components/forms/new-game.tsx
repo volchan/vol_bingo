@@ -18,8 +18,8 @@ import { useCreateGame } from '@/hooks/api/games.hooks'
 
 export default function NewGameForm() {
 	const FormSchema = z.object({
-		title: z.string().min(10, {
-			message: 'Username must be at least 10 characters.',
+		title: z.string().min(1, {
+			message: 'Username must be at least 1 character.',
 		}),
 	})
 

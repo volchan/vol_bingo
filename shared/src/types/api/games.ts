@@ -4,7 +4,7 @@ import type { Game } from '../models/game'
 export interface GameWithCreator extends Omit<Game, 'createdAt' | 'updatedAt'> {
 	createdAt: string
 	updatedAt: string | null
-	status: 'draft' | 'active' | 'completed'
+	status: 'draft' | 'ready' | 'playing' | 'completed'
 	creator: {
 		displayName: string
 		id: string
@@ -24,7 +24,7 @@ export interface PlayedGame {
 	id: string
 	title: string
 	friendlyId: string
-	status: 'draft' | 'active' | 'completed'
+	status: 'draft' | 'ready' | 'playing' | 'completed'
 	createdAt: string
 	updatedAt: string | null
 	creator: {

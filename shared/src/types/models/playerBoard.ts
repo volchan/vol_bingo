@@ -5,3 +5,12 @@ export interface PlayerBoard {
 	createdAt: Date
 	updatedAt: Date
 }
+
+export interface PlayerBoardCell {
+	id: string
+	playerBoardId: string
+	gameCellId: string
+	position: number
+	createdAt: Date
+	updatedAt: Date
+}

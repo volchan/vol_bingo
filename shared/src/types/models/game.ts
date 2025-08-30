@@ -6,5 +6,5 @@ export interface Game {
 	creatorId: string
 	friendlyId: string
 	winnerId?: string | null
-	status: 'draft' | 'active' | 'completed'
+	status: 'draft' | 'ready' | 'playing' | 'completed'
 }

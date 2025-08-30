@@ -71,6 +71,20 @@
       "when": 1755638941005,
       "tag": "0009_third_senator_kelly",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1756568752517,
+      "tag": "0010_elite_hedge_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1756571367203,
+      "tag": "0011_dazzling_richard_fisk",
+      "breakpoints": true
     }
   ]
 }

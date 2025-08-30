@@ -1,0 +1,1 @@
+ALTER TABLE "player_board_cells" DROP COLUMN "marked";
