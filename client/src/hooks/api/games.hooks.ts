@@ -6,6 +6,8 @@ export const authKeys = {
 	played: () => [...authKeys.all, 'played'] as const,
 	detail: (friendlyId: string) =>
 		[...authKeys.all, 'game', friendlyId] as const,
+	players: (friendlyId: string) =>
+		[...authKeys.all, 'game', friendlyId, 'players'] as const,
 	create: () => [...authKeys.all, 'game'] as const,
 }
 
@@ -37,6 +39,23 @@ export function useGame(friendlyId: string) {
 			return failureCount < 2
 		},
 		enabled: !!friendlyId, // Only run query if friendlyId is provided
+	})
+}
+
+export function useGamePlayers(friendlyId: string) {
+	return useQuery({
+		queryKey: authKeys.players(friendlyId),
+		queryFn: () => apiClient.getGamePlayers(friendlyId),
+		staleTime: 0, // Always consider stale for immediate updates
+		gcTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: true, // Refresh when window gains focus
+		refetchOnMount: true,
+		refetchInterval: 5 * 1000, // Refresh every 5 seconds as fallback
+		retry: (failureCount, error) => {
+			if (error?.message.includes('Unauthorized')) return false
+			return failureCount < 2
+		},
+		enabled: !!friendlyId,
 	})
 }
 
@@ -74,7 +93,6 @@ export function useReadyGame() {
 					exact: true,
 				})
 			} catch (error) {
-				console.warn('Cache update failed:', error)
 				// Fallback to invalidating all game queries
 				queryClient.invalidateQueries({ queryKey: authKeys.all })
 			}
@@ -87,7 +105,6 @@ export function useReadyGame() {
 					exact: true,
 				})
 			} catch (error) {
-				console.warn('Cache invalidation failed:', error)
 			}
 		},
 	})
@@ -111,7 +128,6 @@ export function useStartGame() {
 					exact: true,
 				})
 			} catch (error) {
-				console.warn('Cache update failed:', error)
 				// Fallback to invalidating all game queries
 				queryClient.invalidateQueries({ queryKey: authKeys.all })
 			}
@@ -124,7 +140,6 @@ export function useStartGame() {
 					exact: true,
 				})
 			} catch (error) {
-				console.warn('Cache invalidation failed:', error)
 			}
 		},
 	})
@@ -148,7 +163,6 @@ export function useEditGame() {
 					exact: true,
 				})
 			} catch (error) {
-				console.warn('Cache update failed:', error)
 				// Fallback to invalidating all game queries
 				queryClient.invalidateQueries({ queryKey: authKeys.all })
 			}
@@ -161,7 +175,6 @@ export function useEditGame() {
 					exact: true,
 				})
 			} catch (error) {
-				console.warn('Cache invalidation failed:', error)
 			}
 		},
 	})

@@ -96,7 +96,6 @@ export function CellManager({
 			onCellLinked?.(cell)
 			setSearchQuery('')
 		} catch (error) {
-			console.error('Failed to link cell:', error)
 		}
 	}
 
@@ -111,7 +110,6 @@ export function CellManager({
 			})
 			onCellUnlinked?.(cellId)
 		} catch (error) {
-			console.error('Failed to unlink cell:', error)
 		}
 	}
 
@@ -129,7 +127,6 @@ export function CellManager({
 			setSearchQuery('')
 			onCellLinked?.(newCell)
 		} catch (error) {
-			console.error('Failed to create and link cell:', error)
 		}
 	}
 

@@ -1,4 +1,5 @@
 import {
+	boolean,
 	foreignKey,
 	pgEnum,
 	pgTable,
@@ -26,6 +27,7 @@ export const playerBoards = pgTable(
 			.notNull()
 			.references(() => games.id, { onDelete: 'cascade' }),
 		status: statusEnum().default('pending').notNull(),
+		connected: boolean().default(false).notNull(),
 	},
 	(table) => [
 		uniqueIndex('player_boards_playerId_gameId_idx').on(

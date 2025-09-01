@@ -1,0 +1,1 @@
+ALTER TABLE "player_boards" ADD COLUMN "connected" boolean DEFAULT false NOT NULL;

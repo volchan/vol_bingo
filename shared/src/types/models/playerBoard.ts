@@ -4,6 +4,7 @@ export interface PlayerBoard {
 	gameId: string
 	createdAt: Date
 	updatedAt: Date
+	playerBoardCells?: PlayerBoardCellWithGameCell[]
 }
 
 export interface PlayerBoardCell {
@@ -13,4 +14,13 @@ export interface PlayerBoardCell {
 	position: number
 	createdAt: Date
 	updatedAt: Date
+}
+
+export interface PlayerBoardCellWithGameCell extends PlayerBoardCell {
+	gameCell?: {
+		marked: boolean
+		cell?: {
+			value: string
+		}
+	}
 }

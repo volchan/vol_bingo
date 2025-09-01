@@ -105,9 +105,6 @@ class ApiClient {
 		if (isJwtExpired(tokens.access_token, 60)) {
 			const refreshed = await this.tryRefreshToken()
 			if (!refreshed) {
-				console.log(
-					'Token refresh failed, using expired token for this request',
-				)
 				return {
 					Authorization: `Bearer ${tokens.access_token}`,
 				}
@@ -209,12 +206,7 @@ class ApiClient {
 				error instanceof AuthError &&
 				(error.status === 401 || error.status === 403)
 			) {
-				console.log('Refresh token is invalid, clearing stored tokens')
 				this.storeTokens(null)
-			} else {
-				console.log(
-					'Token refresh failed due to network/server error, keeping tokens',
-				)
 			}
 			return false
 		}
@@ -254,6 +246,16 @@ class ApiClient {
 		)
 
 		return this.handleResponse<GameWithCreator>(response)
+	}
+
+	async getGamePlayers(friendlyId: string): Promise<{ id: string; displayName: string; connected: boolean }[]> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/games/${friendlyId}/players`,
+			{ headers },
+		)
+
+		return this.handleResponse<{ id: string; displayName: string; connected: boolean }[]>(response)
 	}
 
 	async createGame(data: Pick<Game, 'title'>): Promise<Game> {
@@ -407,22 +409,6 @@ class ApiClient {
 		return this.handleResponse<PlayerBoard>(response)
 	}
 
-	async markGameCell(gameCellId: string, marked: boolean): Promise<void> {
-		const headers = await this.getAuthHeaderWithRefresh()
-		const response = await this.fetchWithRetry(
-			`${API_BASE}/game_cells/${gameCellId}/mark`,
-			{
-				method: 'PATCH',
-				headers: {
-					...headers,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ marked }),
-			},
-		)
-
-		return this.handleResponse<void>(response)
-	}
 
 	async shufflePlayerBoard(playerBoardId: string): Promise<PlayerBoard> {
 		const headers = await this.getAuthHeaderWithRefresh()

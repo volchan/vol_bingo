@@ -180,6 +180,57 @@ const playerBoardsRepository = {
 
 		return createdCells
 	},
+
+	clearAllPlayerBoardCells: async (gameId: string, tx?: DbTransaction) => {
+		const executor = tx || db
+
+		// Get all player boards for this game
+		const gamePlayerBoards = await executor
+			.select()
+			.from(playerBoards)
+			.where(eq(playerBoards.gameId, gameId))
+
+		// Delete all player board cells for this game
+		for (const playerBoard of gamePlayerBoards) {
+			await executor
+				.delete(playerBoardCells)
+				.where(eq(playerBoardCells.playerBoardId, playerBoard.id))
+		}
+
+		console.log(`Cleared player board cells for game ${gameId}`)
+	},
+
+	async setPlayerConnected(playerId: string, gameId: string, connected: boolean) {
+		const [updatedPlayerBoard] = await db
+			.update(playerBoards)
+			.set({ connected })
+			.where(and(eq(playerBoards.playerId, playerId), eq(playerBoards.gameId, gameId)))
+			.returning()
+		
+		return updatedPlayerBoard
+	},
+
+	getAllForGame: async (gameId: string, tx?: DbTransaction) => {
+		const executor = tx || db
+
+		const playerBoardsList = await executor.query.playerBoards.findMany({
+			where: (table) => eq(table.gameId, gameId),
+			with: {
+				player: true,
+				playerBoardCells: {
+					with: {
+						gameCell: {
+							with: {
+								cell: true
+							}
+						}
+					}
+				}
+			}
+		})
+
+		return playerBoardsList
+	},
 }
 
 export default playerBoardsRepository

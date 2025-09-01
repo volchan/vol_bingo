@@ -7,4 +7,13 @@ export interface Game {
 	friendlyId: string
 	winnerId?: string | null
 	status: 'draft' | 'ready' | 'playing' | 'completed'
+	creator?: {
+		id: string
+		displayName: string
+	}
+	gameCells?: Array<{
+		cell?: {
+			value: string
+		}
+	}>
 }

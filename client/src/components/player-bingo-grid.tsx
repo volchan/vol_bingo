@@ -1,11 +1,8 @@
 import { Shuffle } from 'lucide-react'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PlayerBoard } from 'shared'
 import { Button } from '@/components/ui/button'
-import {
-	useMarkGameCell,
-	useShufflePlayerBoard,
-} from '@/hooks/api/player-boards.hooks'
+import { useShufflePlayerBoard } from '@/hooks/api/player-boards.hooks'
 import { cn } from '@/lib/utils'
 
 interface PlayerBingoGridProps {
@@ -14,6 +11,7 @@ interface PlayerBingoGridProps {
 	readonly disabled?: boolean
 	readonly canMark?: boolean
 	readonly canShuffle?: boolean
+	readonly onMarkCell?: (gameCellId: string, marked: boolean) => void
 }
 
 interface PlayerBingoCell {
@@ -30,14 +28,18 @@ const PlayerBingoGridComponent = ({
 	disabled = false,
 	canMark = false,
 	canShuffle = false,
+	onMarkCell,
 }: PlayerBingoGridProps) => {
 	const totalCells = size * size
 	const centerIndex = Math.floor(totalCells / 2)
-	const markCellMutation = useMarkGameCell()
 	const shuffleMutation = useShufflePlayerBoard()
 
 	const [localCells, setLocalCells] = useState<PlayerBingoCell[]>([])
-	useEffect(() => {
+	const prevPlayerBoardCellsRef = useRef<string>('')
+	
+	// Use useMemo to compute cells and only update when actually needed
+	const computedCells = useMemo(() => {
+		
 		const gridCells = (playerBoard.playerBoardCells || []).map((pbc) => ({
 			id: pbc.id,
 			gameCellId: pbc.gameCellId,
@@ -57,47 +59,32 @@ const PlayerBingoGridComponent = ({
 		}
 
 		gridCells.sort((a, b) => a.position - b.position)
-
-		setLocalCells(gridCells)
+		return gridCells
 	}, [playerBoard.playerBoardCells, totalCells])
 
+	// Only update localCells when computedCells actually changes
+	useEffect(() => {
+		const currentHash = JSON.stringify(computedCells)
+		if (prevPlayerBoardCellsRef.current !== currentHash) {
+			setLocalCells(computedCells)
+			prevPlayerBoardCellsRef.current = currentHash
+		}
+	}, [computedCells])
+
 	const toggleCell = useCallback(
-		async (cell: PlayerBingoCell) => {
+		(cell: PlayerBingoCell) => {
 			if (
 				disabled ||
 				!canMark ||
 				!cell.gameCellId ||
-				markCellMutation.isPending
+				!onMarkCell
 			)
 				return
 
 			const newMarkedState = !cell.isMarked
-
-			setLocalCells((prev) =>
-				prev.map((c) =>
-					c.gameCellId === cell.gameCellId
-						? { ...c, isMarked: newMarkedState }
-						: c,
-				),
-			)
-
-			try {
-				await markCellMutation.mutateAsync({
-					gameCellId: cell.gameCellId,
-					marked: newMarkedState,
-				})
-			} catch (error) {
-				console.error('Failed to toggle cell:', error)
-				setLocalCells((prev) =>
-					prev.map((c) =>
-						c.gameCellId === cell.gameCellId
-							? { ...c, isMarked: !newMarkedState }
-							: c,
-					),
-				)
-			}
+			onMarkCell(cell.gameCellId, newMarkedState)
 		},
-		[disabled, canMark, markCellMutation],
+		[disabled, canMark, onMarkCell],
 	)
 
 	const handleShuffle = useCallback(async () => {
@@ -130,116 +117,66 @@ const PlayerBingoGridComponent = ({
 			gridCells.sort((a, b) => a.position - b.position)
 			setLocalCells(gridCells)
 		} catch (error) {
-			console.error('Failed to shuffle board:', error)
 		}
 	}, [canShuffle, shuffleMutation, playerBoard.id, totalCells])
 
-	const hasBingo = useMemo(() => {
-		const checkRowComplete = (rowIndex: number): boolean => {
-			for (let col = 0; col < size; col++) {
-				if (!localCells[rowIndex * size + col]?.isMarked) {
-					return false
-				}
-			}
-			return true
-		}
-
-		const checkColumnComplete = (colIndex: number): boolean => {
-			for (let row = 0; row < size; row++) {
-				if (!localCells[row * size + colIndex]?.isMarked) {
-					return false
-				}
-			}
-			return true
-		}
-
-		const checkDiagonalsComplete = (): boolean => {
-			for (let i = 0; i < size; i++) {
-				if (!localCells[i * size + i]?.isMarked) {
-					break
-				}
-				if (i === size - 1) return true
-			}
-
-			for (let i = 0; i < size; i++) {
-				if (!localCells[i * size + (size - 1 - i)]?.isMarked) {
-					return false
-				}
-			}
-			return true
-		}
-
-		for (let row = 0; row < size; row++) {
-			if (checkRowComplete(row)) return true
-		}
-
-		for (let col = 0; col < size; col++) {
-			if (checkColumnComplete(col)) return true
-		}
-
-		return checkDiagonalsComplete()
-	}, [localCells, size])
 
 	return (
-		<div className="w-full max-w-2xl mx-auto space-y-4">
-			{hasBingo && (
-				<div className="text-center p-4 bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-					<h2 className="text-2xl font-bold text-green-800 dark:text-green-200">
-						🎉 BINGO! 🎉
-					</h2>
-					<p className="text-green-600 dark:text-green-300">
-						Congratulations! You got a bingo!
-					</p>
-				</div>
-			)}
+		<>
 
-			{canShuffle && (
-				<div className="text-center">
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={handleShuffle}
-						disabled={shuffleMutation.isPending}
-						className="flex items-center gap-2"
-					>
-						<Shuffle className="h-4 w-4" />
-						{shuffleMutation.isPending ? 'Shuffling...' : 'Shuffle Board'}
-					</Button>
-				</div>
-			)}
-
-			<div
-				className={cn(
-					'grid gap-2 w-full aspect-square',
-					size === 3 && 'grid-cols-3',
-					size === 5 && 'grid-cols-5',
-					size === 7 && 'grid-cols-7',
+			<div className="w-full max-w-2xl mx-auto space-y-4">
+				{canShuffle && (
+					<div className="text-center">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handleShuffle}
+							disabled={shuffleMutation.isPending}
+							className="flex items-center gap-2"
+						>
+							<Shuffle className="h-4 w-4" />
+							{shuffleMutation.isPending ? 'Shuffling..' : 'Shuffle Board'}
+						</Button>
+					</div>
 				)}
-			>
-				{localCells.map((cell, index) => {
-					const handleCellClick = () => toggleCell(cell)
 
-					return (
-						<PlayerBingoCell
-							key={cell.id}
-							cell={cell}
-							isCenter={index === centerIndex}
-							onClick={handleCellClick}
-							disabled={
-								disabled || !canMark || !cell.text || markCellMutation.isPending
-							}
-							loading={markCellMutation.isPending}
-							className={cn(
-								'aspect-square',
-								size === 3 && 'text-sm sm:text-base',
-								size === 5 && 'text-xs sm:text-sm',
-								size === 7 && 'text-xs',
-							)}
-						/>
-					)
-				})}
+				<div
+					className={cn(
+						'grid gap-2 w-full aspect-square',
+						size === 3 && 'grid-cols-3',
+						size === 5 && 'grid-cols-5',
+						size === 7 && 'grid-cols-7',
+					)}
+				>
+					{localCells.map((cell, index) => {
+						const handleCellClick = () => {
+							toggleCell(cell)
+						}
+
+						const isClickable = !disabled && canMark && cell.text
+						
+						return (
+							<PlayerBingoCell
+								key={cell.id}
+								cell={cell}
+								isCenter={index === centerIndex}
+								onClick={isClickable ? handleCellClick : () => {}}
+								disabled={!cell.text}
+								loading={false}
+								showMuted={false}
+								className={cn(
+									'aspect-square',
+									size === 3 && 'text-sm sm:text-base',
+									size === 5 && 'text-xs sm:text-sm',
+									size === 7 && 'text-xs',
+									!isClickable && 'cursor-default',
+								)}
+							/>
+						)
+					})}
+				</div>
 			</div>
-		</div>
+		</>
 	)
 }
 
@@ -251,6 +188,7 @@ interface PlayerBingoCellProps {
 	readonly onClick: () => void
 	readonly disabled?: boolean
 	readonly loading?: boolean
+	readonly showMuted?: boolean
 	readonly className?: string
 }
 
@@ -261,6 +199,7 @@ const PlayerBingoCell = memo(
 		onClick,
 		disabled = false,
 		loading = false,
+		showMuted = false,
 		className,
 	}: PlayerBingoCellProps) => {
 		return (
@@ -273,7 +212,7 @@ const PlayerBingoCell = memo(
 					!disabled &&
 						!loading &&
 						'hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg',
-					(disabled || loading) && 'opacity-50 cursor-not-allowed',
+					showMuted && (disabled || loading) && 'opacity-50',
 					loading && 'animate-pulse',
 					cell.isMarked &&
 						!isCenter &&
@@ -281,7 +220,7 @@ const PlayerBingoCell = memo(
 					cell.isMarked &&
 						isCenter &&
 						'bg-yellow-500 text-white hover:bg-yellow-600 hover:text-white',
-					!cell.text && 'bg-muted/30 border-dashed',
+					!cell.text && 'bg-muted/30 border-dashed opacity-50',
 					className,
 				)}
 			>

@@ -85,6 +85,13 @@
       "when": 1756571367203,
       "tag": "0011_dazzling_richard_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1756590477499,
+      "tag": "0012_brown_white_queen",
+      "breakpoints": true
     }
   ]
 }

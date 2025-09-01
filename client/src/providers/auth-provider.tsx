@@ -11,11 +11,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
 	const queryClient = useQueryClient()
 	const [isInitialized, setIsInitialized] = useState(false)
-
-	useEffect(() => {
-		apiClient.setQueryClient(queryClient)
-		setIsInitialized(true)
-	}, [queryClient])
+	const [storedTokens, setStoredTokens] = useState<{ access_token: string | null, refresh_token: string | null } | null>(null)
 
 	const getStoredTokens = useCallback((): AuthTokens | null => {
 		try {
@@ -25,6 +21,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 			return null
 		}
 	}, [])
+
+	useEffect(() => {
+		apiClient.setQueryClient(queryClient)
+		setIsInitialized(true)
+		// Initialize stored tokens
+		setStoredTokens(getStoredTokens())
+	}, [queryClient, getStoredTokens])
 
 	const {
 		data: user,
@@ -51,33 +54,66 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	useEffect(() => {
 		if (error?.message.includes('Unauthorized')) {
 			localStorage.removeItem('auth_tokens')
+			setStoredTokens({ access_token: null, refresh_token: null })
 		}
 	}, [error])
+
+	useEffect(() => {
+		const handleStorageChange = () => {
+			const newTokens = getStoredTokens()
+			setStoredTokens(newTokens)
+		}
+
+		window.addEventListener('storage', handleStorageChange)
+		
+		const interval = setInterval(() => {
+			const currentTokens = getStoredTokens()
+			const currentHasToken = !!currentTokens?.access_token
+			const stateHasToken = !!storedTokens?.access_token
+			
+			if (currentHasToken !== stateHasToken) {
+				setStoredTokens(currentTokens)
+			}
+		}, 1000)
+
+		return () => {
+			window.removeEventListener('storage', handleStorageChange)
+			clearInterval(interval)
+		}
+	}, [getStoredTokens, storedTokens])
 
 	const login = useCallback(() => apiClient.initiateLogin(), [])
 
 	const logout = useCallback(async () => {
 		await apiClient.logout()
+		setStoredTokens({ access_token: null, refresh_token: null })
 		queryClient.removeQueries({ queryKey: ['auth'] })
 	}, [queryClient])
 
 	const refetch = useCallback(() => {
+		const newTokens = getStoredTokens()
+		setStoredTokens(newTokens)
 		queryRefetch()
-	}, [queryRefetch])
+	}, [queryRefetch, getStoredTokens])
 
 	const isLoading = !isInitialized || isQueryLoading
 	const isAuthenticated = !!(user && !isError && getStoredTokens())
+
+	const tokens = useMemo(() => {
+		return storedTokens || { access_token: null, refresh_token: null }
+	}, [storedTokens])
 
 	const contextValue = useMemo(
 		() => ({
 			user: user || null,
 			isAuthenticated,
 			isLoading,
+			tokens,
 			login,
 			logout,
 			refetch,
 		}),
-		[user, isAuthenticated, isLoading, login, logout, refetch],
+		[user, isAuthenticated, isLoading, tokens, login, logout, refetch],
 	)
 
 	return (

@@ -12,7 +12,7 @@ export function usePlayerBoard(friendlyId: string, enabled: boolean = true) {
 	return useQuery({
 		queryKey: playerBoardKeys.detail(friendlyId),
 		queryFn: () => apiClient.getPlayerBoard(friendlyId),
-		staleTime: 0, // Always consider stale so it refetches when needed
+		staleTime: 500, // 500ms buffer to reduce excessive refetching
 		gcTime: 10 * 60 * 1000,
 		enabled: !!friendlyId && enabled,
 		retry: (failureCount, error) => {
@@ -23,15 +23,6 @@ export function usePlayerBoard(friendlyId: string, enabled: boolean = true) {
 	})
 }
 
-export function useMarkGameCell() {
-	return useMutation({
-		mutationFn: (data: { gameCellId: string; marked: boolean }) =>
-			apiClient.markGameCell(data.gameCellId, data.marked),
-		onError: (error) => {
-			console.error('Failed to mark cell:', error)
-		},
-	})
-}
 
 export function useShufflePlayerBoard() {
 	const queryClient = useQueryClient()
@@ -49,9 +40,6 @@ export function useShufflePlayerBoard() {
 					return old
 				},
 			)
-		},
-		onError: (error) => {
-			console.error('Failed to shuffle player board:', error)
 		},
 	})
 }

@@ -104,8 +104,10 @@ const gamesRepository = {
 		return game
 	},
 
-	async update(game: Game): Promise<Game> {
-		const [updatedGame] = await db
+	async update(game: Game, tx?: DbTransaction): Promise<Game> {
+		const executor = tx || db
+
+		const [updatedGame] = await executor
 			.update(games)
 			.set({ ...game, updatedAt: new Date() })
 			.where(eq(games.id, game.id))
@@ -114,7 +116,7 @@ const gamesRepository = {
 		if (!updatedGame) throw new Error('Failed to update game')
 
 		// Fetch the complete game with creator and gameCells relations
-		const gameWithCreator = await db.query.games.findFirst({
+		const gameWithCreator = await executor.query.games.findFirst({
 			where: (table, { eq }) => eq(table.id, updatedGame.id),
 			with: {
 				creator: {

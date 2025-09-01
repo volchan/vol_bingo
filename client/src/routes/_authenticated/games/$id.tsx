@@ -1,10 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Copy, Crown, Edit, Loader2, Play } from 'lucide-react'
-import { useState } from 'react'
+import { Copy, Edit, Loader2, Play, Trophy } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import confetti from 'canvas-confetti'
 import { BingoGrid } from '@/components/bingo-grid'
 import { CellManager } from '@/components/cell-manager'
 import { PlayerBingoGrid } from '@/components/player-bingo-grid'
+import { PlayersList } from '@/components/players-list'
 import { Button } from '@/components/ui/button'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog'
 import {
 	Tooltip,
 	TooltipContent,
@@ -19,6 +28,7 @@ import {
 } from '@/hooks/api/games.hooks'
 import { usePlayerBoard } from '@/hooks/api/player-boards.hooks'
 import { useAuth } from '@/hooks/use-auth'
+import { useGameWebSocket } from '@/hooks/use-game-websocket'
 
 export const Route = createFileRoute('/_authenticated/games/$id')({
 	component: RouteComponent,
@@ -36,6 +46,84 @@ function RouteComponent() {
 		game?.status === 'ready' || game?.status === 'playing',
 	)
 	const [isCopied, setIsCopied] = useState(false)
+	const websocket = useGameWebSocket(params.id)
+
+	useEffect(() => {
+		if (websocket.showBingoDialog) {
+			const isMegaBingo = websocket.isMegaBingo
+			const duration = isMegaBingo ? 5000 : 2000
+			const animationEnd = Date.now() + duration
+
+			const runConfetti = () => {
+				const timeLeft = animationEnd - Date.now()
+				
+				if (timeLeft <= 0) return
+
+				const dialogElement = document.querySelector('[role="dialog"]')
+				let originY = 0.5
+				let originX = 0.5
+
+				if (dialogElement) {
+					const dialogRect = dialogElement.getBoundingClientRect()
+					const centerX = dialogRect.left + dialogRect.width / 2
+					const topY = dialogRect.top + 20
+					
+					originX = centerX / window.innerWidth
+					originY = topY / window.innerHeight
+				}
+
+				if (isMegaBingo) {
+					confetti({
+						particleCount: 100,
+						startVelocity: 60,
+						spread: 80,
+						angle: 90,
+						origin: { x: originX - 0.2, y: originY },
+						colors: ['#FFD700', '#FFA500', '#FF6347', '#32CD32', '#1E90FF', '#9932CC'],
+					})
+					confetti({
+						particleCount: 100,
+						startVelocity: 60,
+						spread: 80,
+						angle: 90,
+						origin: { x: originX + 0.2, y: originY },
+						colors: ['#FFD700', '#FFA500', '#FF6347', '#32CD32', '#1E90FF', '#9932CC'],
+					})
+					confetti({
+						particleCount: 150,
+						startVelocity: 70,
+						spread: 90,
+						angle: 90,
+						origin: { x: originX, y: originY - 0.02 },
+						colors: ['#FFD700', '#FFA500', '#FF6347', '#32CD32', '#1E90FF', '#9932CC'],
+					})
+					setTimeout(() => requestAnimationFrame(runConfetti), 100)
+				} else {
+					confetti({
+						particleCount: 30,
+						startVelocity: 40,
+						spread: 70,
+						angle: 90,
+						origin: {
+							x: originX,
+							y: originY
+						},
+						colors: ['#FFD700', '#FFA500', '#FF6347', '#32CD32', '#1E90FF', '#9932CC'],
+					})
+					setTimeout(() => requestAnimationFrame(runConfetti), 200)
+				}
+			}
+
+			runConfetti()
+
+			// Auto-close timer
+			const timer = setTimeout(() => {
+				websocket.setShowBingoDialog(false)
+			}, 10000)
+			
+			return () => clearTimeout(timer)
+		}
+	}, [websocket.showBingoDialog, websocket.setShowBingoDialog, websocket.isMegaBingo])
 
 	if (isLoading) {
 		return (
@@ -85,7 +173,6 @@ function RouteComponent() {
 		)
 	}
 
-	// Get bingo items from linked game cells
 	const bingoItems =
 		game.gameCells?.map((gc) => gc.cell?.value || '').slice(0, 25) || []
 	const linkedCellsCount = game.gameCells?.length || 0
@@ -124,7 +211,6 @@ function RouteComponent() {
 			setIsCopied(true)
 			setTimeout(() => setIsCopied(false), 2000)
 		} catch {
-			console.warn('Clipboard API not supported')
 			setIsCopied(true)
 			setTimeout(() => setIsCopied(false), 2000)
 		}
@@ -149,7 +235,7 @@ function RouteComponent() {
 	}
 
 	const isGameCreator =
-		user && game && game.creator && user.id === game.creator.id
+		!!(user && game && game.creator && user.id === game.creator.id)
 
 	return (
 		<div className="container mx-auto p-4 space-y-6">
@@ -163,11 +249,45 @@ function RouteComponent() {
 
 			<div className="border rounded-lg p-6 bg-card">
 				<div className="flex justify-between items-start mb-4">
-					<div className="flex items-center gap-2">
-						<div
-							className={`w-2 h-2 rounded-full ${getStatusColor(game.status)}`}
-						/>
-						<span className="font-medium">{getStatusText(game.status)}</span>
+					<div className="flex items-center gap-4">
+						<div className="flex items-center gap-2">
+							<div
+								className={`w-2 h-2 rounded-full ${getStatusColor(game.status)}`}
+							/>
+							<span className="font-medium">{getStatusText(game.status)}</span>
+						</div>
+						<div className="flex items-center gap-2 text-xs text-muted-foreground">
+							<div
+								className={`w-1.5 h-1.5 rounded-full ${
+									websocket.isConnected 
+										? 'bg-green-500' 
+										: websocket.connectionStatus === 'reconnecting' || websocket.connectionStatus === 'refreshing_token'
+											? 'bg-yellow-500 animate-pulse'
+											: 'bg-red-500'
+								}`}
+							/>
+							<span>
+								{websocket.isConnected
+									? 'Connected'
+									: websocket.connectionStatus === 'reconnecting'
+										? `Reconnecting... (${websocket.reconnectAttempts}/${websocket.maxReconnectAttempts})`
+									: websocket.connectionStatus === 'refreshing_token'
+										? 'Refreshing authentication...'
+									: websocket.connectionStatus === 'error'
+										? 'Connection Error'
+									: 'Disconnected'}
+							</span>
+							{(!websocket.isConnected && !['reconnecting', 'refreshing_token'].includes(websocket.connectionStatus)) && (
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={websocket.reconnect}
+									className="h-5 px-2 text-xs"
+								>
+									Reconnect
+								</Button>
+							)}
+						</div>
 					</div>
 
 					<div className="flex items-center gap-2">
@@ -262,22 +382,6 @@ function RouteComponent() {
 				</div>
 
 				<div className="space-y-4">
-					<div>
-						<h3 className="font-semibold mb-2">Players ({1})</h3>
-						<div className="space-y-2">
-							{game.creator && (
-								<div className="flex items-center gap-2">
-									<div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-xs text-primary-foreground font-medium">
-										{game.creator.displayName?.charAt(0).toUpperCase() || '?'}
-									</div>
-									<span className="text-sm">
-										{game.creator.displayName || 'Unknown'}
-									</span>
-									<Crown className="w-4 h-4 text-yellow-500" />
-								</div>
-							)}
-						</div>
-					</div>
 
 					{game.status === 'draft' && (
 						<div className="bg-muted/50 rounded-md p-3 flex items-center gap-3">
@@ -321,6 +425,15 @@ function RouteComponent() {
 			</div>
 
 			<div className="flex gap-6">
+				{(game.status === 'ready' || game.status === 'playing') && (
+					<div className="w-64 flex-shrink-0">
+						<PlayersList 
+							creator={game.creator}
+							connectedPlayers={websocket.connectedPlayers}
+							currentUserId={user?.id}
+						/>
+					</div>
+				)}
 				{isGameCreator && game.status === 'draft' && (
 					<div className="w-80 flex-shrink-0">
 						<CellManager
@@ -366,6 +479,7 @@ function RouteComponent() {
 							disabled={game.status !== 'playing'}
 							canMark={isGameCreator && game.status === 'playing'}
 							canShuffle={game.status === 'ready'}
+							onMarkCell={websocket.markCell}
 						/>
 					) : (game.status === 'ready' || game.status === 'playing') &&
 						!playerBoard ? (
@@ -398,6 +512,102 @@ function RouteComponent() {
 					)}
 				</div>
 			</div>
+
+			{/* Server-driven Bingo Dialog */}
+			<Dialog open={websocket.showBingoDialog} onOpenChange={websocket.setShowBingoDialog}>
+				<DialogContent className="sm:max-w-md">
+					<DialogHeader>
+						<div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-100 dark:bg-yellow-900/20">
+							<Trophy className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+						</div>
+						<DialogTitle className="text-center text-2xl font-bold">
+							{websocket.isMegaBingo ? '🎆 MEGA BINGO! 🎆' : '🎉 BINGO! 🎉'}
+						</DialogTitle>
+						<DialogDescription className="text-center text-lg">
+							{websocket.isMegaBingo ? (
+								<span className="space-y-2 block">
+									<span className="text-xl font-bold text-yellow-600 dark:text-yellow-400 block">
+										ENTIRE GRID COMPLETED!
+									</span>
+									<span className="block">Ultimate bingo achievement unlocked! 🏆</span>
+								</span>
+							) : (
+								<span className="space-y-3 block">
+									{/* Show who got NEW bingos (not in mega bingo) */}
+									{websocket.newBingoPlayers.length === 1 ? (
+										<span className="block text-green-600 dark:text-green-400 font-bold">
+											🎉 <strong>{websocket.newBingoPlayers[0]?.playerName}</strong> just got a new bingo!
+										</span>
+									) : websocket.newBingoPlayers.length > 1 ? (
+										<span className="space-y-1 block">
+											{websocket.newBingoPlayers.length <= 5 ? (
+												<>
+													<span className="block text-green-600 dark:text-green-400 font-bold">🎉 New bingos achieved by:</span>
+													{websocket.newBingoPlayers
+														.sort((a, b) => a.playerName.localeCompare(b.playerName))
+														.map((player, index) => (
+															<span key={index} className="block text-green-600 dark:text-green-400 font-semibold">
+																<strong>{player.playerName}</strong>
+															</span>
+														))
+													}
+												</>
+											) : (
+												<span className="block text-green-600 dark:text-green-400 font-bold">
+													🎉 {websocket.newBingoPlayers.length} players just got new bingos!
+												</span>
+											)}
+										</span>
+									) : null}
+
+									{/* Show current bingo status */}
+									{websocket.bingoPlayers.length === 1 ? (
+										<span className="block">
+											<strong>{websocket.bingoPlayers[0]?.playerName}</strong> has{' '}
+											{websocket.bingoPlayers[0]?.bingoCount > 1 ? (
+												<span className="text-yellow-600 dark:text-yellow-400 font-bold">
+													{websocket.bingoPlayers[0]?.bingoCount} bingos
+												</span>
+											) : (
+												'a bingo'
+											)}!
+										</span>
+									) : websocket.bingoPlayers.length > 1 ? (
+										<span className="space-y-1 block">
+											<span className="block">
+												{websocket.bingoPlayers.length <= 5 ? 'Current bingo standings:' : 'Top 5 bingo leaders:'}
+											</span>
+											{websocket.bingoPlayers
+												.sort((a, b) => b.bingoCount - a.bingoCount)
+												.slice(0, 5)
+												.map((player, index) => (
+													<span key={index} className="font-semibold block">
+														<strong>{player.playerName}</strong>{' '}
+														{player.bingoCount > 1 ? (
+															<span className="text-yellow-600 dark:text-yellow-400">
+																({player.bingoCount} bingos)
+															</span>
+														) : (
+															'(1 bingo)'
+														)}
+													</span>
+												))
+											}
+											{websocket.bingoPlayers.length > 5 && (
+												<span className="block text-sm text-muted-foreground">
+													...and {websocket.bingoPlayers.length - 5} more players
+												</span>
+											)}
+										</span>
+									) : (
+										<span className="block">Someone achieved a bingo!</span>
+									)}
+								</span>
+							)}
+						</DialogDescription>
+					</DialogHeader>
+				</DialogContent>
+			</Dialog>
 		</div>
 	)
 }

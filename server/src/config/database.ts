@@ -19,9 +19,9 @@ export const checkDatabaseConnection = async () => {
 	try {
 		await db.execute('SELECT 1;')
 
-		console.log('✅ Database connection successful')
+		console.log('Database connection successful')
 	} catch (error) {
-		console.error('❌ Database connection failed:', error)
+		console.error('Database connection failed:', error)
 		process.exit(1)
 	}
 }

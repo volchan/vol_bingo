@@ -15,7 +15,7 @@ export function GameList({ currentUser, games }: GameListProps) {
 		switch (game.status) {
 			case 'draft':
 				return 'warning'
-			case 'active':
+			case 'playing':
 				return 'default'
 			case 'completed':
 				return 'success'

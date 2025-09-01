@@ -1,6 +1,7 @@
 import { jwtAuth } from '@server/middlewares/jwt-auth'
 import cellsRepository from '@server/repositories/cells'
 import gameCellRepository from '@server/repositories/game-cells'
+import { wsManager } from '@server/websocket/websocket-manager'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from './utils'
@@ -83,6 +84,19 @@ app.post(
 			if (!gameCell) {
 				return c.json({ error: 'Failed to link cell to game' }, 500)
 			}
+
+			const cell = await cellsRepository.getById(id, c.get('currentUser').id)
+			const gameCells = await gameCellRepository.getAllByGameId(gameId)
+
+			wsManager.broadcastToGame(gameId, {
+				type: 'game_cell_added',
+				data: {
+					gameId,
+					cellValue: cell?.value || '',
+					linkedCellsCount: gameCells.length,
+				},
+			})
+
 			return c.json(204)
 		} catch (error) {
 			console.error('Link cell to game error:', error)

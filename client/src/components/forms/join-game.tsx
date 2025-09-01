@@ -26,8 +26,7 @@ export default function JoinGameForm() {
 		},
 	})
 
-	function onSubmitForm(data: z.infer<typeof FormSchema>) {
-		console.log('Join game form submitted:', data)
+	function onSubmitForm(_data: z.infer<typeof FormSchema>) {
 	}
 
 	return (

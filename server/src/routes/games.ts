@@ -5,6 +5,7 @@ import gamesRepository, {
 	type CreateGameData,
 } from '@server/repositories/games'
 import playerBoardsRepository from '@server/repositories/player-boards'
+import { wsManager } from '@server/websocket/websocket-manager'
 import type { Game } from '@shared/types'
 import { Hono } from 'hono'
 import { z } from 'zod'
@@ -118,13 +119,19 @@ app.patch(
 		let updatedGame: Game | null = null
 		await db.transaction(async (tx) => {
 			// Update game status to ready
-			updatedGame = await gamesRepository.update({
-				...game,
-				status: 'ready',
-			})
+			updatedGame = await gamesRepository.update(
+				{
+					...game,
+					status: 'ready',
+				},
+				tx,
+			)
+
+			// Clear any existing player board cells first
+			await playerBoardsRepository.clearAllPlayerBoardCells(game.id, tx)
 
 			// Initialize player board cells for all existing player boards
-			const existingPlayerBoards = await db.query.playerBoards.findMany({
+			const existingPlayerBoards = await tx.query.playerBoards.findMany({
 				where: (table, { eq }) => eq(table.gameId, game.id),
 			})
 
@@ -140,6 +147,19 @@ app.patch(
 		if (!updatedGame) {
 			return c.json({ error: 'Failed to make game ready' }, 500)
 		}
+
+		console.log(`🎮 Broadcasting game state change: ready for game ${game.id} (${game.friendlyId})`)
+
+		wsManager.broadcastToGame(game.id, {
+			type: 'game_state_change',
+			data: {
+				gameId: game.id,
+				friendlyId: game.friendlyId,
+				status: 'ready',
+				linkedCellsCount: gameCells.length,
+			},
+			timestamp: Date.now(),
+		})
 
 		return c.json(updatedGame, 200)
 	},
@@ -174,6 +194,18 @@ app.patch(
 			return c.json({ error: 'Failed to start game' }, 500)
 		}
 
+		console.log(`🎮 Broadcasting game state change: playing for game ${game.id} (${game.friendlyId})`)
+
+		wsManager.broadcastToGame(game.id, {
+			type: 'game_state_change',
+			data: {
+				gameId: game.id,
+				friendlyId: game.friendlyId,
+				status: 'playing',
+			},
+			timestamp: Date.now(),
+		})
+
 		return c.json(updatedGame, 200)
 	},
 )
@@ -198,16 +230,70 @@ app.patch(
 			return c.json({ error: 'Game must be in ready state to edit' }, 400)
 		}
 
-		const updatedGame = await gamesRepository.update({
-			...game,
-			status: 'draft',
+		let updatedGame: Game | null = null
+		await db.transaction(async (tx) => {
+			updatedGame = await gamesRepository.update(
+				{
+					...game,
+					status: 'draft',
+				},
+				tx,
+			)
+
+			// Clear all existing player board cells when switching to draft mode
+			await playerBoardsRepository.clearAllPlayerBoardCells(game.id, tx)
 		})
 
 		if (!updatedGame) {
 			return c.json({ error: 'Failed to switch game to edit mode' }, 500)
 		}
 
+		console.log(`🎮 Broadcasting game state change: draft for game ${game.id} (${game.friendlyId})`)
+
+		wsManager.broadcastToGame(game.id, {
+			type: 'game_state_change',
+			data: {
+				gameId: game.id,
+				friendlyId: game.friendlyId,
+				status: 'draft',
+			},
+		})
+
 		return c.json(updatedGame, 200)
+	},
+)
+
+app.get(
+	'/:friendlyId/players',
+	zValidator('param', GameDetailSchema),
+	async (c) => {
+		const { friendlyId } = c.req.valid('param')
+		const game = await gamesRepository.getByFriendlyId(friendlyId)
+
+		if (!game) {
+			return c.json({ error: 'Game not found' }, 404)
+		}
+
+		const players = await db.query.playerBoards.findMany({
+			where: (table, { eq }) => eq(table.gameId, game.id),
+			with: {
+				player: {
+					columns: {
+						id: true,
+						displayName: true,
+					},
+				},
+			},
+		})
+
+		return c.json(
+			players.map(pb => ({
+				id: pb.player.id,
+				displayName: pb.player.displayName,
+				connected: pb.connected,
+			})),
+			200,
+		)
 	},
 )
 

@@ -29,6 +29,7 @@
 		"@tanstack/react-router": "^1.131.2",
 		"@tanstack/react-router-devtools": "^1.131.2",
 		"@tanstack/react-table": "^8.21.3",
+		"canvas-confetti": "^1.9.3",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"cmdk": "^1.1.1",
@@ -46,6 +47,7 @@
 	},
 	"devDependencies": {
 		"@tanstack/router-plugin": "^1.131.2",
+		"@types/canvas-confetti": "^1.9.0",
 		"@types/js-cookie": "^3.0.6",
 		"@types/luxon": "^3.7.1",
 		"@types/node": "^22.15.31",

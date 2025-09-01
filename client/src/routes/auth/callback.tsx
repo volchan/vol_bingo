@@ -43,7 +43,6 @@ function RouteComponent() {
 
 					navigate({ to: redirectUrl })
 				} catch (err) {
-					console.error('Failed to process authentication:', err)
 					navigate({
 						to: '/',
 						search: { error: 'invalid_tokens' },

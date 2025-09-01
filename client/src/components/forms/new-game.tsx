@@ -43,9 +43,8 @@ export default function NewGameForm() {
 						params: { id: newGame.friendlyId },
 					})
 				},
-				onError: (error) => {
+				onError: () => {
 					// Handle error - maybe show an error toast
-					console.error('Failed to create game:', error)
 				},
 			},
 		)
