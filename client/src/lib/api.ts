@@ -17,6 +17,7 @@ import {
 import { isJwtExpired } from '@/lib/jwt'
 
 const API_BASE = import.meta.env.VITE_API_URL
+const AUTH_BASE = import.meta.env.VITE_AUTH_URL
 
 class ApiClient {
 	private queryClient: QueryClient | null = null
@@ -154,7 +155,7 @@ class ApiClient {
 
 	async getCurrentUser(): Promise<User> {
 		const headers = await this.getAuthHeaderWithRefresh()
-		const response = await this.fetchWithRetry(`${API_BASE}/auth/me`, {
+		const response = await this.fetchWithRetry(`${AUTH_BASE}/auth/me`, {
 			headers,
 		})
 
@@ -171,7 +172,7 @@ class ApiClient {
 			)
 		}
 
-		const response = await this.fetchWithRetry(`${API_BASE}/auth/refresh`, {
+		const response = await this.fetchWithRetry(`${AUTH_BASE}/auth/refresh`, {
 			method: 'POST',
 			headers: {
 				Authorization: `Bearer ${currentTokens.access_token}`,
@@ -215,7 +216,7 @@ class ApiClient {
 	async logout(): Promise<void> {
 		try {
 			const headers = this.getAuthHeader()
-			await this.fetchWithRetry(`${API_BASE}/auth/logout`, {
+			await this.fetchWithRetry(`${AUTH_BASE}/auth/logout`, {
 				method: 'POST',
 				headers,
 			})
@@ -227,7 +228,7 @@ class ApiClient {
 	}
 
 	initiateLogin() {
-		window.location.href = `${API_BASE}/auth/twitch`
+		window.location.href = `${AUTH_BASE}/auth/twitch`
 	}
 
 	async getGames(): Promise<GameWithCreator[]> {
