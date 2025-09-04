@@ -3,7 +3,7 @@ NODE_VERSION = "20"
 NIXPACKS_NODE_VERSION = "20"
 VITE_APP_NAME = "VolBingo"
 VITE_APP_URL = "https://bingo.volchan.fr"
-VITE_API_URL = "/api"
+VITE_API_URL = "https://bingo.volchan.fr/api"
 VITE_APP_ENV = "production"
 
 [phases.setup]
