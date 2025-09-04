@@ -3,6 +3,7 @@ import { websocket } from 'hono/bun'
 import { cors } from 'hono/cors'
 import { requestId } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
+import { serveStatic } from 'hono/bun'
 import { checkDatabaseConnection } from './config/database'
 import env from './config/env'
 import {
@@ -35,6 +36,12 @@ await checkDatabaseConnection()
 app.route('/auth', authRoutes)
 app.route('/ws', websocketRoutes)
 app.route('/api', router)
+
+// Serve static files from client build
+app.use('/*', serveStatic({ root: '../client/dist' }))
+
+// Fallback to index.html for SPA routing
+app.get('*', serveStatic({ path: '../client/dist/index.html' }))
 
 export default {
 	port: env.APP_PORT,

@@ -1,0 +1,20 @@
+[variables]
+NODE_VERSION = "20"
+NIXPACKS_NODE_VERSION = "20"
+VITE_APP_NAME = "VolBingo"
+VITE_APP_URL = "https://bingo.volchan.fr"
+VITE_API_URL = "/api"
+VITE_APP_ENV = "production"
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "bun"]
+aptPkgs = []
+
+[phases.build]
+cmds = [
+  "bun install --frozen-lockfile",
+  "bun run build"
+]
+
+[start]
+cmd = "cd server && bun run migrate && bun run dist/server/src/index.js"
