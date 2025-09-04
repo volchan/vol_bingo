@@ -10,12 +10,18 @@ export const Route = createFileRoute('/')({
 		const hasError = 'error' in search
 		if (hasError) return
 
+		if ('redirect' in search && search.redirect) {
+			sessionStorage.setItem('auth_redirect', search.redirect as string)
+		}
+
 		const tokensFromStorage = localStorage.getItem('auth_tokens')
 		if (tokensFromStorage) {
 			try {
 				const tokens = JSON.parse(tokensFromStorage)
 				if (tokens?.access_token) {
-					return redirect({ to: '/dashboard' })
+					const redirectTo = sessionStorage.getItem('auth_redirect') || '/dashboard'
+					sessionStorage.removeItem('auth_redirect')
+					return redirect({ to: redirectTo })
 				}
 			} catch {
 				localStorage.removeItem('auth_tokens')

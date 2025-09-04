@@ -6,6 +6,7 @@ import {
 import { Hono } from 'hono'
 import { authService } from '../services/auth/auth.service'
 import { createTwitchAuthService } from '../services/auth/twitch-auth.service'
+import env from '../config/env'
 
 const app = new Hono()
 const twitchAuth = createTwitchAuthService()
@@ -17,7 +18,7 @@ app.get('/twitch', async (c) => {
 
 	if (error) {
 		console.error('OAuth error:', error)
-		return c.redirect('http://localhost:5173/auth/error')
+		return c.redirect(`${env.FRONTEND_URL}/auth/error`)
 	}
 
 	if (!code || !state) {
@@ -25,7 +26,7 @@ app.get('/twitch', async (c) => {
 		if (result.success && result.redirectUrl) {
 			return c.redirect(result.redirectUrl)
 		}
-		return c.redirect('http://localhost:5173/auth/error')
+		return c.redirect(`${env.FRONTEND_URL}/auth/error`)
 	}
 
 	const result = await twitchAuth.handleCallback(code, state)
