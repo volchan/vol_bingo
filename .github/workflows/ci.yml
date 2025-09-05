@@ -1,0 +1,29 @@
+name: CI - Lint, Format, Test and SonarCloud Scan
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  lint-and-format:
+    name: Lint and Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.21
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run lint and format
+        run: bunx biome ci
+
+      - name: Run type check
+        run: bun run type-check
