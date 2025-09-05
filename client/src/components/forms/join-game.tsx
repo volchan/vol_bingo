@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useNavigate } from '@tanstack/react-router'
 import { Swords } from 'lucide-react'
 import { Suspense } from 'react'
 import { useForm } from 'react-hook-form'
@@ -16,7 +17,11 @@ import { DashboardFormSkeleton } from '../loading'
 
 export default function JoinGameForm() {
 	const FormSchema = z.object({
-		gameId: z.string(),
+		gameId: z.string().min(10, {
+			message: 'Game ID is required.',
+		}).max(10, {
+			message: 'Game ID must be exactly 10 characters long.',
+		}),
 	})
 
 	const form = useForm({
@@ -26,7 +31,13 @@ export default function JoinGameForm() {
 		},
 	})
 
-	function onSubmitForm(_data: z.infer<typeof FormSchema>) {
+	const navigate = useNavigate()
+
+	function onSubmitForm(data: z.infer<typeof FormSchema>) {
+		navigate({
+			to: '/games/$id',
+			params: { id: data.gameId.trim() },
+		})
 	}
 
 	return (
