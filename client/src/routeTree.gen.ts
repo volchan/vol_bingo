@@ -13,6 +13,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AuthenticatedTestErrorsRouteImport } from './routes/_authenticated/test-errors'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCellsRouteImport } from './routes/_authenticated/cells'
 import { Route as AuthenticatedGamesIdRouteImport } from './routes/_authenticated/games/$id'
@@ -36,6 +37,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTestErrorsRoute = AuthenticatedTestErrorsRouteImport.update({
+  id: '/test-errors',
+  path: '/test-errors',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/cells': typeof AuthenticatedCellsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/test-errors': typeof AuthenticatedTestErrorsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/games/$id': typeof AuthenticatedGamesIdRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/cells': typeof AuthenticatedCellsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/test-errors': typeof AuthenticatedTestErrorsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/games/$id': typeof AuthenticatedGamesIdRoute
 }
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/_authenticated/cells': typeof AuthenticatedCellsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/test-errors': typeof AuthenticatedTestErrorsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/games/$id': typeof AuthenticatedGamesIdRoute
 }
@@ -85,10 +94,18 @@ export interface FileRouteTypes {
     | '/about'
     | '/cells'
     | '/dashboard'
+    | '/test-errors'
     | '/auth/callback'
     | '/games/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/cells' | '/dashboard' | '/auth/callback' | '/games/$id'
+  to:
+    | '/'
+    | '/about'
+    | '/cells'
+    | '/dashboard'
+    | '/test-errors'
+    | '/auth/callback'
+    | '/games/$id'
   id:
     | '__root__'
     | '/'
@@ -96,6 +113,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/_authenticated/cells'
     | '/_authenticated/dashboard'
+    | '/_authenticated/test-errors'
     | '/auth/callback'
     | '/_authenticated/games/$id'
   fileRoutesById: FileRoutesById
@@ -137,6 +155,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/test-errors': {
+      id: '/_authenticated/test-errors'
+      path: '/test-errors'
+      fullPath: '/test-errors'
+      preLoaderRoute: typeof AuthenticatedTestErrorsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -164,12 +189,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedCellsRoute: typeof AuthenticatedCellsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedTestErrorsRoute: typeof AuthenticatedTestErrorsRoute
   AuthenticatedGamesIdRoute: typeof AuthenticatedGamesIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCellsRoute: AuthenticatedCellsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedTestErrorsRoute: AuthenticatedTestErrorsRoute,
   AuthenticatedGamesIdRoute: AuthenticatedGamesIdRoute,
 }
 

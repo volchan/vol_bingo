@@ -3,9 +3,11 @@ export class ApiError extends Error {
 		public status: number,
 		public statusText: string,
 		message?: string,
+		public details?: string,
 	) {
 		super(message || `HTTP ${status}: ${statusText}`)
 		this.name = 'ApiError'
+		this.details = details
 	}
 }
 
