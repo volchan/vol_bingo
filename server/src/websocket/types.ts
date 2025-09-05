@@ -1,6 +1,6 @@
 export interface WebSocketMessage {
 	type: string
-	data?: any
+	data?: unknown
 }
 
 export interface GameStateChangeMessage extends WebSocketMessage {
@@ -51,9 +51,32 @@ export interface GameCellRemovedMessage extends WebSocketMessage {
 	}
 }
 
+export interface BingoAchievedMessage extends WebSocketMessage {
+	type: 'bingo_achieved'
+	data: {
+		gameId: string
+		bingoPlayers: Array<{
+			playerId: string
+			playerBoardId: string
+			playerName: string
+			bingoCount: number
+			isMegaBingo: boolean
+		}>
+		newBingoPlayers: Array<{
+			playerId: string
+			playerBoardId: string
+			playerName: string
+			bingoCount: number
+			isMegaBingo: boolean
+		}>
+		isMegaBingo: boolean
+	}
+}
+
 export type GameMessage =
 	| GameStateChangeMessage
 	| CellMarkedMessage
 	| PlayersListUpdateMessage
 	| GameCellAddedMessage
 	| GameCellRemovedMessage
+	| BingoAchievedMessage

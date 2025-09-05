@@ -1,10 +1,23 @@
 import db from '@server/config/database'
 import { wsLogger } from '@server/config/websocket-logger'
 
+// Generic WebSocket interface to support different environments
+interface WebSocketLike {
+	send(data: string): void
+	close(code?: number, reason?: string): void
+	readyState: number
+}
+
+interface WebSocketMessage {
+	type: string
+	data?: unknown
+	timestamp?: number
+}
+
 interface GameConnection {
 	gameId: string
 	userId: string
-	ws: any
+	ws: WebSocketLike
 	lastActivity: number
 	connectedAt: number
 }
@@ -33,13 +46,13 @@ class WebSocketManager {
 				},
 			},
 		})
-		
-		const playersData = allPlayers.map(pb => ({
+
+		const playersData = allPlayers.map((pb) => ({
 			id: pb.player.id,
 			displayName: pb.player.displayName,
-			connected: pb.connected
+			connected: pb.connected,
 		}))
-		
+
 		this.broadcastToGame(gameId, {
 			type: 'players_list_update',
 			data: {
@@ -50,7 +63,12 @@ class WebSocketManager {
 		})
 	}
 
-	addConnection(connectionId: string, gameId: string, userId: string, ws: any) {
+	addConnection(
+		connectionId: string,
+		gameId: string,
+		userId: string,
+		ws: WebSocketLike,
+	) {
 		const now = Date.now()
 		const connection: GameConnection = {
 			gameId,
@@ -67,7 +85,11 @@ class WebSocketManager {
 		}
 		this.gameConnections.get(gameId)!.add(connectionId)
 
-		wsLogger.connectionManagerStats(this.connections.size, gameId, this.getGameConnections(gameId))
+		wsLogger.connectionManagerStats(
+			this.connections.size,
+			gameId,
+			this.getGameConnections(gameId),
+		)
 	}
 
 	removeConnection(connectionId: string) {
@@ -86,7 +108,7 @@ class WebSocketManager {
 		}
 	}
 
-	removeConnectionByWs(ws: any): GameConnection | null {
+	removeConnectionByWs(ws: WebSocketLike): GameConnection | null {
 		for (const [connectionId, connection] of this.connections) {
 			if (connection.ws === ws) {
 				const removedConnection = { ...connection } // Copy before removal
@@ -97,7 +119,11 @@ class WebSocketManager {
 		return null
 	}
 
-	broadcastToGame(gameId: string, message: any, excludeUserId?: string) {
+	broadcastToGame(
+		gameId: string,
+		message: WebSocketMessage,
+		excludeUserId?: string,
+	) {
 		const gameConns = this.gameConnections.get(gameId)
 		if (!gameConns) {
 			return
@@ -110,12 +136,16 @@ class WebSocketManager {
 				if (excludeUserId && connection.userId === excludeUserId) {
 					continue
 				}
-				
+
 				try {
 					connection.ws.send(JSON.stringify(message))
 					sentCount++
 				} catch (error) {
-					wsLogger.error(connectionId, 'Failed to send broadcast message', error as Error)
+					wsLogger.error(
+						connectionId,
+						'Failed to send broadcast message',
+						error as Error,
+					)
 					this.removeConnection(connectionId)
 				}
 			}
@@ -123,13 +153,17 @@ class WebSocketManager {
 		wsLogger.broadcastMessage(gameId, message.type, sentCount)
 	}
 
-	broadcastToUser(userId: string, message: any) {
+	broadcastToUser(userId: string, message: WebSocketMessage) {
 		for (const [connectionId, connection] of this.connections) {
 			if (connection.userId === userId) {
 				try {
 					connection.ws.send(JSON.stringify(message))
 				} catch (error) {
-					wsLogger.error(connectionId, `Failed to send message to user ${userId}`, error as Error)
+					wsLogger.error(
+						connectionId,
+						`Failed to send message to user ${userId}`,
+						error as Error,
+					)
 					this.removeConnection(connectionId)
 				}
 			}
@@ -152,19 +186,33 @@ class WebSocketManager {
 		for (const [connectionId, connection] of this.connections) {
 			if (now - connection.lastActivity > abandonedTimeout) {
 				wsLogger.connectionCleanup(connectionId, 'abandoned_timeout')
-				
+
 				this.removeConnection(connectionId)
-				
+
 				if (!this.hasActiveConnections(connection.userId, connection.gameId)) {
 					try {
-						const playerBoardsRepository = await import('@server/repositories/player-boards')
-						await playerBoardsRepository.default.setPlayerConnected(connection.userId, connection.gameId, false)
-						
-						wsLogger.playerDisconnected(connection.userId, connection.gameId, 'abandoned_timeout')
-						
+						const playerBoardsRepository = await import(
+							'@server/repositories/player-boards'
+						)
+						await playerBoardsRepository.default.setPlayerConnected(
+							connection.userId,
+							connection.gameId,
+							false,
+						)
+
+						wsLogger.playerDisconnected(
+							connection.userId,
+							connection.gameId,
+							'abandoned_timeout',
+						)
+
 						await this.broadcastPlayersList(connection.gameId)
 					} catch (error) {
-						wsLogger.error(connectionId, 'Failed to handle abandoned connection', error as Error)
+						wsLogger.error(
+							connectionId,
+							'Failed to handle abandoned connection',
+							error as Error,
+						)
 					}
 				}
 			}
@@ -197,6 +245,19 @@ class WebSocketManager {
 			}
 		}
 		return false
+	}
+
+	// Clean up resources when the manager is destroyed
+	destroy(): void {
+		if (this.cleanupInterval) {
+			clearInterval(this.cleanupInterval)
+		}
+		// Close all connections
+		for (const connection of this.connections.values()) {
+			connection.ws.close()
+		}
+		this.connections.clear()
+		this.gameConnections.clear()
 	}
 }
 

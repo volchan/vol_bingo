@@ -26,8 +26,7 @@ export default function JoinGameForm() {
 		},
 	})
 
-	function onSubmitForm(_data: z.infer<typeof FormSchema>) {
-	}
+	function onSubmitForm(_data: z.infer<typeof FormSchema>) {}
 
 	return (
 		<Suspense fallback={<DashboardFormSkeleton />}>

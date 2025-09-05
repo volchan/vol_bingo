@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
+import confetti from 'canvas-confetti'
 import { Copy, Edit, Loader2, Play, Trophy } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import confetti from 'canvas-confetti'
 import { BingoGrid } from '@/components/bingo-grid'
 import { CellManager } from '@/components/cell-manager'
 import { PlayerBingoGrid } from '@/components/player-bingo-grid'
@@ -56,7 +56,7 @@ function RouteComponent() {
 
 			const runConfetti = () => {
 				const timeLeft = animationEnd - Date.now()
-				
+
 				if (timeLeft <= 0) return
 
 				const dialogElement = document.querySelector('[role="dialog"]')
@@ -67,7 +67,7 @@ function RouteComponent() {
 					const dialogRect = dialogElement.getBoundingClientRect()
 					const centerX = dialogRect.left + dialogRect.width / 2
 					const topY = dialogRect.top + 20
-					
+
 					originX = centerX / window.innerWidth
 					originY = topY / window.innerHeight
 				}
@@ -79,7 +79,14 @@ function RouteComponent() {
 						spread: 80,
 						angle: 90,
 						origin: { x: originX - 0.2, y: originY },
-						colors: ['#FFD700', '#FFA500', '#FF6347', '#32CD32', '#1E90FF', '#9932CC'],
+						colors: [
+							'#FFD700',
+							'#FFA500',
+							'#FF6347',
+							'#32CD32',
+							'#1E90FF',
+							'#9932CC',
+						],
 					})
 					confetti({
 						particleCount: 100,
@@ -87,7 +94,14 @@ function RouteComponent() {
 						spread: 80,
 						angle: 90,
 						origin: { x: originX + 0.2, y: originY },
-						colors: ['#FFD700', '#FFA500', '#FF6347', '#32CD32', '#1E90FF', '#9932CC'],
+						colors: [
+							'#FFD700',
+							'#FFA500',
+							'#FF6347',
+							'#32CD32',
+							'#1E90FF',
+							'#9932CC',
+						],
 					})
 					confetti({
 						particleCount: 150,
@@ -95,7 +109,14 @@ function RouteComponent() {
 						spread: 90,
 						angle: 90,
 						origin: { x: originX, y: originY - 0.02 },
-						colors: ['#FFD700', '#FFA500', '#FF6347', '#32CD32', '#1E90FF', '#9932CC'],
+						colors: [
+							'#FFD700',
+							'#FFA500',
+							'#FF6347',
+							'#32CD32',
+							'#1E90FF',
+							'#9932CC',
+						],
 					})
 					setTimeout(() => requestAnimationFrame(runConfetti), 100)
 				} else {
@@ -106,9 +127,16 @@ function RouteComponent() {
 						angle: 90,
 						origin: {
 							x: originX,
-							y: originY
+							y: originY,
 						},
-						colors: ['#FFD700', '#FFA500', '#FF6347', '#32CD32', '#1E90FF', '#9932CC'],
+						colors: [
+							'#FFD700',
+							'#FFA500',
+							'#FF6347',
+							'#32CD32',
+							'#1E90FF',
+							'#9932CC',
+						],
 					})
 					setTimeout(() => requestAnimationFrame(runConfetti), 200)
 				}
@@ -120,10 +148,14 @@ function RouteComponent() {
 			const timer = setTimeout(() => {
 				websocket.setShowBingoDialog(false)
 			}, 10000)
-			
+
 			return () => clearTimeout(timer)
 		}
-	}, [websocket.showBingoDialog, websocket.setShowBingoDialog, websocket.isMegaBingo])
+	}, [
+		websocket.showBingoDialog,
+		websocket.setShowBingoDialog,
+		websocket.isMegaBingo,
+	])
 
 	if (isLoading) {
 		return (
@@ -234,8 +266,12 @@ function RouteComponent() {
 		editGameMutation.mutate(game.friendlyId)
 	}
 
-	const isGameCreator =
-		!!(user && game && game.creator && user.id === game.creator.id)
+	const isGameCreator = !!(
+		user &&
+		game &&
+		game.creator &&
+		user.id === game.creator.id
+	)
 
 	return (
 		<div className="container mx-auto p-4 space-y-6">
@@ -259,9 +295,10 @@ function RouteComponent() {
 						<div className="flex items-center gap-2 text-xs text-muted-foreground">
 							<div
 								className={`w-1.5 h-1.5 rounded-full ${
-									websocket.isConnected 
-										? 'bg-green-500' 
-										: websocket.connectionStatus === 'reconnecting' || websocket.connectionStatus === 'refreshing_token'
+									websocket.isConnected
+										? 'bg-green-500'
+										: websocket.connectionStatus === 'reconnecting' ||
+												websocket.connectionStatus === 'refreshing_token'
 											? 'bg-yellow-500 animate-pulse'
 											: 'bg-red-500'
 								}`}
@@ -271,22 +308,25 @@ function RouteComponent() {
 									? 'Connected'
 									: websocket.connectionStatus === 'reconnecting'
 										? `Reconnecting... (${websocket.reconnectAttempts}/${websocket.maxReconnectAttempts})`
-									: websocket.connectionStatus === 'refreshing_token'
-										? 'Refreshing authentication...'
-									: websocket.connectionStatus === 'error'
-										? 'Connection Error'
-									: 'Disconnected'}
+										: websocket.connectionStatus === 'refreshing_token'
+											? 'Refreshing authentication...'
+											: websocket.connectionStatus === 'error'
+												? 'Connection Error'
+												: 'Disconnected'}
 							</span>
-							{(!websocket.isConnected && !['reconnecting', 'refreshing_token'].includes(websocket.connectionStatus)) && (
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={websocket.reconnect}
-									className="h-5 px-2 text-xs"
-								>
-									Reconnect
-								</Button>
-							)}
+							{!websocket.isConnected &&
+								!['reconnecting', 'refreshing_token'].includes(
+									websocket.connectionStatus,
+								) && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={websocket.reconnect}
+										className="h-5 px-2 text-xs"
+									>
+										Reconnect
+									</Button>
+								)}
 						</div>
 					</div>
 
@@ -382,7 +422,6 @@ function RouteComponent() {
 				</div>
 
 				<div className="space-y-4">
-
 					{game.status === 'draft' && (
 						<div className="bg-muted/50 rounded-md p-3 flex items-center gap-3">
 							<Loader2 className="animate-spin" />
@@ -427,7 +466,7 @@ function RouteComponent() {
 			<div className="flex gap-6">
 				{(game.status === 'ready' || game.status === 'playing') && (
 					<div className="w-64 flex-shrink-0">
-						<PlayersList 
+						<PlayersList
 							creator={game.creator}
 							connectedPlayers={websocket.connectedPlayers}
 							currentUserId={user?.id}
@@ -514,7 +553,10 @@ function RouteComponent() {
 			</div>
 
 			{/* Server-driven Bingo Dialog */}
-			<Dialog open={websocket.showBingoDialog} onOpenChange={websocket.setShowBingoDialog}>
+			<Dialog
+				open={websocket.showBingoDialog}
+				onOpenChange={websocket.setShowBingoDialog}
+			>
 				<DialogContent className="sm:max-w-md">
 					<DialogHeader>
 						<div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-100 dark:bg-yellow-900/20">
@@ -529,32 +571,45 @@ function RouteComponent() {
 									<span className="text-xl font-bold text-yellow-600 dark:text-yellow-400 block">
 										ENTIRE GRID COMPLETED!
 									</span>
-									<span className="block">Ultimate bingo achievement unlocked! 🏆</span>
+									<span className="block">
+										Ultimate bingo achievement unlocked! 🏆
+									</span>
 								</span>
 							) : (
 								<span className="space-y-3 block">
 									{/* Show who got NEW bingos (not in mega bingo) */}
 									{websocket.newBingoPlayers.length === 1 ? (
 										<span className="block text-green-600 dark:text-green-400 font-bold">
-											🎉 <strong>{websocket.newBingoPlayers[0]?.playerName}</strong> just got a new bingo!
+											🎉{' '}
+											<strong>
+												{websocket.newBingoPlayers[0]?.playerName}
+											</strong>{' '}
+											just got a new bingo!
 										</span>
 									) : websocket.newBingoPlayers.length > 1 ? (
 										<span className="space-y-1 block">
 											{websocket.newBingoPlayers.length <= 5 ? (
 												<>
-													<span className="block text-green-600 dark:text-green-400 font-bold">🎉 New bingos achieved by:</span>
+													<span className="block text-green-600 dark:text-green-400 font-bold">
+														🎉 New bingos achieved by:
+													</span>
 													{websocket.newBingoPlayers
-														.sort((a, b) => a.playerName.localeCompare(b.playerName))
-														.map((player, index) => (
-															<span key={index} className="block text-green-600 dark:text-green-400 font-semibold">
+														.sort((a, b) =>
+															a.playerName.localeCompare(b.playerName),
+														)
+														.map((player) => (
+															<span
+																key={`${player.playerId}-${player.playerBoardId}`}
+																className="block text-green-600 dark:text-green-400 font-semibold"
+															>
 																<strong>{player.playerName}</strong>
 															</span>
-														))
-													}
+														))}
 												</>
 											) : (
 												<span className="block text-green-600 dark:text-green-400 font-bold">
-													🎉 {websocket.newBingoPlayers.length} players just got new bingos!
+													🎉 {websocket.newBingoPlayers.length} players just got
+													new bingos!
 												</span>
 											)}
 										</span>
@@ -563,25 +618,32 @@ function RouteComponent() {
 									{/* Show current bingo status */}
 									{websocket.bingoPlayers.length === 1 ? (
 										<span className="block">
-											<strong>{websocket.bingoPlayers[0]?.playerName}</strong> has{' '}
+											<strong>{websocket.bingoPlayers[0]?.playerName}</strong>{' '}
+											has{' '}
 											{websocket.bingoPlayers[0]?.bingoCount > 1 ? (
 												<span className="text-yellow-600 dark:text-yellow-400 font-bold">
 													{websocket.bingoPlayers[0]?.bingoCount} bingos
 												</span>
 											) : (
 												'a bingo'
-											)}!
+											)}
+											!
 										</span>
 									) : websocket.bingoPlayers.length > 1 ? (
 										<span className="space-y-1 block">
 											<span className="block">
-												{websocket.bingoPlayers.length <= 5 ? 'Current bingo standings:' : 'Top 5 bingo leaders:'}
+												{websocket.bingoPlayers.length <= 5
+													? 'Current bingo standings:'
+													: 'Top 5 bingo leaders:'}
 											</span>
 											{websocket.bingoPlayers
 												.sort((a, b) => b.bingoCount - a.bingoCount)
 												.slice(0, 5)
-												.map((player, index) => (
-													<span key={index} className="font-semibold block">
+												.map((player) => (
+													<span
+														key={`${player.playerId}-${player.playerBoardId}`}
+														className="font-semibold block"
+													>
 														<strong>{player.playerName}</strong>{' '}
 														{player.bingoCount > 1 ? (
 															<span className="text-yellow-600 dark:text-yellow-400">
@@ -591,11 +653,11 @@ function RouteComponent() {
 															'(1 bingo)'
 														)}
 													</span>
-												))
-											}
+												))}
 											{websocket.bingoPlayers.length > 5 && (
 												<span className="block text-sm text-muted-foreground">
-													...and {websocket.bingoPlayers.length - 5} more players
+													...and {websocket.bingoPlayers.length - 5} more
+													players
 												</span>
 											)}
 										</span>
