@@ -1,6 +1,6 @@
 import { BlockGameIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { Blocks, FileText, LayoutDashboard, LogOut } from 'lucide-react'
 import type * as React from 'react'
 import { NavMain } from '@/components/nav-main'
@@ -24,19 +24,16 @@ const data = {
       title: 'Dashboard',
       url: '/dashboard',
       icon: LayoutDashboard,
-      isActive: true,
     },
     {
       title: 'Cells',
       url: '/cells',
       icon: Blocks,
-      isActive: true,
     },
     {
       title: 'Templates',
       url: '/templates',
       icon: FileText,
-      isActive: true,
     },
   ],
   navSecondary: [
@@ -53,6 +50,12 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const navMainWithActiveState = data.navMain.map((item) => ({
+    ...item,
+    isActive: location.pathname === item.url,
+  }))
 
   const handleLogout = async () => {
     await logout()
@@ -87,7 +90,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMainWithActiveState} />
         {data.projects.length > 0 && <NavProjects projects={data.projects} />}
         <NavSecondary
           items={data.navSecondary}
