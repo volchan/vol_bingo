@@ -7,6 +7,7 @@ export interface Game {
 	friendlyId: string
 	winnerId?: string | null
 	status: 'draft' | 'ready' | 'playing' | 'completed'
+	currentTemplateId?: string | null
 	creator?: {
 		id: string
 		displayName: string

@@ -115,7 +115,6 @@ const gamesRepository = {
 
 		if (!updatedGame) throw new Error('Failed to update game')
 
-		// Fetch the complete game with creator and gameCells relations
 		const gameWithCreator = await executor.query.games.findFirst({
 			where: (table, { eq }) => eq(table.id, updatedGame.id),
 			with: {

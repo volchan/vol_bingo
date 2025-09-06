@@ -55,7 +55,6 @@ async function broadcastPlayersList(gameId: string) {
 	})
 }
 
-// Bingo detection function
 const checkForBingo = async (gameId: string, size: number = 5) => {
 	const playerBoards = await playerBoardsRepository.getAllForGame(gameId)
 	const bingoResults = []
@@ -80,7 +79,6 @@ const checkForBingo = async (gameId: string, size: number = 5) => {
 	return bingoResults
 }
 
-// Check for bingo state excluding a specific cell (simulate before marking)
 const checkForBingoBefore = async (
 	gameId: string,
 	excludeGameCellId: string,
@@ -92,7 +90,6 @@ const checkForBingoBefore = async (
 	for (const playerBoard of playerBoards) {
 		if (!playerBoard.playerBoardCells) continue
 
-		// Filter out the cell we're checking as if it wasn't marked
 		const cellsWithoutCurrent = playerBoard.playerBoardCells.filter(
 			(cell) => cell.gameCellId !== excludeGameCellId,
 		)
@@ -113,7 +110,6 @@ const checkForBingoBefore = async (
 	return bingoResults
 }
 
-// Compare bingo results to find new bingos
 const getNewBingos = (
 	previousResults: BingoResult[],
 	currentResults: BingoResult[],
@@ -125,12 +121,9 @@ const getNewBingos = (
 			(p) => p.playerId === current.playerId,
 		)
 
-		// New player with bingo
 		if (!previous) {
 			newBingos.push(current)
-		}
-		// Existing player with more bingos or achieved mega bingo
-		else if (
+		} else if (
 			current.bingoCount > previous.bingoCount ||
 			(current.isMegaBingo && !previous.isMegaBingo)
 		) {
@@ -141,7 +134,6 @@ const getNewBingos = (
 	return newBingos
 }
 
-// Check if a player's board has bingo patterns and count them
 const checkBingoPattern = (
 	cells: PlayerBoardCellForBingo[],
 	size: number = 5,
@@ -150,7 +142,6 @@ const checkBingoPattern = (
 		.fill(null)
 		.map(() => Array(size).fill(false))
 
-	// Fill the grid with marked status
 	cells.forEach((cell) => {
 		const row = Math.floor(cell.position / size)
 		const col = cell.position % size
@@ -161,31 +152,26 @@ const checkBingoPattern = (
 
 	let bingoCount = 0
 
-	// Check rows
 	for (let row = 0; row < size; row++) {
 		if (grid[row] && grid[row]!.every((cell) => cell)) {
 			bingoCount++
 		}
 	}
 
-	// Check columns
 	for (let col = 0; col < size; col++) {
 		if (grid.every((row) => row?.[col])) {
 			bingoCount++
 		}
 	}
 
-	// Check main diagonal (top-left to bottom-right)
 	if (grid.every((row, i) => row?.[i])) {
 		bingoCount++
 	}
 
-	// Check anti-diagonal (top-right to bottom-left)
 	if (grid.every((row, i) => row?.[size - 1 - i])) {
 		bingoCount++
 	}
 
-	// Check if entire grid is filled (mega bingo)
 	const isMegaBingo = grid.every((row) => row?.every((cell) => cell))
 
 	return {
@@ -228,7 +214,6 @@ app.get(
 			throw new Error('Game friendly ID is required')
 		}
 
-		// Get the actual game ID from friendlyId
 		const game = await gamesRepository.getByFriendlyId(friendlyId)
 		if (!game) {
 			throw new Error('Game not found')
@@ -289,9 +274,7 @@ app.get(
 						wsManager.updateActivity(currentConnectionId)
 					}
 
-					// Handle ping for heartbeat
 					if (data.type === 'ping') {
-						// Just updating activity is enough - no need to respond
 						return
 					}
 
@@ -312,7 +295,6 @@ app.get(
 								return
 							}
 
-							// Get the game cell and validate permissions
 							const gameCell = await gameCellRepository.getById(gameCellId)
 							if (!gameCell) {
 								ws.send(
@@ -324,7 +306,6 @@ app.get(
 								return
 							}
 
-							// Get the game to check permissions and status
 							const game = await gamesRepository.getById(gameCell.gameId)
 							if (!game) {
 								ws.send(
@@ -356,7 +337,6 @@ app.get(
 								return
 							}
 
-							// Mark the cell
 							const updatedGameCell = await gameCellRepository.markCell(
 								gameCellId,
 								marked,
@@ -371,7 +351,6 @@ app.get(
 								return
 							}
 
-							// Broadcast the cell marked event to all players
 							wsManager.broadcastToGame(game.id, {
 								type: 'cell_marked',
 								data: {
@@ -381,16 +360,13 @@ app.get(
 								},
 							})
 
-							// Check for bingo after marking a cell
 							if (marked) {
-								// Get previous bingo state before this mark
 								const previousBingoResults = await checkForBingoBefore(
 									game.id,
 									gameCellId,
 								)
 								const currentBingoResults = await checkForBingo(game.id)
 
-								// Check if there are new bingos
 								const newBingos = getNewBingos(
 									previousBingoResults,
 									currentBingoResults,

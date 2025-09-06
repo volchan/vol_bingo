@@ -21,7 +21,24 @@ app.get('/', async (c) => {
 		return c.json({ error: 'Failed to fetch cells' }, 500)
 	}
 
-	return c.json(cells, 200)
+	const cellsWithUsage = await Promise.all(
+		cells.map(async (cell) => {
+			const isUsedInGames = await cellsRepository.isUsedInGames(cell.id)
+			const isUsedInNonDraftGames = await cellsRepository.isUsedInNonDraftGames(
+				cell.id,
+			)
+
+			return {
+				...cell,
+				isUsedInGames,
+				isUsedInNonDraftGames,
+				canDelete: !isUsedInNonDraftGames,
+				canEdit: !isUsedInNonDraftGames,
+			}
+		}),
+	)
+
+	return c.json(cellsWithUsage, 200)
 })
 
 const SearchCellsSchema = z.object({
@@ -80,12 +97,15 @@ app.post(
 		const { gameId } = c.req.valid('form')
 
 		try {
+			const cell = await cellsRepository.getById(id, c.get('currentUser').id)
+			if (!cell) {
+				return c.json({ error: 'Cell not found' }, 404)
+			}
+
 			const gameCell = await gameCellRepository.create(gameId, id)
 			if (!gameCell) {
 				return c.json({ error: 'Failed to link cell to game' }, 500)
 			}
-
-			const cell = await cellsRepository.getById(id, c.get('currentUser').id)
 			const gameCells = await gameCellRepository.getAllByGameId(gameId)
 
 			wsManager.broadcastToGame(gameId, {

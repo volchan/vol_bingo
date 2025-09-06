@@ -4,6 +4,10 @@ export interface Cell {
 	userId: string
 	createdAt: Date
 	updatedAt: Date | null
+	isUsedInGames?: boolean
+	isUsedInNonDraftGames?: boolean
+	canDelete?: boolean
+	canEdit?: boolean
 }
 
 export interface GameCell {

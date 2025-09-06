@@ -38,8 +38,6 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table'
-import { Route as CellsRoute } from '@/routes/_authenticated/cells'
-
 export function DataTable<TData, TValue>({
 	columns,
 	data,
@@ -49,8 +47,6 @@ export function DataTable<TData, TValue>({
 	data: TData[]
 	filterColumn?: string
 }>) {
-	const search = CellsRoute.useSearch()
-	const navigate = CellsRoute.useNavigate()
 	const [sorting, setSorting] = React.useState<SortingState>([])
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
 		[],
@@ -59,9 +55,9 @@ export function DataTable<TData, TValue>({
 		React.useState<VisibilityState>({})
 	const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({})
 
-	// Sync pagination state with URL
-	const pageSize = Number(search.pageSize) || 25
-	const pageIndex = Number(search.page) || 0
+	// Default pagination state (not synced with URL for generic use)
+	const pageSize = 25
+	const pageIndex = 0
 	const table = useReactTable({
 		data,
 		columns,
@@ -151,12 +147,6 @@ export function DataTable<TData, TValue>({
 					<Select
 						value={String(Math.max(table.getState().pagination.pageSize, 25))}
 						onValueChange={(value) => {
-							navigate({
-								search: {
-									pageSize: Number(value),
-									page: 0,
-								},
-							})
 							table.setPageSize(Number(value))
 						}}
 					>

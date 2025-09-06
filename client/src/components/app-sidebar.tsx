@@ -1,7 +1,7 @@
 import { BlockGameIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Blocks, LayoutDashboard, LogOut } from 'lucide-react'
+import { Blocks, FileText, LayoutDashboard, LogOut } from 'lucide-react'
 import type * as React from 'react'
 import { NavMain } from '@/components/nav-main'
 import { NavProjects } from '@/components/nav-projects'
@@ -30,6 +30,12 @@ const data = {
 			title: 'Cells',
 			url: '/cells',
 			icon: Blocks,
+			isActive: true,
+		},
+		{
+			title: 'Templates',
+			url: '/templates',
+			icon: FileText,
 			isActive: true,
 		},
 	],

@@ -2,6 +2,7 @@ export * from './api/games'
 export * from './models/cell'
 export * from './models/game'
 export * from './models/playerBoard'
+export * from './models/template'
 export * from './models/user'
 
 export interface ApiResponse {

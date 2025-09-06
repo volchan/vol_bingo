@@ -6,6 +6,8 @@ export type Cell = {
 	createdAt: string
 	onDelete?: (id: string) => void
 	onEdit?: (id: string, value: string) => void
+	canDelete?: boolean
+	canEdit?: boolean
 }
 
 export const columns: ColumnDef<Cell>[] = [

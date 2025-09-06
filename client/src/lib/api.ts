@@ -2,10 +2,14 @@ import type { QueryClient } from '@tanstack/react-query'
 import type {
 	AuthTokens,
 	Cell,
+	CreateTemplateRequest,
 	Game,
 	GameWithCreator,
 	PlayedGame,
 	PlayerBoard,
+	Template,
+	TemplateWithCells,
+	TemplateWithCreator,
 	User,
 } from 'shared'
 import {
@@ -425,6 +429,118 @@ class ApiClient {
 		)
 
 		return this.handleResponse<PlayerBoard>(response)
+	}
+
+	// Template methods
+	async getTemplates(): Promise<TemplateWithCreator[]> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(`${API_BASE}/templates`, {
+			headers,
+		})
+
+		const data = await this.handleResponse<TemplateWithCreator[]>(response)
+		return data || []
+	}
+
+	async checkTemplateName(
+		name: string,
+		excludeId?: string,
+	): Promise<{ exists: boolean }> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const params = new URLSearchParams()
+		params.append('name', name)
+		if (excludeId) params.append('excludeId', excludeId)
+
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/templates/check-name?${params}`,
+			{
+				method: 'GET',
+				headers,
+			},
+		)
+
+		return this.handleResponse<{ exists: boolean }>(response)
+	}
+
+	async getTemplate(templateId: string): Promise<TemplateWithCells> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/templates/${templateId}`,
+			{
+				headers,
+			},
+		)
+
+		return this.handleResponse<TemplateWithCells>(response)
+	}
+
+	async createTemplate(data: CreateTemplateRequest): Promise<Template> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const params = new URLSearchParams()
+		params.append('name', data.name)
+		if (data.description) {
+			params.append('description', data.description)
+		}
+		data.cellIds.forEach((cellId: string) => {
+			params.append('cellIds', cellId)
+		})
+		if (data.gameId) {
+			params.append('gameId', data.gameId)
+		}
+
+		const response = await this.fetchWithRetry(`${API_BASE}/templates`, {
+			method: 'POST',
+			headers,
+			body: params,
+		})
+
+		return this.handleResponse<Template>(response)
+	}
+
+	async updateTemplate(
+		templateId: string,
+		data: CreateTemplateRequest,
+	): Promise<Template> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const params = new URLSearchParams()
+		params.append('name', data.name)
+		if (data.description) {
+			params.append('description', data.description)
+		}
+		data.cellIds.forEach((cellId: string) => {
+			params.append('cellIds', cellId)
+		})
+
+		const response = await this.fetchWithRetry(
+			`${API_BASE}/templates/${templateId}`,
+			{
+				method: 'PUT',
+				headers,
+				body: params,
+			},
+		)
+
+		return this.handleResponse<Template>(response)
+	}
+
+	async deleteTemplate(templateId: string): Promise<void> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		await this.fetchWithRetry(`${API_BASE}/templates/${templateId}`, {
+			method: 'DELETE',
+			headers,
+		})
+	}
+
+	async applyTemplate(gameId: string, templateId: string): Promise<void> {
+		const headers = await this.getAuthHeaderWithRefresh()
+		const params = new URLSearchParams()
+		params.append('templateId', templateId)
+
+		await this.fetchWithRetry(`${API_BASE}/templates/apply/${gameId}`, {
+			method: 'POST',
+			headers,
+			body: params,
+		})
 	}
 }
 export const apiClient = new ApiClient()

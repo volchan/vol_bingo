@@ -496,6 +496,8 @@ function RouteComponent() {
 						<CellManager
 							gameId={game.id}
 							gameCells={game.gameCells || []}
+							currentTemplateId={game.currentTemplateId}
+							gameFriendlyId={game.friendlyId}
 							onCellLinked={() => refetch()}
 							onCellUnlinked={() => refetch()}
 						/>

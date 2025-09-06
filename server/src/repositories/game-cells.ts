@@ -1,18 +1,33 @@
 import db from '@server/config/database'
+import type * as schema from '@server/schemas'
 import { gameCells } from '@server/schemas/game-cells'
+import type { ExtractTablesWithRelations } from 'drizzle-orm'
 import { eq } from 'drizzle-orm'
+import type { NodePgTransaction } from 'drizzle-orm/node-postgres'
 
-const gameCellsRepository = {
+type DbTransaction = NodePgTransaction<
+	typeof schema,
+	ExtractTablesWithRelations<typeof schema>
+>
+
+export const gameCellRepository = {
 	async getById(id: string, userId?: string) {
 		const result = await db.query.gameCells.findFirst({
 			where: eq(gameCells.id, id),
 			with: {
-				cell: true,
+				cell: {
+					columns: {
+						id: true,
+						value: true,
+						userId: true,
+						createdAt: true,
+						updatedAt: true,
+					},
+				},
 			},
 		})
 
-		// If userId is provided, check ownership
-		if (userId && result && result.cell?.userId !== userId) {
+		if (userId && result && result.cell && result.cell.userId !== userId) {
 			return null
 		}
 
@@ -29,11 +44,73 @@ const gameCellsRepository = {
 		return gameCell
 	},
 
+	async clearGameCells(gameId: string, tx?: DbTransaction) {
+		const dbInstance = tx || db
+		await dbInstance.delete(gameCells).where(eq(gameCells.gameId, gameId))
+	},
+
+	async linkMultipleCells(
+		gameId: string,
+		cellIds: string[],
+		tx?: DbTransaction,
+	) {
+		if (cellIds.length === 0) return []
+
+		const dbInstance = tx || db
+
+		const values = cellIds.map((cellId) => ({
+			gameId,
+			cellId,
+		}))
+
+		const results = await dbInstance
+			.insert(gameCells)
+			.values(values)
+			.returning()
+
+		return results
+	},
+
+	async applyTemplate(
+		gameId: string,
+		cellIds: string[],
+		_templateId: string | null,
+		tx?: DbTransaction,
+	) {
+		const dbInstance = tx || db
+
+		await dbInstance.delete(gameCells).where(eq(gameCells.gameId, gameId))
+
+		if (cellIds.length > 0) {
+			const values = cellIds.map((cellId) => ({
+				gameId,
+				cellId,
+			}))
+
+			const results = await dbInstance
+				.insert(gameCells)
+				.values(values)
+				.returning()
+
+			return results
+		}
+
+		return []
+	},
+
 	async getAllByGameId(gameId: string) {
 		const results = await db.query.gameCells.findMany({
 			where: eq(gameCells.gameId, gameId),
 			with: {
-				cell: true,
+				cell: {
+					columns: {
+						id: true,
+						value: true,
+						userId: true,
+						createdAt: true,
+						updatedAt: true,
+					},
+				},
 			},
 		})
 
@@ -57,4 +134,4 @@ const gameCellsRepository = {
 	},
 }
 
-export default gameCellsRepository
+export default gameCellRepository
