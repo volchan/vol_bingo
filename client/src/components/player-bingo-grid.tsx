@@ -214,7 +214,7 @@ const PlayerBingoCell = memo(
           className,
         )}
       >
-        <span className="leading-tight text-wrap">{cell.text}</span>
+        <span className="leading-tight text-clip">{cell.text}</span>
       </Button>
     )
   },
