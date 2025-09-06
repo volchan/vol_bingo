@@ -1,4 +1,4 @@
-name: CI - Lint, Format, Test and SonarCloud Scan
+name: CI - Lint, Format
 
 on:
   push:
@@ -26,4 +26,4 @@ jobs:
         run: bunx biome ci
 
       - name: Run type check
-        run: bun run type-check
+        run: bun run build
