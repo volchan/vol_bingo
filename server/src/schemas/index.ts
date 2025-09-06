@@ -11,8 +11,12 @@ import {
 	playerBoardCellRelations,
 	playerBoardRelations,
 	refreshTokensRelations,
+	templateCellRelations,
+	templateRelations,
 	userRelations,
 } from './relations'
+import { templateCells } from './template-cells'
+import { templates } from './templates'
 import { users } from './users'
 
 export {
@@ -28,6 +32,10 @@ export {
 	playerBoardCellRelations,
 	refreshTokens,
 	refreshTokensRelations,
+	templateCells,
+	templateCellRelations,
+	templates,
+	templateRelations,
 	users,
 	userRelations,
 }

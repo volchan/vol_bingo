@@ -20,18 +20,15 @@ app.patch(
 		const { id } = c.req.valid('param')
 		const user = c.get('currentUser')
 
-		// Get the player board to verify ownership
 		const playerBoard = await playerBoardsRepository.findById(id)
 		if (!playerBoard) {
 			return c.json({ error: 'Player board not found' }, 404)
 		}
 
-		// Verify the player board belongs to the current user
 		if (playerBoard.playerId !== user.id) {
 			return c.json({ error: 'Access denied' }, 403)
 		}
 
-		// Get the game to check status
 		const game = await gamesRepository.getById(playerBoard.gameId)
 		if (!game) {
 			return c.json({ error: 'Game not found' }, 404)
@@ -47,7 +44,6 @@ app.patch(
 		try {
 			await playerBoardsRepository.shufflePlayerBoard(user.id, game.id)
 
-			// Return the updated player board
 			const updatedPlayerBoard =
 				await playerBoardsRepository.getPlayerBoardWithCells(user.id, game.id)
 

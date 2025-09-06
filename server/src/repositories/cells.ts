@@ -1,5 +1,5 @@
 import db from '@server/config/database'
-import { cells } from '@server/schemas'
+import { cells, gameCells } from '@server/schemas'
 import { eq } from 'drizzle-orm'
 import type { Cell } from 'shared/dist'
 
@@ -51,7 +51,36 @@ const cellsRepository = {
 		return cell
 	},
 
+	async isUsedInGames(id: string): Promise<boolean> {
+		const cellUsages = await db.query.gameCells.findMany({
+			where: eq(gameCells.cellId, id),
+		})
+		return cellUsages.length > 0
+	},
+
+	async isUsedInNonDraftGames(id: string): Promise<boolean> {
+		const cellUsages = await db.query.gameCells.findMany({
+			where: eq(gameCells.cellId, id),
+			with: {
+				game: {
+					columns: {
+						status: true,
+					},
+				},
+			},
+		})
+
+		return cellUsages.some(
+			(gameCell) => gameCell.game && gameCell.game.status !== 'draft',
+		)
+	},
+
 	async update(id: string, data: Pick<Cell, 'value'>) {
+		const isUsedInNonDraft = await this.isUsedInNonDraftGames(id)
+		if (isUsedInNonDraft) {
+			throw new Error('Cannot modify cell that is used in non-draft games')
+		}
+
 		const [cell] = await db
 			.update(cells)
 			.set({ ...data, updatedAt: new Date() })
@@ -63,6 +92,11 @@ const cellsRepository = {
 	},
 
 	async delete(id: string) {
+		const isUsedInNonDraft = await this.isUsedInNonDraftGames(id)
+		if (isUsedInNonDraft) {
+			throw new Error('Cannot delete cell that is used in non-draft games')
+		}
+
 		await db.delete(cells).where(eq(cells.id, id))
 	},
 }

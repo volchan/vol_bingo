@@ -1,11 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Loader2, Trash2 } from 'lucide-react'
+import { Edit2, Loader2, Save, Trash2, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { z } from 'zod'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Button } from '@/components/ui/button'
-import { columns as baseColumns, type Cell } from '@/components/ui/columns'
+import type { Cell } from '@/components/ui/columns'
 import { DataTable } from '@/components/ui/data-table'
+import { Input } from '@/components/ui/input'
 import {
 	useDeleteCell,
 	useGetCells,
@@ -23,7 +24,6 @@ export const Route = createFileRoute('/_authenticated/cells')({
 })
 
 function CellsPage() {
-	// const { user } = useAuth()
 	const { data: cells = [] } = useGetCells()
 	const { mutate: deleteCellMutation, isPending } = useDeleteCell()
 	const { mutate: updateCellMutation, isPending: isUpdating } = useUpdateCell()
@@ -71,68 +71,45 @@ function CellsPage() {
 		setEditingValue('')
 	}
 
-	const tableData: Cell[] = cells.map((cell) => ({
+	const tableData = cells.map((cell) => ({
 		id: cell.id,
 		value: cell.value,
 		createdAt:
 			typeof cell.createdAt === 'string'
 				? cell.createdAt
 				: cell.createdAt.toISOString(),
-		onDelete: handleDelete,
-		// Editing props for controlled cell UI
-		isEditing: editingId === cell.id,
-		editingValue: editingId === cell.id ? editingValue : cell.value,
-		isUpdating,
-		editError: editingId === cell.id ? errorMsg : null,
-		onEditInit: handleEditInit,
-		onEditChange: (val: string) => setEditingValue(val),
-		onEditSave: handleEditSave,
-		onEditCancel: handleEditCancel,
-		// For type compatibility
-		onEdit: handleEditInit,
+		canEdit: cell.canEdit,
+		canDelete: cell.canDelete,
 	}))
 
-	const columns = baseColumns.map((col) => {
-		if (col.id === 'actions') {
-			return {
-				...col,
-				cell: ({ row }: { row: { original: Cell } }) => (
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={() => row.original.onDelete?.(row.original.id)}
-						className="text-destructive"
-						disabled={isPending && deletingId === row.original.id}
-					>
-						{isPending && deletingId === row.original.id ? (
-							<Loader2 className="animate-spin" />
-						) : (
-							<Trash2 />
-						)}
-					</Button>
-				),
-			}
-		}
-		if (col.id === 'value') {
-			return {
-				...col,
-				cell: ({ row }: { row: { original: Cell } }) => {
-					const isEditingRow = editingId === row.original.id
-					if (isEditingRow) {
-						return (
-							<div className="flex gap-2 items-center">
-								<input
-									className="border rounded px-2 py-1 text-sm"
-									value={editingValue}
-									onChange={(e) => setEditingValue(e.target.value)}
-									disabled={isUpdating}
-								/>
+	const columns = [
+		{
+			id: 'value',
+			header: 'Value',
+			accessorKey: 'value',
+			cell: ({ row }: { row: { original: Cell } }) => {
+				const isEditingRow = editingId === row.original.id
+				if (isEditingRow) {
+					return (
+						<div className="space-y-2">
+							<Input
+								value={editingValue}
+								onChange={(e) => setEditingValue(e.target.value)}
+								disabled={isUpdating}
+								placeholder="Cell value"
+							/>
+							<div className="flex gap-2">
 								<Button
 									size="sm"
 									variant="outline"
 									onClick={() => handleEditSave(row.original.id)}
-									disabled={isUpdating}
+									disabled={isUpdating || !editingValue.trim()}
 								>
+									{isUpdating ? (
+										<Loader2 className="h-4 w-4 animate-spin" />
+									) : (
+										<Save className="h-4 w-4" />
+									)}
 									Save
 								</Button>
 								<Button
@@ -141,27 +118,78 @@ function CellsPage() {
 									onClick={handleEditCancel}
 									disabled={isUpdating}
 								>
+									<X className="h-4 w-4" />
 									Cancel
 								</Button>
 							</div>
-						)
-					}
-					return (
-						<button
-							type="button"
-							className="cursor-pointer hover:underline bg-transparent border-none p-0 text-left"
-							onClick={() =>
-								handleEditInit(row.original.id, row.original.value)
-							}
-						>
-							{row.original.value}
-						</button>
+						</div>
 					)
-				},
-			}
-		}
-		return col
-	})
+				}
+				return (
+					<div>
+						<div className="font-medium">{row.original.value}</div>
+					</div>
+				)
+			},
+		},
+		{
+			id: 'createdAt',
+			header: 'Created',
+			cell: ({ row }: { row: { original: Cell } }) => {
+				const date = new Date(row.original.createdAt)
+				return (
+					<span className="text-sm text-muted-foreground">
+						{date.toLocaleDateString()}
+					</span>
+				)
+			},
+		},
+		{
+			id: 'actions',
+			header: 'Actions',
+			cell: ({ row }: { row: { original: Cell } }) => (
+				<div className="flex gap-2">
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => handleEditInit(row.original.id, row.original.value)}
+						className={
+							row.original.canEdit
+								? 'text-orange-600 hover:text-orange-700'
+								: 'text-muted-foreground'
+						}
+						disabled={editingId === row.original.id || !row.original.canEdit}
+					>
+						<Edit2
+							className={`h-4 w-4 ${!row.original.canEdit ? 'opacity-50' : ''}`}
+						/>
+					</Button>
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => handleDelete(row.original.id)}
+						className={
+							row.original.canDelete
+								? 'text-destructive'
+								: 'text-muted-foreground'
+						}
+						disabled={
+							(isPending && deletingId === row.original.id) ||
+							!row.original.canDelete
+						}
+					>
+						{isPending && deletingId === row.original.id ? (
+							<Loader2 className="h-4 w-4 animate-spin" />
+						) : (
+							<Trash2
+								className={`h-4 w-4 ${!row.original.canDelete ? 'opacity-50' : ''}`}
+							/>
+						)}
+					</Button>
+				</div>
+			),
+		},
+	]
 
 	return (
 		<ErrorBoundary>

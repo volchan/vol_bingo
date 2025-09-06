@@ -5,10 +5,13 @@ import { games } from './games'
 import { playerBoardCells } from './player-board-cells'
 import { playerBoards } from './player-boards'
 import { refreshTokens } from './refresh-tokens'
+import { templateCells } from './template-cells'
+import { templates } from './templates'
 import { users } from './users'
 
 export const cellRelations = relations(cells, ({ many, one }) => ({
 	gameCells: many(gameCells),
+	templateCells: many(templateCells),
 	user: one(users, {
 		fields: [cells.userId],
 		references: [users.id],
@@ -82,4 +85,24 @@ export const userRelations = relations(users, ({ many }) => ({
 	cells: many(cells),
 	createdGames: many(games, { relationName: 'creator' }),
 	playerBoards: many(playerBoards, { relationName: 'player' }),
+	templates: many(templates),
+}))
+
+export const templateRelations = relations(templates, ({ many, one }) => ({
+	creator: one(users, {
+		fields: [templates.creatorId],
+		references: [users.id],
+	}),
+	templateCells: many(templateCells),
+}))
+
+export const templateCellRelations = relations(templateCells, ({ one }) => ({
+	template: one(templates, {
+		fields: [templateCells.templateId],
+		references: [templates.id],
+	}),
+	cell: one(cells, {
+		fields: [templateCells.cellId],
+		references: [cells.id],
+	}),
 }))

@@ -74,7 +74,6 @@ const playerBoardsRepository = {
 	) => {
 		const executor = tx || db
 
-		// Get all game cells for this game
 		const gameGameCells = await executor
 			.select()
 			.from(gameCells)
@@ -85,10 +84,8 @@ const playerBoardsRepository = {
 			return []
 		}
 
-		// Shuffle the cells randomly for this player's board
 		const shuffledCells = [...gameGameCells].sort(() => Math.random() - 0.5)
 
-		// Create player board cells
 		const playerBoardCellData = shuffledCells.map((gameCell, index) => ({
 			playerBoardId,
 			gameCellId: gameCell.id,
@@ -137,7 +134,6 @@ const playerBoardsRepository = {
 	) => {
 		const executor = tx || db
 
-		// Find the player board
 		const playerBoard = await playerBoardsRepository.findByPlayerAndGame(
 			playerId,
 			gameId,
@@ -147,7 +143,6 @@ const playerBoardsRepository = {
 			throw new Error('Player board not found')
 		}
 
-		// Get all game cells for this game
 		const gameGameCells = await executor
 			.select()
 			.from(gameCells)
@@ -158,15 +153,12 @@ const playerBoardsRepository = {
 			throw new Error('No game cells found')
 		}
 
-		// Shuffle the cells randomly
 		const shuffledCells = [...gameGameCells].sort(() => Math.random() - 0.5)
 
-		// Delete existing player board cells
 		await executor
 			.delete(playerBoardCells)
 			.where(eq(playerBoardCells.playerBoardId, playerBoard.id))
 
-		// Create new shuffled player board cells
 		const playerBoardCellData = shuffledCells.map((gameCell, index) => ({
 			playerBoardId: playerBoard.id,
 			gameCellId: gameCell.id,
@@ -184,13 +176,11 @@ const playerBoardsRepository = {
 	clearAllPlayerBoardCells: async (gameId: string, tx?: DbTransaction) => {
 		const executor = tx || db
 
-		// Get all player boards for this game
 		const gamePlayerBoards = await executor
 			.select()
 			.from(playerBoards)
 			.where(eq(playerBoards.gameId, gameId))
 
-		// Delete all player board cells for this game
 		for (const playerBoard of gamePlayerBoards) {
 			await executor
 				.delete(playerBoardCells)

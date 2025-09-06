@@ -37,13 +37,11 @@ app.get('/:friendlyId', zValidator('param', GameDetailSchema), async (c) => {
 		return c.json({ error: 'Game not found' }, 404)
 	}
 
-	// Automatically create a player board for the current user if they don't have one
 	const playerBoard = await playerBoardsRepository.createIfNotExists({
 		playerId: user.id,
 		gameId: game.id,
 	})
 
-	// If game is ready or playing, initialize player board cells if they don't exist
 	if (game.status === 'ready' || game.status === 'playing') {
 		const existingCells = await db.query.playerBoardCells.findFirst({
 			where: (table, { eq }) => eq(table.playerBoardId, playerBoard.id),
@@ -105,7 +103,6 @@ app.patch(
 			return c.json({ error: 'Game cannot be made ready' }, 400)
 		}
 
-		// Check if the game has exactly 25 cells linked (for 5x5 bingo grid)
 		const gameCells = await gameCellRepository.getAllByGameId(game.id)
 		if (gameCells.length !== 25) {
 			return c.json(
@@ -118,7 +115,6 @@ app.patch(
 
 		let updatedGame: Game | null = null
 		await db.transaction(async (tx) => {
-			// Update game status to ready
 			updatedGame = await gamesRepository.update(
 				{
 					...game,
@@ -127,10 +123,8 @@ app.patch(
 				tx,
 			)
 
-			// Clear any existing player board cells first
 			await playerBoardsRepository.clearAllPlayerBoardCells(game.id, tx)
 
-			// Initialize player board cells for all existing player boards
 			const existingPlayerBoards = await tx.query.playerBoards.findMany({
 				where: (table, { eq }) => eq(table.gameId, game.id),
 			})
@@ -147,10 +141,6 @@ app.patch(
 		if (!updatedGame) {
 			return c.json({ error: 'Failed to make game ready' }, 500)
 		}
-
-		console.log(
-			`🎮 Broadcasting game state change: ready for game ${game.id} (${game.friendlyId})`,
-		)
 
 		wsManager.broadcastToGame(game.id, {
 			type: 'game_state_change',
@@ -196,10 +186,6 @@ app.patch(
 			return c.json({ error: 'Failed to start game' }, 500)
 		}
 
-		console.log(
-			`🎮 Broadcasting game state change: playing for game ${game.id} (${game.friendlyId})`,
-		)
-
 		wsManager.broadcastToGame(game.id, {
 			type: 'game_state_change',
 			data: {
@@ -244,17 +230,12 @@ app.patch(
 				tx,
 			)
 
-			// Clear all existing player board cells when switching to draft mode
 			await playerBoardsRepository.clearAllPlayerBoardCells(game.id, tx)
 		})
 
 		if (!updatedGame) {
 			return c.json({ error: 'Failed to switch game to edit mode' }, 500)
 		}
-
-		console.log(
-			`🎮 Broadcasting game state change: draft for game ${game.id} (${game.friendlyId})`,
-		)
 
 		wsManager.broadcastToGame(game.id, {
 			type: 'game_state_change',
