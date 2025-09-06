@@ -8,40 +8,40 @@ import { zValidator } from './utils'
 const app = new Hono()
 
 const CellLinkSchema = z.object({
-	id: z.string(),
+  id: z.string(),
 })
 
 app.use('*', jwtAuth)
 
 app.delete('/:id', zValidator('param', CellLinkSchema), async (c) => {
-	const { id } = c.req.valid('param')
-	const user = c.get('currentUser')
+  const { id } = c.req.valid('param')
+  const user = c.get('currentUser')
 
-	try {
-		const cell = await gameCellRepository.getById(id, user.id)
-		if (!cell) {
-			return c.json({ error: 'Cell not found' }, 404)
-		}
+  try {
+    const cell = await gameCellRepository.getById(id, user.id)
+    if (!cell) {
+      return c.json({ error: 'Cell not found' }, 404)
+    }
 
-		const gameId = cell.gameId
-		await gameCellRepository.delete(id)
+    const gameId = cell.gameId
+    await gameCellRepository.delete(id)
 
-		const gameCells = await gameCellRepository.getAllByGameId(gameId)
+    const gameCells = await gameCellRepository.getAllByGameId(gameId)
 
-		wsManager.broadcastToGame(gameId, {
-			type: 'game_cell_removed',
-			data: {
-				gameId,
-				cellValue: cell.cell?.value || '',
-				linkedCellsCount: gameCells.length,
-			},
-		})
+    wsManager.broadcastToGame(gameId, {
+      type: 'game_cell_removed',
+      data: {
+        gameId,
+        cellValue: cell.cell?.value || '',
+        linkedCellsCount: gameCells.length,
+      },
+    })
 
-		return c.json({ message: 'Cell unlinked successfully' }, 200)
-	} catch (error) {
-		console.error('Error unlinking cell:', error)
-		return c.json({ error: 'Failed to unlink cell' }, 500)
-	}
+    return c.json({ message: 'Cell unlinked successfully' }, 200)
+  } catch (error) {
+    console.error('Error unlinking cell:', error)
+    return c.json({ error: 'Failed to unlink cell' }, 500)
+  }
 })
 
 export default app

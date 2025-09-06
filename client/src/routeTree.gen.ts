@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthenticatedTestErrorsRouteImport } from './routes/_authenticated/test-errors'
+import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCellsRouteImport } from './routes/_authenticated/cells'
 import { Route as AuthenticatedGamesIdRouteImport } from './routes/_authenticated/games/$id'
@@ -42,6 +43,11 @@ const AuthenticatedTestErrorsRoute = AuthenticatedTestErrorsRouteImport.update({
   path: '/test-errors',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/cells': typeof AuthenticatedCellsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/templates': typeof AuthenticatedTemplatesRoute
   '/test-errors': typeof AuthenticatedTestErrorsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/games/$id': typeof AuthenticatedGamesIdRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/cells': typeof AuthenticatedCellsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/templates': typeof AuthenticatedTemplatesRoute
   '/test-errors': typeof AuthenticatedTestErrorsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/games/$id': typeof AuthenticatedGamesIdRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/_authenticated/cells': typeof AuthenticatedCellsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/test-errors': typeof AuthenticatedTestErrorsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/games/$id': typeof AuthenticatedGamesIdRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/cells'
     | '/dashboard'
+    | '/templates'
     | '/test-errors'
     | '/auth/callback'
     | '/games/$id'
@@ -103,6 +113,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/cells'
     | '/dashboard'
+    | '/templates'
     | '/test-errors'
     | '/auth/callback'
     | '/games/$id'
@@ -113,6 +124,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/_authenticated/cells'
     | '/_authenticated/dashboard'
+    | '/_authenticated/templates'
     | '/_authenticated/test-errors'
     | '/auth/callback'
     | '/_authenticated/games/$id'
@@ -162,6 +174,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTestErrorsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/templates': {
+      id: '/_authenticated/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -189,6 +208,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedCellsRoute: typeof AuthenticatedCellsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedTestErrorsRoute: typeof AuthenticatedTestErrorsRoute
   AuthenticatedGamesIdRoute: typeof AuthenticatedGamesIdRoute
 }
@@ -196,6 +216,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCellsRoute: AuthenticatedCellsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedTestErrorsRoute: AuthenticatedTestErrorsRoute,
   AuthenticatedGamesIdRoute: AuthenticatedGamesIdRoute,
 }
