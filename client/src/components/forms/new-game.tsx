@@ -7,87 +7,87 @@ import { z } from 'zod'
 import { DashboardFormSkeleton } from '@/components/loading'
 import { Button } from '@/components/ui/button'
 import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { useCreateGame } from '@/hooks/api/games.hooks'
 
 export default function NewGameForm() {
-	const FormSchema = z.object({
-		title: z.string().min(1, {
-			message: 'Username must be at least 1 character.',
-		}),
-	})
+  const FormSchema = z.object({
+    title: z.string().min(1, {
+      message: 'Username must be at least 1 character.',
+    }),
+  })
 
-	const form = useForm({
-		resolver: zodResolver(FormSchema),
-		defaultValues: {
-			title: '',
-		},
-	})
+  const form = useForm({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      title: '',
+    },
+  })
 
-	const createGameMutation = useCreateGame()
-	const navigate = useNavigate()
+  const createGameMutation = useCreateGame()
+  const navigate = useNavigate()
 
-	function onSubmitForm(data: z.infer<typeof FormSchema>) {
-		createGameMutation.mutate(
-			{ title: data.title },
-			{
-				onSuccess: (newGame) => {
-					navigate({
-						to: '/games/$id',
-						params: { id: newGame.friendlyId },
-					})
-				},
-				onError: () => {
-					// Handle error - maybe show an error toast
-				},
-			},
-		)
-	}
+  function onSubmitForm(data: z.infer<typeof FormSchema>) {
+    createGameMutation.mutate(
+      { title: data.title },
+      {
+        onSuccess: (newGame) => {
+          navigate({
+            to: '/games/$id',
+            params: { id: newGame.friendlyId },
+          })
+        },
+        onError: () => {
+          // Handle error - maybe show an error toast
+        },
+      },
+    )
+  }
 
-	return (
-		<Suspense fallback={<DashboardFormSkeleton />}>
-			<Form {...form}>
-				<form
-					onSubmit={form.handleSubmit(onSubmitForm)}
-					className="flex-1 flex flex-col gap-5 p-5 border rounded-lg bg-card"
-				>
-					<FormField
-						control={form.control}
-						name="title"
-						render={({ field }) => (
-							<FormItem>
-								<FormControl>
-									<Input
-										placeholder="Enter a name for the Bingo game"
-										{...field}
-									/>
-								</FormControl>
+  return (
+    <Suspense fallback={<DashboardFormSkeleton />}>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmitForm)}
+          className="flex-1 flex flex-col gap-5 p-5 border rounded-lg bg-card"
+        >
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    placeholder="Enter a name for the Bingo game"
+                    {...field}
+                  />
+                </FormControl>
 
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<Button type="submit" disabled={createGameMutation.isPending}>
-						{createGameMutation.isPending ? (
-							<>
-								<Loader2 className="h-4 w-4 animate-spin" />
-								Creating the game
-							</>
-						) : (
-							<>
-								<Plus className="h-4 w-4" />
-								Create a new game
-							</>
-						)}
-					</Button>
-				</form>
-			</Form>
-		</Suspense>
-	)
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" disabled={createGameMutation.isPending}>
+            {createGameMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating the game
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4" />
+                Create a new game
+              </>
+            )}
+          </Button>
+        </form>
+      </Form>
+    </Suspense>
+  )
 }

@@ -4,7 +4,7 @@ import type { PgTransaction } from 'drizzle-orm/pg-core'
 import type * as Schema from '../schemas'
 
 export type DbTransaction = PgTransaction<
-	NodePgQueryResultHKT,
-	typeof Schema,
-	ExtractTablesWithRelations<typeof Schema>
+  NodePgQueryResultHKT,
+  typeof Schema,
+  ExtractTablesWithRelations<typeof Schema>
 >

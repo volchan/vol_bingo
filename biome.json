@@ -45,7 +45,7 @@
 			"quoteStyle": "single",
 			"trailingCommas": "all",
 			"semicolons": "asNeeded",
-			"indentStyle": "tab",
+			"indentStyle": "space",
 			"indentWidth": 2
 		}
 	}

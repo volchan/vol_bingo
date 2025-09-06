@@ -6,9 +6,9 @@ import { secureHeaders } from 'hono/secure-headers'
 import { checkDatabaseConnection } from './config/database'
 import env from './config/env'
 import {
-	errorLoggerMiddleware,
-	loggerMiddleware,
-	requestContextMiddleware,
+  errorLoggerMiddleware,
+  loggerMiddleware,
+  requestContextMiddleware,
 } from './middlewares'
 import router from './routes'
 import authRoutes from './routes/auth'
@@ -17,10 +17,10 @@ import websocketRoutes from './routes/websocket'
 export const app = new Hono()
 
 app.use(
-	cors({
-		origin: [env.FRONTEND_URL],
-		credentials: true,
-	}),
+  cors({
+    origin: [env.FRONTEND_URL],
+    credentials: true,
+  }),
 )
 
 app.use(requestId())
@@ -41,7 +41,7 @@ app.use('/*', serveStatic({ root: '../client/dist' }))
 app.get('*', serveStatic({ path: '../client/dist/index.html' }))
 
 export default {
-	port: env.APP_PORT,
-	fetch: app.fetch,
-	websocket,
+  port: env.APP_PORT,
+  fetch: app.fetch,
+  websocket,
 }

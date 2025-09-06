@@ -7,10 +7,10 @@ const app = new Hono()
 app.use('*', jwtAuth)
 
 app.get('/games/played', async (c) => {
-	const currentUser = c.get('currentUser')
-	const playedGames = await usersRepository.getPlayedGames(currentUser.id)
+  const currentUser = c.get('currentUser')
+  const playedGames = await usersRepository.getPlayedGames(currentUser.id)
 
-	return c.json(playedGames, 200)
+  return c.json(playedGames, 200)
 })
 
 export default app
