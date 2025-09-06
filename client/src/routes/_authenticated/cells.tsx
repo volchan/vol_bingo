@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Edit2, Loader2, Save, Trash2, X } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { z } from 'zod'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,7 @@ import {
 } from '@/hooks/api/cells.hooks'
 
 const cellsSearchSchema = z.object({
-  page: z.coerce.number().default(0),
+  page: z.coerce.number().default(1),
   pageSize: z.coerce.number().default(25),
 })
 
@@ -24,6 +24,8 @@ export const Route = createFileRoute('/_authenticated/cells')({
 })
 
 function CellsPage() {
+  const { page, pageSize } = Route.useSearch()
+  const navigate = Route.useNavigate()
   const { data: cells = [] } = useGetCells()
   const { mutate: deleteCellMutation, isPending } = useDeleteCell()
   const { mutate: updateCellMutation, isPending: isUpdating } = useUpdateCell()
@@ -139,7 +141,13 @@ function CellsPage() {
         const date = new Date(row.original.createdAt)
         return (
           <span className="text-sm text-muted-foreground">
-            {date.toLocaleDateString()}
+            {date.toLocaleString(undefined, {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </span>
         )
       },
@@ -200,7 +208,30 @@ function CellsPage() {
             {errorMsg}
           </div>
         )}
-        <DataTable columns={columns} data={tableData} filterColumn="value" />
+        <DataTable 
+          columns={columns} 
+          data={tableData} 
+          filterColumn="value"
+          pagination={{
+            pageIndex: page - 1,
+            pageSize,
+            onPaginationChange: useCallback((updater) => {
+              const currentState = { pageIndex: page - 1, pageSize }
+              const newPagination = typeof updater === 'function' 
+                ? updater(currentState)
+                : updater
+              
+              if (newPagination.pageIndex !== currentState.pageIndex || newPagination.pageSize !== currentState.pageSize) {
+                navigate({
+                  search: {
+                    page: newPagination.pageIndex + 1,
+                    pageSize: newPagination.pageSize,
+                  },
+                })
+              }
+            }, [page, pageSize, navigate]),
+          }}
+        />
       </div>
     </ErrorBoundary>
   )

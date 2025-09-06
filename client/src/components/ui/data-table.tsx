@@ -5,6 +5,7 @@ import type {
   SortingState,
   VisibilityState,
 } from '@tanstack/react-table'
+
 import {
   flexRender,
   getCoreRowModel,
@@ -13,7 +14,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import React from 'react'
+import { useMemo, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import {
   Pagination,
@@ -42,36 +43,64 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   filterColumn = 'value',
+  pagination,
 }: Readonly<{
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   filterColumn?: string
+  pagination?: {
+    pageIndex: number
+    pageSize: number
+    onPaginationChange: (updater: ((prev: { pageIndex: number; pageSize: number }) => { pageIndex: number; pageSize: number }) | { pageIndex: number; pageSize: number }) => void
+  }
 }>) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  )
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({})
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
 
-  // Default pagination state (not synced with URL for generic use)
-  const pageSize = 25
-  const pageIndex = 0
+  const defaultPageSize = 25
+  const defaultPageIndex = 0
+
+  // For uncontrolled pagination (when no pagination prop is provided)
+  const [uncontrolledPagination, setUncontrolledPagination] = useState({
+    pageIndex: defaultPageIndex,
+    pageSize: defaultPageSize,
+  })
+
+  // Use controlled pagination if provided, otherwise use uncontrolled
+  const isControlled = !!pagination
+  const currentPagination = isControlled 
+    ? { pageIndex: pagination.pageIndex, pageSize: pagination.pageSize }
+    : uncontrolledPagination
+
+  // When using manual pagination, we need to slice the data ourselves
+  const displayData = useMemo(() => {
+    if (isControlled) {
+      const startIndex = currentPagination.pageIndex * currentPagination.pageSize
+      const endIndex = startIndex + currentPagination.pageSize
+      return data.slice(startIndex, endIndex)
+    }
+    return data
+  }, [data, isControlled, currentPagination.pageIndex, currentPagination.pageSize])
+
   const table = useReactTable({
-    data,
+    data: displayData,
     columns,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
-      pagination: { pageSize, pageIndex },
+      pagination: currentPagination,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: isControlled ? pagination.onPaginationChange : setUncontrolledPagination,
+    manualPagination: isControlled, // This tells TanStack Table to not manage pagination internally
+    rowCount: isControlled ? data.length : undefined, // Tell TanStack Table the total number of rows
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -145,7 +174,7 @@ export function DataTable<TData, TValue>({
         <div className="self-start flex-1 flex items-center gap-2">
           <span className="text-sm font-medium">Rows per page</span>
           <Select
-            value={String(Math.max(table.getState().pagination.pageSize, 25))}
+            value={String(Math.max(table.getState().pagination.pageSize, 10))}
             onValueChange={(value) => {
               table.setPageSize(Number(value))
             }}
@@ -156,7 +185,7 @@ export function DataTable<TData, TValue>({
               />
             </SelectTrigger>
             <SelectContent side="top">
-              {[25, 50, 100, 200].map((pageSize) => (
+              {[10, 25, 50, 100, 200].map((pageSize) => (
                 <SelectItem key={pageSize} value={String(pageSize)}>
                   {pageSize}
                 </SelectItem>
@@ -169,9 +198,7 @@ export function DataTable<TData, TValue>({
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault()
+                  onClick={() => {
                     if (table.getCanPreviousPage()) {
                       table.previousPage()
                     }
@@ -183,7 +210,6 @@ export function DataTable<TData, TValue>({
                 return (
                   <PaginationItem key={page}>
                     <PaginationLink
-                      href="#"
                       isActive={table.getState().pagination.pageIndex === i}
                       aria-disabled={
                         table.getState().pagination.pageIndex === i
@@ -191,8 +217,7 @@ export function DataTable<TData, TValue>({
                       tabIndex={
                         table.getState().pagination.pageIndex === i ? -1 : 0
                       }
-                      onClick={(e) => {
-                        e.preventDefault()
+                      onClick={() => {
                         if (table.getState().pagination.pageIndex !== i) {
                           table.setPageIndex(i)
                         }
@@ -205,11 +230,9 @@ export function DataTable<TData, TValue>({
               })}
               <PaginationItem>
                 <PaginationNext
-                  href="#"
                   aria-disabled={!table.getCanNextPage()}
                   tabIndex={!table.getCanNextPage() ? -1 : 0}
-                  onClick={(e) => {
-                    e.preventDefault()
+                  onClick={() => {
                     if (table.getCanNextPage()) {
                       table.nextPage()
                     }

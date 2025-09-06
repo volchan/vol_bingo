@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Edit2, Eye, Loader2, Save, Trash2, X } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { TemplateWithCreator } from 'shared'
 import { z } from 'zod'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -22,7 +22,7 @@ import {
 } from '@/hooks/api/templates.hooks'
 
 const templatesSearchSchema = z.object({
-  page: z.coerce.number().default(0),
+  page: z.coerce.number().default(1),
   pageSize: z.coerce.number().default(25),
 })
 
@@ -41,6 +41,8 @@ interface TemplateTableData extends TemplateWithCreator {
 }
 
 function TemplatesPage() {
+  const { page, pageSize } = Route.useSearch()
+  const navigate = Route.useNavigate()
   const { data: templates = [] } = useTemplates()
   const { mutate: deleteTemplateMutation, isPending } = useDeleteTemplate()
   const { mutate: updateTemplateMutation, isPending: isUpdating } =
@@ -199,7 +201,13 @@ function TemplatesPage() {
         const date = new Date(row.original.createdAt)
         return (
           <span className="text-sm text-muted-foreground">
-            {date.toLocaleDateString()}
+            {date.toLocaleString(undefined, {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </span>
         )
       },
@@ -261,7 +269,30 @@ function TemplatesPage() {
             {errorMsg}
           </div>
         )}
-        <DataTable columns={columns} data={tableData} filterColumn="name" />
+        <DataTable 
+          columns={columns} 
+          data={tableData} 
+          filterColumn="name"
+          pagination={{
+            pageIndex: page - 1,
+            pageSize,
+            onPaginationChange: useCallback((updater) => {
+              const currentState = { pageIndex: page - 1, pageSize }
+              const newPagination = typeof updater === 'function' 
+                ? updater(currentState)
+                : updater
+              
+              if (newPagination.pageIndex !== currentState.pageIndex || newPagination.pageSize !== currentState.pageSize) {
+                navigate({
+                  search: {
+                    page: newPagination.pageIndex + 1,
+                    pageSize: newPagination.pageSize,
+                  },
+                })
+              }
+            }, [page, pageSize, navigate]),
+          }}
+        />
 
         {/* View Template Dialog */}
         <Dialog
