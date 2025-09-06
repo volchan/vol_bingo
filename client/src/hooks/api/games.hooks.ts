@@ -92,7 +92,7 @@ export function useReadyGame() {
 					queryKey: authKeys.played(),
 					exact: true,
 				})
-			} catch (error) {
+			} catch (_error) {
 				// Fallback to invalidating all game queries
 				queryClient.invalidateQueries({ queryKey: authKeys.all })
 			}
@@ -104,8 +104,7 @@ export function useReadyGame() {
 					queryKey: authKeys.detail(friendlyId),
 					exact: true,
 				})
-			} catch (error) {
-			}
+			} catch (_error) {}
 		},
 	})
 }
@@ -127,7 +126,7 @@ export function useStartGame() {
 					queryKey: authKeys.played(),
 					exact: true,
 				})
-			} catch (error) {
+			} catch (_error) {
 				// Fallback to invalidating all game queries
 				queryClient.invalidateQueries({ queryKey: authKeys.all })
 			}
@@ -139,8 +138,7 @@ export function useStartGame() {
 					queryKey: authKeys.detail(friendlyId),
 					exact: true,
 				})
-			} catch (error) {
-			}
+			} catch (_error) {}
 		},
 	})
 }
@@ -162,7 +160,7 @@ export function useEditGame() {
 					queryKey: authKeys.played(),
 					exact: true,
 				})
-			} catch (error) {
+			} catch (_error) {
 				// Fallback to invalidating all game queries
 				queryClient.invalidateQueries({ queryKey: authKeys.all })
 			}
@@ -174,8 +172,7 @@ export function useEditGame() {
 					queryKey: authKeys.detail(friendlyId),
 					exact: true,
 				})
-			} catch (error) {
-			}
+			} catch (_error) {}
 		},
 	})
 }

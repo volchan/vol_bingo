@@ -4,9 +4,9 @@ import {
 	jwtRefreshAuth,
 } from '@server/middlewares/jwt-auth'
 import { Hono } from 'hono'
+import env from '../config/env'
 import { authService } from '../services/auth/auth.service'
 import { createTwitchAuthService } from '../services/auth/twitch-auth.service'
-import env from '../config/env'
 
 const app = new Hono()
 const twitchAuth = createTwitchAuthService()

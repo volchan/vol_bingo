@@ -1,8 +1,57 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { PlayerBoardCellWithGameCell } from 'shared'
 import { authKeys } from './api/games.hooks'
 import { playerBoardKeys } from './api/player-boards.hooks'
 import { useWebSocket } from './use-websocket'
+
+interface BingoPlayer {
+	playerId: string
+	playerBoardId: string
+	playerName: string
+	bingoCount: number
+	isMegaBingo: boolean
+}
+
+interface GameStateChangeData {
+	gameId: string
+	status: 'draft' | 'ready' | 'playing' | 'completed'
+	linkedCellsCount?: number
+}
+
+interface CellMarkedData {
+	gameId: string
+	gameCellId: string
+	marked: boolean
+}
+
+interface GameCellAddedData {
+	gameId: string
+	cellValue: string
+	linkedCellsCount: number
+}
+
+interface GameCellRemovedData {
+	gameId: string
+	cellValue: string
+	linkedCellsCount: number
+}
+
+interface PlayersListUpdateData {
+	gameId: string
+	players: Array<{
+		id: string
+		displayName: string
+		connected: boolean
+	}>
+}
+
+interface BingoAchievedData {
+	gameId: string
+	bingoPlayers: BingoPlayer[]
+	newBingoPlayers: BingoPlayer[]
+	isMegaBingo: boolean
+}
 
 interface GameWebSocketMessage {
 	type:
@@ -12,7 +61,13 @@ interface GameWebSocketMessage {
 		| 'game_cell_removed'
 		| 'players_list_update'
 		| 'bingo_achieved'
-	data: any
+	data:
+		| GameStateChangeData
+		| CellMarkedData
+		| GameCellAddedData
+		| GameCellRemovedData
+		| PlayersListUpdateData
+		| BingoAchievedData
 	timestamp?: number
 }
 
@@ -27,86 +82,97 @@ export function useGameWebSocket(friendlyId: string) {
 	const [players, setPlayers] = useState<Player[]>([])
 	const [isLoadingPlayers, setIsLoadingPlayers] = useState(true)
 	const [lastUpdateTimestamp, setLastUpdateTimestamp] = useState<number>(0)
-	const [bingoPlayers, setBingoPlayers] = useState<any[]>([])
-	const [newBingoPlayers, setNewBingoPlayers] = useState<any[]>([])
+	const [bingoPlayers, setBingoPlayers] = useState<BingoPlayer[]>([])
+	const [newBingoPlayers, setNewBingoPlayers] = useState<BingoPlayer[]>([])
 	const [showBingoDialog, setShowBingoDialog] = useState(false)
 	const [isMegaBingo, setIsMegaBingo] = useState(false)
-	const websocketRef = useRef<any>(null)
+	const websocketRef = useRef<ReturnType<typeof useWebSocket> | null>(null)
 
-	const handleMessage = (message: GameWebSocketMessage) => {
-		switch (message.type) {
-			case 'game_state_change':
-				queryClient.invalidateQueries({
-					queryKey: authKeys.detail(friendlyId),
-				})
-				if (
-					message.data.status === 'ready' ||
-					message.data.status === 'playing'
-				) {
+	const handleMessage = useCallback(
+		(message: GameWebSocketMessage) => {
+			switch (message.type) {
+				case 'game_state_change': {
+					const data = message.data as GameStateChangeData
 					queryClient.invalidateQueries({
-						queryKey: playerBoardKeys.all,
+						queryKey: authKeys.detail(friendlyId),
 					})
+					if (data.status === 'ready' || data.status === 'playing') {
+						queryClient.invalidateQueries({
+							queryKey: playerBoardKeys.all,
+						})
+					}
+					break
 				}
-				break
 
-			case 'cell_marked': {
-				const { gameCellId, marked } = message.data
-				queryClient.setQueriesData(
-					{ queryKey: playerBoardKeys.all },
-					(old: any) => {
-						if (!old?.playerBoardCells) {
-							return old
-						}
+				case 'cell_marked': {
+					const data = message.data as CellMarkedData
+					const { gameCellId, marked } = data
+					queryClient.setQueriesData(
+						{ queryKey: playerBoardKeys.all },
+						(
+							old:
+								| { playerBoardCells?: PlayerBoardCellWithGameCell[] }
+								| undefined,
+						) => {
+							if (!old?.playerBoardCells) {
+								return old
+							}
 
-						const updated = {
-							...old,
-							playerBoardCells: old.playerBoardCells.map((cell: any) =>
-								cell.gameCellId === gameCellId
-									? {
-											...cell,
-											gameCell: {
-												...cell.gameCell,
-												marked: marked,
-											},
-										}
-									: cell,
-							),
-						}
-						return updated
-					},
-				)
-				break
-			}
-
-			case 'game_cell_added':
-			case 'game_cell_removed':
-				queryClient.invalidateQueries({
-					queryKey: authKeys.detail(friendlyId),
-				})
-				break
-
-			case 'players_list_update': {
-				const listTimestamp = message.timestamp || Date.now()
-
-				// Check if this update is newer than the last one
-				if (listTimestamp > lastUpdateTimestamp) {
-					setLastUpdateTimestamp(listTimestamp)
-
-					// Update the complete players list
-					setPlayers(message.data.players || [])
-					setIsLoadingPlayers(false)
+							const updated = {
+								...old,
+								playerBoardCells: old.playerBoardCells.map(
+									(cell: PlayerBoardCellWithGameCell) =>
+										cell.gameCellId === gameCellId
+											? {
+													...cell,
+													gameCell: {
+														...cell.gameCell,
+														marked: marked,
+													},
+												}
+											: cell,
+								),
+							}
+							return updated
+						},
+					)
+					break
 				}
-				break
-			}
 
-			case 'bingo_achieved':
-				setBingoPlayers(message.data.bingoPlayers || [])
-				setNewBingoPlayers(message.data.newBingoPlayers || [])
-				setIsMegaBingo(message.data.isMegaBingo || false)
-				setShowBingoDialog(true)
-				break
-		}
-	}
+				case 'game_cell_added':
+				case 'game_cell_removed':
+					queryClient.invalidateQueries({
+						queryKey: authKeys.detail(friendlyId),
+					})
+					break
+
+				case 'players_list_update': {
+					const data = message.data as PlayersListUpdateData
+					const listTimestamp = message.timestamp || Date.now()
+
+					// Check if this update is newer than the last one
+					if (listTimestamp > lastUpdateTimestamp) {
+						setLastUpdateTimestamp(listTimestamp)
+
+						// Update the complete players list
+						setPlayers(data.players || [])
+						setIsLoadingPlayers(false)
+					}
+					break
+				}
+
+				case 'bingo_achieved': {
+					const data = message.data as BingoAchievedData
+					setBingoPlayers(data.bingoPlayers || [])
+					setNewBingoPlayers(data.newBingoPlayers || [])
+					setIsMegaBingo(data.isMegaBingo || false)
+					setShowBingoDialog(true)
+					break
+				}
+			}
+		},
+		[queryClient, friendlyId, lastUpdateTimestamp],
+	)
 
 	const websocket = useWebSocket<GameWebSocketMessage>(
 		friendlyId,

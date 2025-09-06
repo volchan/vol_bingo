@@ -36,10 +36,9 @@ const PlayerBingoGridComponent = ({
 
 	const [localCells, setLocalCells] = useState<PlayerBingoCell[]>([])
 	const prevPlayerBoardCellsRef = useRef<string>('')
-	
+
 	// Use useMemo to compute cells and only update when actually needed
 	const computedCells = useMemo(() => {
-		
 		const gridCells = (playerBoard.playerBoardCells || []).map((pbc) => ({
 			id: pbc.id,
 			gameCellId: pbc.gameCellId,
@@ -73,13 +72,7 @@ const PlayerBingoGridComponent = ({
 
 	const toggleCell = useCallback(
 		(cell: PlayerBingoCell) => {
-			if (
-				disabled ||
-				!canMark ||
-				!cell.gameCellId ||
-				!onMarkCell
-			)
-				return
+			if (disabled || !canMark || !cell.gameCellId || !onMarkCell) return
 
 			const newMarkedState = !cell.isMarked
 			onMarkCell(cell.gameCellId, newMarkedState)
@@ -116,69 +109,66 @@ const PlayerBingoGridComponent = ({
 
 			gridCells.sort((a, b) => a.position - b.position)
 			setLocalCells(gridCells)
-		} catch (error) {
-		}
+		} catch (_error) {}
 	}, [canShuffle, shuffleMutation, playerBoard.id, totalCells])
 
-
 	return (
-		<>
-
-			<div className="w-full max-w-2xl mx-auto space-y-4">
-				{canShuffle && (
-					<div className="text-center">
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handleShuffle}
-							disabled={shuffleMutation.isPending}
-							className="flex items-center gap-2"
-						>
-							<Shuffle className="h-4 w-4" />
-							{shuffleMutation.isPending ? 'Shuffling..' : 'Shuffle Board'}
-						</Button>
-					</div>
-				)}
-
-				<div
-					className={cn(
-						'grid gap-2 w-full aspect-square',
-						size === 3 && 'grid-cols-3',
-						size === 5 && 'grid-cols-5',
-						size === 7 && 'grid-cols-7',
-					)}
-				>
-					{localCells.map((cell, index) => {
-						const handleCellClick = () => {
-							toggleCell(cell)
-						}
-
-						const isClickable = !disabled && canMark && cell.text
-						
-						return (
-							<PlayerBingoCell
-								key={cell.id}
-								cell={cell}
-								isCenter={index === centerIndex}
-								onClick={isClickable ? handleCellClick : () => {}}
-								disabled={!cell.text}
-								loading={false}
-								showMuted={false}
-								className={cn(
-									'aspect-square',
-									size === 3 && 'text-sm sm:text-base',
-									size === 5 && 'text-xs sm:text-sm',
-									size === 7 && 'text-xs',
-									!isClickable && 'cursor-default',
-								)}
-							/>
-						)
-					})}
+		<div className="w-full max-w-2xl mx-auto space-y-4">
+			{canShuffle && (
+				<div className="text-center">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={handleShuffle}
+						disabled={shuffleMutation.isPending}
+						className="flex items-center gap-2"
+					>
+						<Shuffle className="h-4 w-4" />
+						{shuffleMutation.isPending ? 'Shuffling..' : 'Shuffle Board'}
+					</Button>
 				</div>
+			)}
+
+			<div
+				className={cn(
+					'grid gap-2 w-full aspect-square',
+					size === 3 && 'grid-cols-3',
+					size === 5 && 'grid-cols-5',
+					size === 7 && 'grid-cols-7',
+				)}
+			>
+				{localCells.map((cell, index) => {
+					const handleCellClick = () => {
+						toggleCell(cell)
+					}
+
+					const isClickable = !disabled && canMark && cell.text
+
+					return (
+						<PlayerBingoCell
+							key={cell.id}
+							cell={cell}
+							isCenter={index === centerIndex}
+							onClick={isClickable ? handleCellClick : () => {}}
+							disabled={!cell.text}
+							loading={false}
+							showMuted={false}
+							className={cn(
+								'aspect-square',
+								size === 3 && 'text-sm sm:text-base',
+								size === 5 && 'text-xs sm:text-sm',
+								size === 7 && 'text-xs',
+								!isClickable && 'cursor-default',
+							)}
+						/>
+					)
+				})}
 			</div>
-		</>
+		</div>
 	)
 }
+
+PlayerBingoGridComponent.displayName = 'PlayerBingoGridComponent'
 
 export const PlayerBingoGrid = memo(PlayerBingoGridComponent)
 
@@ -229,3 +219,5 @@ const PlayerBingoCell = memo(
 		)
 	},
 )
+
+PlayerBingoCell.displayName = 'PlayerBingoCell'

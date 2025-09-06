@@ -42,7 +42,7 @@ function RouteComponent() {
 					sessionStorage.removeItem('auth_redirect')
 
 					navigate({ to: redirectUrl })
-				} catch (err) {
+				} catch (_err) {
 					navigate({
 						to: '/',
 						search: { error: 'invalid_tokens' },

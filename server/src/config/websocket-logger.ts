@@ -23,7 +23,8 @@ class WebSocketLogger {
 
 	private formatConnectionId(connectionId: string): string {
 		// Extract last 8 chars for shorter display
-		const shortId = connectionId.split('-').pop()?.slice(-8) || connectionId.slice(-8)
+		const shortId =
+			connectionId.split('-').pop()?.slice(-8) || connectionId.slice(-8)
 		return colorize('magenta', `[${shortId}]`)
 	}
 
@@ -39,53 +40,79 @@ class WebSocketLogger {
 		const timestamp = this.formatTimestamp()
 		const connId = this.formatConnectionId(connectionId)
 		const game = this.formatGameId(gameId)
-		console.log(`${timestamp} ${connId} ${colorize('green', 'CONNECT')} ${game}`)
+		console.log(
+			`${timestamp} ${connId} ${colorize('green', 'CONNECT')} ${game}`,
+		)
 	}
 
-	public connectionAuthenticated(connectionId: string, userId: string, gameId: string): void {
+	public connectionAuthenticated(
+		connectionId: string,
+		userId: string,
+		gameId: string,
+	): void {
 		const timestamp = this.formatTimestamp()
 		const connId = this.formatConnectionId(connectionId)
 		const user = this.formatUserId(userId)
 		const game = this.formatGameId(gameId)
-		console.log(`${timestamp} ${connId} ${colorize('green', 'AUTH')} ${user} → ${game}`)
+		console.log(
+			`${timestamp} ${connId} ${colorize('green', 'AUTH')} ${user} → ${game}`,
+		)
 	}
 
-	public connectionClosed(connectionId: string, reason: string, code?: number): void {
+	public connectionClosed(
+		connectionId: string,
+		reason: string,
+		code?: number,
+	): void {
 		const timestamp = this.formatTimestamp()
 		const connId = this.formatConnectionId(connectionId)
 		const reasonColored = colorize('yellow', reason)
 		const codeInfo = code ? ` (${code})` : ''
-		console.log(`${timestamp} ${connId} ${colorize('red', 'CLOSE')} ${reasonColored}${codeInfo}`)
+		console.log(
+			`${timestamp} ${connId} ${colorize('red', 'CLOSE')} ${reasonColored}${codeInfo}`,
+		)
 	}
 
-	public playerDisconnected(userId: string, gameId: string, reason: string): void {
+	public playerDisconnected(
+		userId: string,
+		gameId: string,
+		reason: string,
+	): void {
 		const timestamp = this.formatTimestamp()
 		const user = this.formatUserId(userId)
 		const game = this.formatGameId(gameId)
 		const reasonColored = colorize('yellow', reason)
-		console.log(`${timestamp} ${colorize('red', 'OFFLINE')} ${user} from ${game} (${reasonColored})`)
+		console.log(
+			`${timestamp} ${colorize('red', 'OFFLINE')} ${user} from ${game} (${reasonColored})`,
+		)
 	}
 
 	public playerReconnected(userId: string, gameId: string): void {
 		const timestamp = this.formatTimestamp()
 		const user = this.formatUserId(userId)
 		const game = this.formatGameId(gameId)
-		console.log(`${timestamp} ${colorize('green', 'ONLINE')} ${user} to ${game}`)
+		console.log(
+			`${timestamp} ${colorize('green', 'ONLINE')} ${user} to ${game}`,
+		)
 	}
 
-	public connectionManagerStats(total: number, gameId?: string, gameConnections?: number): void {
+	public connectionManagerStats(
+		total: number,
+		gameId?: string,
+		gameConnections?: number,
+	): void {
 		if (isProduction()) return // Skip stats in production
-		
+
 		const timestamp = this.formatTimestamp()
 		const totalColored = colorize('cyan', total.toString())
 		let message = `${timestamp} ${colorize('blue', 'STATS')} ${totalColored} total`
-		
+
 		if (gameId && gameConnections !== undefined) {
 			const game = this.formatGameId(gameId)
 			const gameConns = colorize('cyan', gameConnections.toString())
 			message += ` | ${game}: ${gameConns}`
 		}
-		
+
 		console.log(message)
 	}
 
@@ -93,26 +120,44 @@ class WebSocketLogger {
 		const timestamp = this.formatTimestamp()
 		const connId = this.formatConnectionId(connectionId)
 		const reasonColored = colorize('yellow', reason)
-		console.log(`${timestamp} ${connId} ${colorize('yellow', 'CLEANUP')} ${reasonColored}`)
+		console.log(
+			`${timestamp} ${connId} ${colorize('yellow', 'CLEANUP')} ${reasonColored}`,
+		)
 	}
 
-	public broadcastMessage(gameId: string, messageType: string, recipientCount: number): void {
+	public broadcastMessage(
+		gameId: string,
+		messageType: string,
+		recipientCount: number,
+	): void {
 		const timestamp = this.formatTimestamp()
 		const game = this.formatGameId(gameId)
 		const type = colorize('magenta', messageType)
 		const count = colorize('cyan', recipientCount.toString())
-		console.log(`${timestamp} ${colorize('green', 'BROADCAST')} ${type} to ${count} in ${game}`)
+		console.log(
+			`${timestamp} ${colorize('green', 'BROADCAST')} ${type} to ${count} in ${game}`,
+		)
 	}
 
-	public error(connectionId: string | undefined, message: string, error?: Error): void {
+	public error(
+		connectionId: string | undefined,
+		message: string,
+		error?: Error,
+	): void {
 		const timestamp = this.formatTimestamp()
-		const connId = connectionId ? this.formatConnectionId(connectionId) : colorize('red', '[NO_ID]')
+		const connId = connectionId
+			? this.formatConnectionId(connectionId)
+			: colorize('red', '[NO_ID]')
 		const errorMessage = colorize('red', message)
-		
-		console.log(`${timestamp} ${connId} ${colorize('red', 'ERROR')} ${errorMessage}`)
-		
+
+		console.log(
+			`${timestamp} ${connId} ${colorize('red', 'ERROR')} ${errorMessage}`,
+		)
+
 		if (error && !isProduction()) {
-			console.log(`${timestamp} ${connId} ${colorize('red', '   →')} ${error.message}`)
+			console.log(
+				`${timestamp} ${connId} ${colorize('red', '   →')} ${error.message}`,
+			)
 		}
 	}
 }

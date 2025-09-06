@@ -19,7 +19,8 @@ export const Route = createFileRoute('/')({
 			try {
 				const tokens = JSON.parse(tokensFromStorage)
 				if (tokens?.access_token) {
-					const redirectTo = sessionStorage.getItem('auth_redirect') || '/dashboard'
+					const redirectTo =
+						sessionStorage.getItem('auth_redirect') || '/dashboard'
 					sessionStorage.removeItem('auth_redirect')
 					return redirect({ to: redirectTo })
 				}
