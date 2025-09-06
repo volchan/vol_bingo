@@ -1,14 +1,11 @@
 import { jwtAuth } from '@server/middlewares/jwt-auth'
 import gameCellRepository from '@server/repositories/game-cells'
-import gamesRepository from '@server/repositories/games'
-import playerBoardsRepository from '@server/repositories/player-boards'
 import { wsManager } from '@server/websocket/websocket-manager'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from './utils'
 
 const app = new Hono()
-
 
 const CellLinkSchema = z.object({
 	id: z.string(),
@@ -46,6 +43,5 @@ app.delete('/:id', zValidator('param', CellLinkSchema), async (c) => {
 		return c.json({ error: 'Failed to unlink cell' }, 500)
 	}
 })
-
 
 export default app

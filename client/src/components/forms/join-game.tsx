@@ -17,11 +17,14 @@ import { DashboardFormSkeleton } from '../loading'
 
 export default function JoinGameForm() {
 	const FormSchema = z.object({
-		gameId: z.string().min(10, {
-			message: 'Game ID is required.',
-		}).max(10, {
-			message: 'Game ID must be exactly 10 characters long.',
-		}),
+		gameId: z
+			.string()
+			.min(10, {
+				message: 'Game ID is required.',
+			})
+			.max(10, {
+				message: 'Game ID must be exactly 10 characters long.',
+			}),
 	})
 
 	const form = useForm({

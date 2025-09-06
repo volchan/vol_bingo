@@ -148,7 +148,9 @@ app.patch(
 			return c.json({ error: 'Failed to make game ready' }, 500)
 		}
 
-		console.log(`🎮 Broadcasting game state change: ready for game ${game.id} (${game.friendlyId})`)
+		console.log(
+			`🎮 Broadcasting game state change: ready for game ${game.id} (${game.friendlyId})`,
+		)
 
 		wsManager.broadcastToGame(game.id, {
 			type: 'game_state_change',
@@ -194,7 +196,9 @@ app.patch(
 			return c.json({ error: 'Failed to start game' }, 500)
 		}
 
-		console.log(`🎮 Broadcasting game state change: playing for game ${game.id} (${game.friendlyId})`)
+		console.log(
+			`🎮 Broadcasting game state change: playing for game ${game.id} (${game.friendlyId})`,
+		)
 
 		wsManager.broadcastToGame(game.id, {
 			type: 'game_state_change',
@@ -248,7 +252,9 @@ app.patch(
 			return c.json({ error: 'Failed to switch game to edit mode' }, 500)
 		}
 
-		console.log(`🎮 Broadcasting game state change: draft for game ${game.id} (${game.friendlyId})`)
+		console.log(
+			`🎮 Broadcasting game state change: draft for game ${game.id} (${game.friendlyId})`,
+		)
 
 		wsManager.broadcastToGame(game.id, {
 			type: 'game_state_change',
@@ -287,7 +293,7 @@ app.get(
 		})
 
 		return c.json(
-			players.map(pb => ({
+			players.map((pb) => ({
 				id: pb.player.id,
 				displayName: pb.player.displayName,
 				connected: pb.connected,

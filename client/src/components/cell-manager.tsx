@@ -95,8 +95,7 @@ export function CellManager({
 			})
 			onCellLinked?.(cell)
 			setSearchQuery('')
-		} catch (error) {
-		}
+		} catch (_error) {}
 	}
 
 	const handleUnlinkCell = async (cellId: string) => {
@@ -109,8 +108,7 @@ export function CellManager({
 				gameId,
 			})
 			onCellUnlinked?.(cellId)
-		} catch (error) {
-		}
+		} catch (_error) {}
 	}
 
 	const handleCreateAndLink = async () => {
@@ -126,8 +124,7 @@ export function CellManager({
 			})
 			setSearchQuery('')
 			onCellLinked?.(newCell)
-		} catch (error) {
-		}
+		} catch (_error) {}
 	}
 
 	// Extract linked cells with their cell data

@@ -11,7 +11,10 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
 	const queryClient = useQueryClient()
 	const [isInitialized, setIsInitialized] = useState(false)
-	const [storedTokens, setStoredTokens] = useState<{ access_token: string | null, refresh_token: string | null } | null>(null)
+	const [storedTokens, setStoredTokens] = useState<{
+		access_token: string | null
+		refresh_token: string | null
+	} | null>(null)
 
 	const getStoredTokens = useCallback((): AuthTokens | null => {
 		try {
@@ -65,12 +68,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		}
 
 		window.addEventListener('storage', handleStorageChange)
-		
+
 		const interval = setInterval(() => {
 			const currentTokens = getStoredTokens()
 			const currentHasToken = !!currentTokens?.access_token
 			const stateHasToken = !!storedTokens?.access_token
-			
+
 			if (currentHasToken !== stateHasToken) {
 				setStoredTokens(currentTokens)
 			}
