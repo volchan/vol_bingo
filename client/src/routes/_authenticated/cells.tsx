@@ -208,28 +208,35 @@ function CellsPage() {
             {errorMsg}
           </div>
         )}
-        <DataTable 
-          columns={columns} 
-          data={tableData} 
+        <DataTable
+          columns={columns}
+          data={tableData}
           filterColumn="value"
           pagination={{
             pageIndex: page - 1,
             pageSize,
-            onPaginationChange: useCallback((updater) => {
-              const currentState = { pageIndex: page - 1, pageSize }
-              const newPagination = typeof updater === 'function' 
-                ? updater(currentState)
-                : updater
-              
-              if (newPagination.pageIndex !== currentState.pageIndex || newPagination.pageSize !== currentState.pageSize) {
-                navigate({
-                  search: {
-                    page: newPagination.pageIndex + 1,
-                    pageSize: newPagination.pageSize,
-                  },
-                })
-              }
-            }, [page, pageSize, navigate]),
+            onPaginationChange: useCallback(
+              (updater) => {
+                const currentState = { pageIndex: page - 1, pageSize }
+                const newPagination =
+                  typeof updater === 'function'
+                    ? updater(currentState)
+                    : updater
+
+                if (
+                  newPagination.pageIndex !== currentState.pageIndex ||
+                  newPagination.pageSize !== currentState.pageSize
+                ) {
+                  navigate({
+                    search: {
+                      page: newPagination.pageIndex + 1,
+                      pageSize: newPagination.pageSize,
+                    },
+                  })
+                }
+              },
+              [page, pageSize, navigate],
+            ),
           }}
         />
       </div>
