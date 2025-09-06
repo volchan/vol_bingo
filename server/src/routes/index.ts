@@ -11,7 +11,7 @@ import usersRoutes from './users'
 const app = new Hono()
 
 app.get('/health', (c) => {
-	return c.json({ status: 'ok' })
+  return c.json({ status: 'ok' })
 })
 
 app.route('/auth', authRoutes)

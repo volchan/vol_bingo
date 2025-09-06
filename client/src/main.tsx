@@ -10,63 +10,63 @@ import { router } from '@/lib/router'
 import { AuthProvider } from '@/providers/auth-provider'
 
 const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			retry: (failureCount, error) => {
-				if (isApiError(error) || isAuthError(error)) return false
-				return failureCount < 3
-			},
-			staleTime: 5 * 60 * 1000,
-			gcTime: 10 * 60 * 1000,
-			refetchOnWindowFocus: true,
-			refetchOnReconnect: true,
-			networkMode: 'offlineFirst',
-			throwOnError: (error) => {
-				if (isAuthError(error)) {
-					localStorage.removeItem('auth_tokens')
-					queryClient.removeQueries({ queryKey: ['auth'] })
-				}
-				return false
-			},
-		},
-		mutations: {
-			retry: (failureCount, error) => {
-				if (isAuthError(error)) return false
-				return failureCount < 1
-			},
-			networkMode: 'offlineFirst',
-			onError: (error) => {
-				if (isAuthError(error)) {
-					localStorage.removeItem('auth_tokens')
-					queryClient.removeQueries({ queryKey: ['auth'] })
-				}
-			},
-		},
-	},
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        if (isApiError(error) || isAuthError(error)) return false
+        return failureCount < 3
+      },
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      networkMode: 'offlineFirst',
+      throwOnError: (error) => {
+        if (isAuthError(error)) {
+          localStorage.removeItem('auth_tokens')
+          queryClient.removeQueries({ queryKey: ['auth'] })
+        }
+        return false
+      },
+    },
+    mutations: {
+      retry: (failureCount, error) => {
+        if (isAuthError(error)) return false
+        return failureCount < 1
+      },
+      networkMode: 'offlineFirst',
+      onError: (error) => {
+        if (isAuthError(error)) {
+          localStorage.removeItem('auth_tokens')
+          queryClient.removeQueries({ queryKey: ['auth'] })
+        }
+      },
+    },
+  },
 })
 
 setQueryUtils(queryClient)
 
 function RouterWrapper() {
-	const authContext = useAuth()
+  const authContext = useAuth()
 
-	return (
-		<RouterProvider router={router} context={{ authentication: authContext }} />
-	)
+  return (
+    <RouterProvider router={router} context={{ authentication: authContext }} />
+  )
 }
 
 function App() {
-	return (
-		<ErrorBoundary>
-			<AuthProvider>
-				<RouterWrapper />
-			</AuthProvider>
-		</ErrorBoundary>
-	)
+  return (
+    <ErrorBoundary>
+      <AuthProvider>
+        <RouterWrapper />
+      </AuthProvider>
+    </ErrorBoundary>
+  )
 }
 
 createRoot(document.getElementById('root')!).render(
-	<QueryClientProvider client={queryClient}>
-		<App />
-	</QueryClientProvider>,
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>,
 )

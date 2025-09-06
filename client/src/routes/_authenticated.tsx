@@ -3,30 +3,30 @@ import { validateAuth } from '@/contexts/router-context'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 
 export const Route = createFileRoute('/_authenticated')({
-	beforeLoad: ({ context, location }) => {
-		const { user, isAuthenticated } = validateAuth()
+  beforeLoad: ({ context, location }) => {
+    const { user, isAuthenticated } = validateAuth()
 
-		if (!isAuthenticated) {
-			throw redirect({
-				to: '/',
-				search: {
-					redirect: location.href,
-				},
-			})
-		}
+    if (!isAuthenticated) {
+      throw redirect({
+        to: '/',
+        search: {
+          redirect: location.href,
+        },
+      })
+    }
 
-		return {
-			...context,
-			authentication: {
-				user,
-				isAuthenticated: true,
-				isLoading: false,
-			},
-		}
-	},
-	component: () => (
-		<AuthenticatedLayout>
-			<Outlet />
-		</AuthenticatedLayout>
-	),
+    return {
+      ...context,
+      authentication: {
+        user,
+        isAuthenticated: true,
+        isLoading: false,
+      },
+    }
+  },
+  component: () => (
+    <AuthenticatedLayout>
+      <Outlet />
+    </AuthenticatedLayout>
+  ),
 })

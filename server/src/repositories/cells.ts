@@ -4,101 +4,101 @@ import { eq } from 'drizzle-orm'
 import type { Cell } from 'shared/dist'
 
 const cellsRepository = {
-	async getAll(userId: string) {
-		const cells = await db.query.cells.findMany({
-			where: (table, { eq }) => eq(table.userId, userId),
-			orderBy: (table, { desc }) => desc(table.createdAt),
-		})
+  async getAll(userId: string) {
+    const cells = await db.query.cells.findMany({
+      where: (table, { eq }) => eq(table.userId, userId),
+      orderBy: (table, { desc }) => desc(table.createdAt),
+    })
 
-		if (!cells) throw new Error('Failed to fetch cells')
+    if (!cells) throw new Error('Failed to fetch cells')
 
-		return cells
-	},
+    return cells
+  },
 
-	async search(query: string, userId: string) {
-		const searchResults = await db.query.cells.findMany({
-			where: (table, { eq, and, ilike }) =>
-				and(eq(table.userId, userId), ilike(table.value, `%${query}%`)),
-			orderBy: (table, { desc }) => desc(table.createdAt),
-			limit: 10,
-		})
+  async search(query: string, userId: string) {
+    const searchResults = await db.query.cells.findMany({
+      where: (table, { eq, and, ilike }) =>
+        and(eq(table.userId, userId), ilike(table.value, `%${query}%`)),
+      orderBy: (table, { desc }) => desc(table.createdAt),
+      limit: 10,
+    })
 
-		if (!searchResults) throw new Error('Failed to search cells')
+    if (!searchResults) throw new Error('Failed to search cells')
 
-		return searchResults
-	},
+    return searchResults
+  },
 
-	async getById(id: string, userId?: string) {
-		const cell = await db.query.cells.findFirst({
-			where: (table, { eq, and }) => {
-				const conditions = [eq(table.id, id)]
-				if (userId) {
-					conditions.push(eq(table.userId, userId))
-				}
-				return conditions.length > 1 ? and(...conditions) : conditions[0]
-			},
-		})
+  async getById(id: string, userId?: string) {
+    const cell = await db.query.cells.findFirst({
+      where: (table, { eq, and }) => {
+        const conditions = [eq(table.id, id)]
+        if (userId) {
+          conditions.push(eq(table.userId, userId))
+        }
+        return conditions.length > 1 ? and(...conditions) : conditions[0]
+      },
+    })
 
-		if (!cell) return null
+    if (!cell) return null
 
-		return cell
-	},
+    return cell
+  },
 
-	async create(data: { value: string; userId: string; gameId?: string }) {
-		const [cell] = await db.insert(cells).values(data).returning()
-		if (!cell) throw new Error('Failed to create cell')
+  async create(data: { value: string; userId: string; gameId?: string }) {
+    const [cell] = await db.insert(cells).values(data).returning()
+    if (!cell) throw new Error('Failed to create cell')
 
-		return cell
-	},
+    return cell
+  },
 
-	async isUsedInGames(id: string): Promise<boolean> {
-		const cellUsages = await db.query.gameCells.findMany({
-			where: eq(gameCells.cellId, id),
-		})
-		return cellUsages.length > 0
-	},
+  async isUsedInGames(id: string): Promise<boolean> {
+    const cellUsages = await db.query.gameCells.findMany({
+      where: eq(gameCells.cellId, id),
+    })
+    return cellUsages.length > 0
+  },
 
-	async isUsedInNonDraftGames(id: string): Promise<boolean> {
-		const cellUsages = await db.query.gameCells.findMany({
-			where: eq(gameCells.cellId, id),
-			with: {
-				game: {
-					columns: {
-						status: true,
-					},
-				},
-			},
-		})
+  async isUsedInNonDraftGames(id: string): Promise<boolean> {
+    const cellUsages = await db.query.gameCells.findMany({
+      where: eq(gameCells.cellId, id),
+      with: {
+        game: {
+          columns: {
+            status: true,
+          },
+        },
+      },
+    })
 
-		return cellUsages.some(
-			(gameCell) => gameCell.game && gameCell.game.status !== 'draft',
-		)
-	},
+    return cellUsages.some(
+      (gameCell) => gameCell.game && gameCell.game.status !== 'draft',
+    )
+  },
 
-	async update(id: string, data: Pick<Cell, 'value'>) {
-		const isUsedInNonDraft = await this.isUsedInNonDraftGames(id)
-		if (isUsedInNonDraft) {
-			throw new Error('Cannot modify cell that is used in non-draft games')
-		}
+  async update(id: string, data: Pick<Cell, 'value'>) {
+    const isUsedInNonDraft = await this.isUsedInNonDraftGames(id)
+    if (isUsedInNonDraft) {
+      throw new Error('Cannot modify cell that is used in non-draft games')
+    }
 
-		const [cell] = await db
-			.update(cells)
-			.set({ ...data, updatedAt: new Date() })
-			.where(eq(cells.id, id))
-			.returning()
-		if (!cell) throw new Error('Failed to update cell')
+    const [cell] = await db
+      .update(cells)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(cells.id, id))
+      .returning()
+    if (!cell) throw new Error('Failed to update cell')
 
-		return cell
-	},
+    return cell
+  },
 
-	async delete(id: string) {
-		const isUsedInNonDraft = await this.isUsedInNonDraftGames(id)
-		if (isUsedInNonDraft) {
-			throw new Error('Cannot delete cell that is used in non-draft games')
-		}
+  async delete(id: string) {
+    const isUsedInNonDraft = await this.isUsedInNonDraftGames(id)
+    if (isUsedInNonDraft) {
+      throw new Error('Cannot delete cell that is used in non-draft games')
+    }
 
-		await db.delete(cells).where(eq(cells.id, id))
-	},
+    await db.delete(cells).where(eq(cells.id, id))
+  },
 }
 
 export default cellsRepository

@@ -7,339 +7,339 @@ import { ErrorBoundary } from '@/components/error-boundary'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/data-table'
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import {
-	useDeleteTemplate,
-	useTemplate,
-	useTemplates,
-	useUpdateTemplate,
+  useDeleteTemplate,
+  useTemplate,
+  useTemplates,
+  useUpdateTemplate,
 } from '@/hooks/api/templates.hooks'
 
 const templatesSearchSchema = z.object({
-	page: z.coerce.number().default(0),
-	pageSize: z.coerce.number().default(25),
+  page: z.coerce.number().default(0),
+  pageSize: z.coerce.number().default(25),
 })
 
 export const Route = createFileRoute('/_authenticated/templates')({
-	component: TemplatesPage,
-	validateSearch: (search) => templatesSearchSchema.parse(search),
+  component: TemplatesPage,
+  validateSearch: (search) => templatesSearchSchema.parse(search),
 })
 
 interface TemplateTableData extends TemplateWithCreator {
-	onDelete: (id: string) => void
-	onEdit: (id: string) => void
-	onView: (id: string) => void
-	isDeleting?: boolean
-	canDelete?: boolean
-	canEdit?: boolean
+  onDelete: (id: string) => void
+  onEdit: (id: string) => void
+  onView: (id: string) => void
+  isDeleting?: boolean
+  canDelete?: boolean
+  canEdit?: boolean
 }
 
 function TemplatesPage() {
-	const { data: templates = [] } = useTemplates()
-	const { mutate: deleteTemplateMutation, isPending } = useDeleteTemplate()
-	const { mutate: updateTemplateMutation, isPending: isUpdating } =
-		useUpdateTemplate()
-	const [deletingId, setDeletingId] = useState<string | null>(null)
-	const [editingId, setEditingId] = useState<string | null>(null)
-	const [viewingId, setViewingId] = useState<string | null>(null)
-	const [editingName, setEditingName] = useState<string>('')
-	const [editingDescription, setEditingDescription] = useState<string>('')
-	const [errorMsg, setErrorMsg] = useState<string | null>(null)
-	const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const { data: templates = [] } = useTemplates()
+  const { mutate: deleteTemplateMutation, isPending } = useDeleteTemplate()
+  const { mutate: updateTemplateMutation, isPending: isUpdating } =
+    useUpdateTemplate()
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [viewingId, setViewingId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState<string>('')
+  const [editingDescription, setEditingDescription] = useState<string>('')
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-	// Get template details for viewing
-	const { data: viewingTemplate } = useTemplate(viewingId || '', !!viewingId)
+  // Get template details for viewing
+  const { data: viewingTemplate } = useTemplate(viewingId || '', !!viewingId)
 
-	const handleDelete = (id: string) => {
-		setDeletingId(id)
-		deleteTemplateMutation(id, {
-			onSettled: () => setDeletingId(null),
-		})
-	}
+  const handleDelete = (id: string) => {
+    setDeletingId(id)
+    deleteTemplateMutation(id, {
+      onSettled: () => setDeletingId(null),
+    })
+  }
 
-	const handleEditInit = (id: string) => {
-		const template = templates.find((t) => t.id === id)
-		if (template) {
-			setEditingId(id)
-			setEditingName(template.name)
-			setEditingDescription(template.description || '')
-		}
-	}
+  const handleEditInit = (id: string) => {
+    const template = templates.find((t) => t.id === id)
+    if (template) {
+      setEditingId(id)
+      setEditingName(template.name)
+      setEditingDescription(template.description || '')
+    }
+  }
 
-	// Get current editing template for cellIds
-	const editingTemplate = useTemplate(editingId || '', !!editingId)
+  // Get current editing template for cellIds
+  const editingTemplate = useTemplate(editingId || '', !!editingId)
 
-	const handleEditSave = (id: string) => {
-		const template = templates.find((t) => t.id === id)
-		if (!template) return
+  const handleEditSave = (id: string) => {
+    const template = templates.find((t) => t.id === id)
+    if (!template) return
 
-		// Get existing cell IDs to preserve the template structure
-		const existingCellIds =
-			editingTemplate.data?.templateCells
-				?.sort((a, b) => a.position - b.position)
-				?.map((tc) => tc.cellId) || []
+    // Get existing cell IDs to preserve the template structure
+    const existingCellIds =
+      editingTemplate.data?.templateCells
+        ?.sort((a, b) => a.position - b.position)
+        ?.map((tc) => tc.cellId) || []
 
-		updateTemplateMutation(
-			{
-				templateId: id,
-				data: {
-					name: editingName,
-					description: editingDescription.trim() || undefined,
-					cellIds: existingCellIds,
-				},
-			},
-			{
-				onError: (error: unknown) => {
-					const message =
-						typeof error === 'object' && error !== null && 'message' in error
-							? (error as { message?: string }).message
-							: undefined
-					setErrorMsg(message || 'Failed to update template.')
-					if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
-					errorTimeoutRef.current = setTimeout(() => setErrorMsg(null), 4000)
-				},
-				onSettled: () => {
-					setEditingId(null)
-					setEditingName('')
-					setEditingDescription('')
-				},
-			},
-		)
-	}
+    updateTemplateMutation(
+      {
+        templateId: id,
+        data: {
+          name: editingName,
+          description: editingDescription.trim() || undefined,
+          cellIds: existingCellIds,
+        },
+      },
+      {
+        onError: (error: unknown) => {
+          const message =
+            typeof error === 'object' && error !== null && 'message' in error
+              ? (error as { message?: string }).message
+              : undefined
+          setErrorMsg(message || 'Failed to update template.')
+          if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
+          errorTimeoutRef.current = setTimeout(() => setErrorMsg(null), 4000)
+        },
+        onSettled: () => {
+          setEditingId(null)
+          setEditingName('')
+          setEditingDescription('')
+        },
+      },
+    )
+  }
 
-	const handleEditCancel = () => {
-		setEditingId(null)
-		setEditingName('')
-		setEditingDescription('')
-	}
+  const handleEditCancel = () => {
+    setEditingId(null)
+    setEditingName('')
+    setEditingDescription('')
+  }
 
-	const handleView = (id: string) => {
-		setViewingId(id)
-	}
+  const handleView = (id: string) => {
+    setViewingId(id)
+  }
 
-	const tableData: TemplateTableData[] = templates.map((template) => ({
-		...template,
-		onDelete: handleDelete,
-		onEdit: handleEditInit,
-		onView: handleView,
-		isDeleting: deletingId === template.id,
-	}))
+  const tableData: TemplateTableData[] = templates.map((template) => ({
+    ...template,
+    onDelete: handleDelete,
+    onEdit: handleEditInit,
+    onView: handleView,
+    isDeleting: deletingId === template.id,
+  }))
 
-	const columns = [
-		{
-			id: 'name',
-			header: 'Name',
-			accessorKey: 'name',
-			cell: ({ row }: { row: { original: TemplateTableData } }) => {
-				const isEditingRow = editingId === row.original.id
-				if (isEditingRow) {
-					return (
-						<div className="space-y-2">
-							<Input
-								value={editingName}
-								onChange={(e) => setEditingName(e.target.value)}
-								disabled={isUpdating}
-								placeholder="Template name"
-							/>
-							<Input
-								value={editingDescription}
-								onChange={(e) => setEditingDescription(e.target.value)}
-								disabled={isUpdating}
-								placeholder="Description (optional)"
-							/>
-							<div className="flex gap-2">
-								<Button
-									size="sm"
-									variant="outline"
-									onClick={() => handleEditSave(row.original.id)}
-									disabled={isUpdating || !editingName.trim()}
-								>
-									{isUpdating ? (
-										<Loader2 className="h-4 w-4 animate-spin" />
-									) : (
-										<Save className="h-4 w-4" />
-									)}
-									Save
-								</Button>
-								<Button
-									size="sm"
-									variant="ghost"
-									onClick={handleEditCancel}
-									disabled={isUpdating}
-								>
-									<X className="h-4 w-4" />
-									Cancel
-								</Button>
-							</div>
-						</div>
-					)
-				}
-				return (
-					<div>
-						<div className="font-medium">{row.original.name}</div>
-						{row.original.description && (
-							<div className="text-sm text-muted-foreground">
-								{row.original.description}
-							</div>
-						)}
-					</div>
-				)
-			},
-		},
-		{
-			id: 'createdAt',
-			header: 'Created',
-			cell: ({ row }: { row: { original: TemplateTableData } }) => {
-				const date = new Date(row.original.createdAt)
-				return (
-					<span className="text-sm text-muted-foreground">
-						{date.toLocaleDateString()}
-					</span>
-				)
-			},
-		},
-		{
-			id: 'actions',
-			header: 'Actions',
-			cell: ({ row }: { row: { original: TemplateTableData } }) => (
-				<div className="flex gap-2">
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={() => row.original.onView(row.original.id)}
-						className="text-blue-600 hover:text-blue-700"
-					>
-						<Eye className="h-4 w-4" />
-					</Button>
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={() => row.original.onEdit(row.original.id)}
-						className="text-orange-600 hover:text-orange-700"
-						disabled={editingId === row.original.id}
-					>
-						<Edit2 className="h-4 w-4" />
-					</Button>
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={() => row.original.onDelete(row.original.id)}
-						className={
-							row.original.canDelete
-								? 'text-destructive'
-								: 'text-muted-foreground'
-						}
-						disabled={
-							(isPending && row.original.isDeleting) || !row.original.canDelete
-						}
-					>
-						{isPending && row.original.isDeleting ? (
-							<Loader2 className="h-4 w-4 animate-spin" />
-						) : (
-							<Trash2
-								className={`h-4 w-4 ${!row.original.canDelete ? 'opacity-50' : ''}`}
-							/>
-						)}
-					</Button>
-				</div>
-			),
-		},
-	]
+  const columns = [
+    {
+      id: 'name',
+      header: 'Name',
+      accessorKey: 'name',
+      cell: ({ row }: { row: { original: TemplateTableData } }) => {
+        const isEditingRow = editingId === row.original.id
+        if (isEditingRow) {
+          return (
+            <div className="space-y-2">
+              <Input
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                disabled={isUpdating}
+                placeholder="Template name"
+              />
+              <Input
+                value={editingDescription}
+                onChange={(e) => setEditingDescription(e.target.value)}
+                disabled={isUpdating}
+                placeholder="Description (optional)"
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleEditSave(row.original.id)}
+                  disabled={isUpdating || !editingName.trim()}
+                >
+                  {isUpdating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Save
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleEditCancel}
+                  disabled={isUpdating}
+                >
+                  <X className="h-4 w-4" />
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )
+        }
+        return (
+          <div>
+            <div className="font-medium">{row.original.name}</div>
+            {row.original.description && (
+              <div className="text-sm text-muted-foreground">
+                {row.original.description}
+              </div>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      id: 'createdAt',
+      header: 'Created',
+      cell: ({ row }: { row: { original: TemplateTableData } }) => {
+        const date = new Date(row.original.createdAt)
+        return (
+          <span className="text-sm text-muted-foreground">
+            {date.toLocaleDateString()}
+          </span>
+        )
+      },
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }: { row: { original: TemplateTableData } }) => (
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => row.original.onView(row.original.id)}
+            className="text-blue-600 hover:text-blue-700"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => row.original.onEdit(row.original.id)}
+            className="text-orange-600 hover:text-orange-700"
+            disabled={editingId === row.original.id}
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => row.original.onDelete(row.original.id)}
+            className={
+              row.original.canDelete
+                ? 'text-destructive'
+                : 'text-muted-foreground'
+            }
+            disabled={
+              (isPending && row.original.isDeleting) || !row.original.canDelete
+            }
+          >
+            {isPending && row.original.isDeleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2
+                className={`h-4 w-4 ${!row.original.canDelete ? 'opacity-50' : ''}`}
+              />
+            )}
+          </Button>
+        </div>
+      ),
+    },
+  ]
 
-	return (
-		<ErrorBoundary>
-			<div className="p-4 w-full">
-				<h1 className="text-2xl font-bold mb-4">Templates</h1>
-				{errorMsg && (
-					<div className="mb-2 text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2">
-						{errorMsg}
-					</div>
-				)}
-				<DataTable columns={columns} data={tableData} filterColumn="name" />
+  return (
+    <ErrorBoundary>
+      <div className="p-4 w-full">
+        <h1 className="text-2xl font-bold mb-4">Templates</h1>
+        {errorMsg && (
+          <div className="mb-2 text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2">
+            {errorMsg}
+          </div>
+        )}
+        <DataTable columns={columns} data={tableData} filterColumn="name" />
 
-				{/* View Template Dialog */}
-				<Dialog
-					open={!!viewingId}
-					onOpenChange={(open) => !open && setViewingId(null)}
-				>
-					<DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-						<DialogHeader>
-							<DialogTitle>Template Details</DialogTitle>
-							<DialogDescription>
-								View template cells and information
-							</DialogDescription>
-						</DialogHeader>
+        {/* View Template Dialog */}
+        <Dialog
+          open={!!viewingId}
+          onOpenChange={(open) => !open && setViewingId(null)}
+        >
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Template Details</DialogTitle>
+              <DialogDescription>
+                View template cells and information
+              </DialogDescription>
+            </DialogHeader>
 
-						{viewingTemplate && (
-							<div className="space-y-4">
-								<div>
-									<h3 className="font-semibold text-lg">
-										{viewingTemplate.name}
-									</h3>
-									{viewingTemplate.description && (
-										<p className="text-muted-foreground mt-1">
-											{viewingTemplate.description}
-										</p>
-									)}
-								</div>
+            {viewingTemplate && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg">
+                    {viewingTemplate.name}
+                  </h3>
+                  {viewingTemplate.description && (
+                    <p className="text-muted-foreground mt-1">
+                      {viewingTemplate.description}
+                    </p>
+                  )}
+                </div>
 
-								<div>
-									<h4 className="font-medium mb-2">
-										Template Cells ({viewingTemplate.templateCells?.length || 0}
-										/25)
-									</h4>
-									<div className="grid grid-cols-5 gap-2 max-w-lg">
-										{viewingTemplate.templateCells
-											?.sort((a, b) => a.position - b.position)
-											.map((templateCell) => (
-												<div
-													key={templateCell.id}
-													className="aspect-square bg-muted rounded border-2 border-dashed border-muted-foreground/30 flex items-center justify-center p-1"
-												>
-													<span className="text-xs text-center break-words">
-														{templateCell.cell?.value || '[Deleted]'}
-													</span>
-												</div>
-											)) ||
-											Array.from({ length: 25 }, (_, i) => {
-												const cellNumber = i + 1
-												return (
-													<div
-														key={`empty-cell-${cellNumber}`}
-														className="aspect-square bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20 flex items-center justify-center"
-													>
-														<span className="text-xs text-muted-foreground">
-															{cellNumber}
-														</span>
-													</div>
-												)
-											})}
-									</div>
-								</div>
+                <div>
+                  <h4 className="font-medium mb-2">
+                    Template Cells ({viewingTemplate.templateCells?.length || 0}
+                    /25)
+                  </h4>
+                  <div className="grid grid-cols-5 gap-2 max-w-lg">
+                    {viewingTemplate.templateCells
+                      ?.sort((a, b) => a.position - b.position)
+                      .map((templateCell) => (
+                        <div
+                          key={templateCell.id}
+                          className="aspect-square bg-muted rounded border-2 border-dashed border-muted-foreground/30 flex items-center justify-center p-1"
+                        >
+                          <span className="text-xs text-center break-words">
+                            {templateCell.cell?.value || '[Deleted]'}
+                          </span>
+                        </div>
+                      )) ||
+                      Array.from({ length: 25 }, (_, i) => {
+                        const cellNumber = i + 1
+                        return (
+                          <div
+                            key={`empty-cell-${cellNumber}`}
+                            className="aspect-square bg-muted/30 rounded border-2 border-dashed border-muted-foreground/20 flex items-center justify-center"
+                          >
+                            <span className="text-xs text-muted-foreground">
+                              {cellNumber}
+                            </span>
+                          </div>
+                        )
+                      })}
+                  </div>
+                </div>
 
-								<div className="text-sm text-muted-foreground">
-									<p>
-										Created:{' '}
-										{new Date(viewingTemplate.createdAt).toLocaleString()}
-									</p>
-									{viewingTemplate.updatedAt && (
-										<p>
-											Updated:{' '}
-											{new Date(viewingTemplate.updatedAt).toLocaleString()}
-										</p>
-									)}
-								</div>
-							</div>
-						)}
-					</DialogContent>
-				</Dialog>
-			</div>
-		</ErrorBoundary>
-	)
+                <div className="text-sm text-muted-foreground">
+                  <p>
+                    Created:{' '}
+                    {new Date(viewingTemplate.createdAt).toLocaleString()}
+                  </p>
+                  {viewingTemplate.updatedAt && (
+                    <p>
+                      Updated:{' '}
+                      {new Date(viewingTemplate.updatedAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </ErrorBoundary>
+  )
 }

@@ -4,22 +4,22 @@ import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
 
 export function TwitchButton() {
-	const { login } = useAuth()
+  const { login } = useAuth()
 
-	return (
-		<Button
-			variant="twitch"
-			size="lg"
-			onClick={login}
-			className="font-semibold flex items-center gap-2"
-		>
-			<HugeiconsIcon
-				icon={TwitchIcon}
-				size={64}
-				color="currentColor"
-				strokeWidth={2}
-			/>
-			Connect with Twitch
-		</Button>
-	)
+  return (
+    <Button
+      variant="twitch"
+      size="lg"
+      onClick={login}
+      className="font-semibold flex items-center gap-2"
+    >
+      <HugeiconsIcon
+        icon={TwitchIcon}
+        size={64}
+        color="currentColor"
+        strokeWidth={2}
+      />
+      Connect with Twitch
+    </Button>
+  )
 }
