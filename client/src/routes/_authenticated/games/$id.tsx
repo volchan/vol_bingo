@@ -4,6 +4,12 @@ import { Copy, Edit, Loader2, Play, Trophy } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { BingoGrid } from '@/components/bingo-grid'
 import { CellManager } from '@/components/cell-manager'
+import {
+	ForbiddenError,
+	GameNotFoundError,
+	ServerError,
+	UnauthorizedError,
+} from '@/components/error-pages'
 import { PlayerBingoGrid } from '@/components/player-bingo-grid'
 import { PlayersList } from '@/components/players-list'
 import { Button } from '@/components/ui/button'
@@ -29,6 +35,7 @@ import {
 import { usePlayerBoard } from '@/hooks/api/player-boards.hooks'
 import { useAuth } from '@/hooks/use-auth'
 import { useGameWebSocket } from '@/hooks/use-game-websocket'
+import { getErrorStatus, getErrorType } from '@/lib/error-utils'
 
 export const Route = createFileRoute('/_authenticated/games/$id')({
 	component: RouteComponent,
@@ -181,18 +188,29 @@ function RouteComponent() {
 	}
 
 	if (error) {
-		return (
-			<div className="container mx-auto p-4 space-y-6">
-				<div className="text-center">
-					<h1 className="text-3xl font-bold tracking-tight text-destructive">
-						Game Not Found
-					</h1>
-					<p className="text-muted-foreground">
-						The game with ID "{params.id}" could not be found.
-					</p>
-				</div>
-			</div>
-		)
+		const errorType = getErrorType(error)
+		const errorStatus = getErrorStatus(error)
+
+		switch (errorType) {
+			case 'not-found':
+				return <GameNotFoundError gameId={params.id} />
+			case 'unauthorized':
+				return <UnauthorizedError />
+			case 'forbidden':
+				return <ForbiddenError />
+			default:
+				if (errorStatus === 404) {
+					return <GameNotFoundError gameId={params.id} />
+				}
+				if (errorStatus === 401) {
+					return <UnauthorizedError />
+				}
+				if (errorStatus === 403) {
+					return <ForbiddenError />
+				}
+
+				return <ServerError error={error} />
+		}
 	}
 
 	if (!game) {

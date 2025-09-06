@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Suspense } from 'react'
 import { GameList } from '@/components/dashboard/game-list'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { ServerError } from '@/components/error-pages'
 import JoinGameForm from '@/components/forms/join-game'
 import NewGameForm from '@/components/forms/new-game'
 import { DashboardSkeleton } from '@/components/loading'
@@ -13,16 +14,9 @@ export const Route = createFileRoute('/_authenticated/dashboard')({
 	component: RouteComponent,
 	loader: ({ context }) => context,
 	pendingComponent: DashboardSkeleton,
-	errorComponent: ({ error }) => (
-		<div className="p-4">
-			<h1 className="text-2xl font-bold mb-4 text-destructive">
-				Dashboard Error
-			</h1>
-			<p className="text-muted-foreground">
-				{error?.message || 'Failed to load dashboard'}
-			</p>
-		</div>
-	),
+	errorComponent: ({ error }) => {
+		return <ServerError error={error} />
+	},
 })
 
 function RouteComponent() {
