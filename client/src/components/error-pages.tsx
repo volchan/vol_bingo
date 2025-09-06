@@ -1,7 +1,13 @@
-import { AlertTriangle, Home, RefreshCw, Wifi, WifiOff } from 'lucide-react'
 import { Link, useNavigate } from '@tanstack/react-router'
+import { AlertTriangle, Home, RefreshCw, Wifi, WifiOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card'
 
 interface BaseErrorPageProps {
 	title: string
@@ -37,9 +43,7 @@ function BaseErrorPage({
 			<Card className="w-full max-w-md">
 				<CardHeader className="text-center">
 					<div className="flex justify-center mb-4">
-						<div className="p-3 rounded-full bg-destructive/10">
-							{icon}
-						</div>
+						<div className="p-3 rounded-full bg-destructive/10">{icon}</div>
 					</div>
 					<CardTitle className="text-2xl">
 						{statusCode && (
@@ -53,7 +57,11 @@ function BaseErrorPage({
 					{customActions && <div className="pb-3">{customActions}</div>}
 					<div className="flex flex-col gap-2">
 						{showRefreshButton && (
-							<Button onClick={handleRefresh} variant="outline" className="w-full">
+							<Button
+								onClick={handleRefresh}
+								variant="outline"
+								className="w-full"
+							>
 								<RefreshCw className="w-4 h-4 mr-2" />
 								Try Again
 							</Button>
@@ -88,7 +96,10 @@ export function ServerError({ error }: { error?: Error }) {
 		<BaseErrorPage
 			statusCode={500}
 			title="Server Error"
-			description={error?.message || "Something went wrong on our end. We're working to fix it."}
+			description={
+				error?.message ||
+				"Something went wrong on our end. We're working to fix it."
+			}
 			icon={<AlertTriangle className="w-8 h-8 text-destructive" />}
 			showHomeButton={true}
 			showRefreshButton={true}
@@ -151,9 +162,7 @@ export function GameNotFoundError({ gameId }: { gameId?: string }) {
 			showHomeButton={true}
 			customActions={
 				<Button asChild variant="outline" className="w-full">
-					<Link to="/dashboard">
-						View My Games
-					</Link>
+					<Link to="/dashboard">View My Games</Link>
 				</Button>
 			}
 		/>

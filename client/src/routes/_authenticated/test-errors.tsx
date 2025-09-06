@@ -1,16 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-	NotFoundError,
-	ServerError,
-	NetworkError,
-	UnauthorizedError,
+	ConnectionError,
 	ForbiddenError,
 	GameNotFoundError,
-	ConnectionError,
 	MaintenanceError,
+	NetworkError,
+	NotFoundError,
+	ServerError,
+	UnauthorizedError,
 } from '@/components/error-pages'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export const Route = createFileRoute('/_authenticated/test-errors')({
 	component: RouteComponent,
@@ -19,11 +19,19 @@ export const Route = createFileRoute('/_authenticated/test-errors')({
 function RouteComponent() {
 	const errorComponents = [
 		{ name: '404 - Not Found', component: <NotFoundError /> },
-		{ name: '500 - Server Error', component: <ServerError error={new Error('Database connection failed')} /> },
+		{
+			name: '500 - Server Error',
+			component: (
+				<ServerError error={new Error('Database connection failed')} />
+			),
+		},
 		{ name: 'Network Error', component: <NetworkError /> },
 		{ name: '401 - Unauthorized', component: <UnauthorizedError /> },
 		{ name: '403 - Forbidden', component: <ForbiddenError /> },
-		{ name: 'Game Not Found', component: <GameNotFoundError gameId="ABC123" /> },
+		{
+			name: 'Game Not Found',
+			component: <GameNotFoundError gameId="ABC123" />,
+		},
 		{ name: 'Connection Error', component: <ConnectionError /> },
 		{ name: 'Maintenance', component: <MaintenanceError /> },
 	]
@@ -56,36 +64,28 @@ function RouteComponent() {
 						<CardTitle>Error Boundary Tests</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-2">
-						<Button 
-							onClick={() => throwError('js-error')} 
+						<Button
+							onClick={() => throwError('js-error')}
 							variant="destructive"
 						>
 							Throw JS Error
 						</Button>
-						<Button 
-							onClick={() => throwError('network')} 
-							variant="destructive"
-						>
+						<Button onClick={() => throwError('network')} variant="destructive">
 							Throw Network Error
 						</Button>
-						<Button 
-							onClick={() => throwError('auth')} 
-							variant="destructive"
-						>
+						<Button onClick={() => throwError('auth')} variant="destructive">
 							Throw Auth Error
 						</Button>
 					</CardContent>
 				</Card>
 
-				{errorComponents.map((errorItem, index) => (
-					<Card key={index}>
+				{errorComponents.map((errorItem) => (
+					<Card key={errorItem.name}>
 						<CardHeader>
 							<CardTitle className="text-sm">{errorItem.name}</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="min-h-[300px]">
-								{errorItem.component}
-							</div>
+							<div className="min-h-[300px]">{errorItem.component}</div>
 						</CardContent>
 					</Card>
 				))}

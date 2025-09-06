@@ -4,9 +4,9 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { Suspense } from 'react'
 import { ErrorBoundary } from '@/components/error-boundary'
 import {
-	UnauthorizedError,
 	ForbiddenError,
 	ServerError,
+	UnauthorizedError,
 } from '@/components/error-pages'
 import { LoadingPage } from '@/components/loading'
 import type { RouterContext } from '@/contexts/router-context'
@@ -29,7 +29,7 @@ export const Route = createRootRoute({
 	pendingComponent: () => <LoadingPage message="Loading page..." />,
 	errorComponent: ({ error }) => {
 		const errorType = getErrorType(error)
-		
+
 		switch (errorType) {
 			case 'not-found':
 				return <NotFound />

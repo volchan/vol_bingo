@@ -23,7 +23,6 @@ export function usePlayerBoard(friendlyId: string, enabled: boolean = true) {
 	})
 }
 
-
 export function useShufflePlayerBoard() {
 	const queryClient = useQueryClient()
 

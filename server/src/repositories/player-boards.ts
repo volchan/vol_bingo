@@ -200,13 +200,22 @@ const playerBoardsRepository = {
 		console.log(`Cleared player board cells for game ${gameId}`)
 	},
 
-	async setPlayerConnected(playerId: string, gameId: string, connected: boolean) {
+	async setPlayerConnected(
+		playerId: string,
+		gameId: string,
+		connected: boolean,
+	) {
 		const [updatedPlayerBoard] = await db
 			.update(playerBoards)
 			.set({ connected })
-			.where(and(eq(playerBoards.playerId, playerId), eq(playerBoards.gameId, gameId)))
+			.where(
+				and(
+					eq(playerBoards.playerId, playerId),
+					eq(playerBoards.gameId, gameId),
+				),
+			)
 			.returning()
-		
+
 		return updatedPlayerBoard
 	},
 
@@ -221,12 +230,12 @@ const playerBoardsRepository = {
 					with: {
 						gameCell: {
 							with: {
-								cell: true
-							}
-						}
-					}
-				}
-			}
+								cell: true,
+							},
+						},
+					},
+				},
+			},
 		})
 
 		return playerBoardsList

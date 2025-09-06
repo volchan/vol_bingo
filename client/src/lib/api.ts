@@ -249,14 +249,18 @@ class ApiClient {
 		return this.handleResponse<GameWithCreator>(response)
 	}
 
-	async getGamePlayers(friendlyId: string): Promise<{ id: string; displayName: string; connected: boolean }[]> {
+	async getGamePlayers(
+		friendlyId: string,
+	): Promise<{ id: string; displayName: string; connected: boolean }[]> {
 		const headers = await this.getAuthHeaderWithRefresh()
 		const response = await this.fetchWithRetry(
 			`${API_BASE}/games/${friendlyId}/players`,
 			{ headers },
 		)
 
-		return this.handleResponse<{ id: string; displayName: string; connected: boolean }[]>(response)
+		return this.handleResponse<
+			{ id: string; displayName: string; connected: boolean }[]
+		>(response)
 	}
 
 	async createGame(data: Pick<Game, 'title'>): Promise<Game> {
@@ -409,7 +413,6 @@ class ApiClient {
 
 		return this.handleResponse<PlayerBoard>(response)
 	}
-
 
 	async shufflePlayerBoard(playerBoardId: string): Promise<PlayerBoard> {
 		const headers = await this.getAuthHeaderWithRefresh()
