@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Blocks, Edit2, Loader2, Save, Trash2 } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { z } from 'zod'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Button } from '@/components/ui/button'
@@ -39,8 +39,9 @@ function CellsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState<string>('')
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<{
+    value?: string
+  }>({})
 
   const handleDelete = (id: string) => {
     setDeletingId(id)
@@ -61,13 +62,35 @@ function CellsPage() {
       { id: editingId, value: editingValue },
       {
         onError: (error: unknown) => {
-          const message =
-            typeof error === 'object' && error !== null && 'message' in error
-              ? (error as { message?: string }).message
-              : undefined
-          setErrorMsg(message || 'Failed to update cell.')
-          if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
-          errorTimeoutRef.current = setTimeout(() => setErrorMsg(null), 4000)
+          setFieldErrors({})
+
+          if (typeof error === 'object' && error !== null) {
+            const errorObj = error as Record<string, unknown>
+
+            if (Array.isArray(errorObj.issues)) {
+              const newFieldErrors: { value?: string } = {}
+
+              errorObj.issues.forEach((issue: Record<string, unknown>) => {
+                if (Array.isArray(issue.path) && issue.path.length > 0) {
+                  const field = issue.path[0]
+                  if (field === 'value') {
+                    newFieldErrors.value = String(
+                      issue.message || 'Invalid value',
+                    )
+                  }
+                }
+              })
+
+              setFieldErrors(newFieldErrors)
+            } else if (errorObj.message) {
+              const message = String(errorObj.message)
+              setFieldErrors({ value: message })
+            } else {
+              setFieldErrors({ value: 'Failed to update cell.' })
+            }
+          } else {
+            setFieldErrors({ value: 'Failed to update cell.' })
+          }
         },
         onSuccess: () => {
           setEditingId(null)
@@ -79,6 +102,7 @@ function CellsPage() {
 
   const handleEditCancel = () => {
     setEditingId(null)
+    setFieldErrors({})
     setTimeout(() => {
       setEditingValue('')
     }, 150)
@@ -181,11 +205,6 @@ function CellsPage() {
           </h1>
           <p className="text-muted-foreground">Manage your bingo cells</p>
         </div>
-        {errorMsg && (
-          <div className="mb-2 text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2">
-            {errorMsg}
-          </div>
-        )}
         <DataTable
           columns={columns}
           data={tableData}
@@ -233,12 +252,6 @@ function CellsPage() {
             </DialogHeader>
 
             <div className="space-y-4">
-              {errorMsg && (
-                <div className="text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2 text-sm">
-                  {errorMsg}
-                </div>
-              )}
-
               <div className="space-y-2">
                 <label htmlFor="cell-value" className="text-sm font-medium">
                   Value
@@ -250,7 +263,15 @@ function CellsPage() {
                   disabled={isUpdating}
                   placeholder="Cell value"
                   autoFocus
+                  className={
+                    fieldErrors.value
+                      ? 'border-red-500 focus-visible:ring-red-500'
+                      : ''
+                  }
                 />
+                {fieldErrors.value && (
+                  <p className="text-sm text-red-600">{fieldErrors.value}</p>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-4">

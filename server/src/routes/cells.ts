@@ -140,13 +140,74 @@ app.patch(
     try {
       const cell = await cellsRepository.getById(id, user.id)
       if (!cell) {
-        return c.json({ error: 'Cell not found' }, 404)
+        return c.json({ message: 'Cell not found' }, 404)
       }
       const updatedCell = await cellsRepository.update(id, { value })
       return c.json(updatedCell, 200)
     } catch (error) {
       console.error('Update cell error:', error)
-      return c.json({ error: 'Failed to update cell' }, 500)
+
+      if (error instanceof Error) {
+        const cause = (
+          error as Error & { cause?: { code?: string; constraint?: string } }
+        ).cause
+        if (
+          cause &&
+          (cause.code === '23505' ||
+            cause.constraint === 'cells_userId_value_idx')
+        ) {
+          return c.json(
+            {
+              issues: [
+                {
+                  path: ['value'],
+                  message: 'You already have a cell with this value',
+                },
+              ],
+            },
+            400,
+          )
+        }
+
+        if (
+          error.message.includes(
+            'duplicate key value violates unique constraint',
+          ) &&
+          error.message.includes('cells_userId_value_idx')
+        ) {
+          return c.json(
+            {
+              issues: [
+                {
+                  path: ['value'],
+                  message: 'You already have a cell with this value',
+                },
+              ],
+            },
+            400,
+          )
+        }
+
+        if (
+          error.message.includes(
+            'Cannot modify cell that is used in non-draft games',
+          )
+        ) {
+          return c.json(
+            {
+              issues: [
+                {
+                  path: ['value'],
+                  message: 'Cannot modify cell that is used in active games',
+                },
+              ],
+            },
+            400,
+          )
+        }
+      }
+
+      return c.json({ message: 'Failed to update cell' }, 500)
     }
   },
 )
