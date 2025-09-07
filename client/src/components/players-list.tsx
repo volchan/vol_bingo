@@ -56,7 +56,7 @@ export function PlayersList({
               title={player.isConnected ? 'Online' : 'Offline'}
             />
             <span
-              className={`text-sm flex-1 ${
+              className={`text-sm ${
                 player.id === currentUserId ? 'font-medium' : ''
               }`}
             >

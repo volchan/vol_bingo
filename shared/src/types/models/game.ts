@@ -8,6 +8,7 @@ export interface Game {
   winnerId?: string | null
   status: 'draft' | 'ready' | 'playing' | 'completed'
   currentTemplateId?: string | null
+  displayOnStream: boolean
   creator?: {
     id: string
     displayName: string

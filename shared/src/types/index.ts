@@ -4,6 +4,7 @@ export * from './models/game'
 export * from './models/playerBoard'
 export * from './models/template'
 export * from './models/user'
+export * from './websocket'
 
 export interface ApiResponse {
   message: string

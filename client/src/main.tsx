@@ -48,6 +48,10 @@ const queryClient = new QueryClient({
 setQueryUtils(queryClient)
 
 function RouterWrapper() {
+  return <RouterProvider router={router} />
+}
+
+function AuthenticatedRouterWrapper() {
   const authContext = useAuth()
 
   return (
@@ -56,10 +60,31 @@ function RouterWrapper() {
 }
 
 function App() {
+  // Check if current route is a blank route (no auth needed)
+  const currentPath = window.location.pathname
+  const isBlankRoute = currentPath.startsWith('/stream/display')
+
+  console.log(
+    'App loading, current path:',
+    currentPath,
+    'isBlankRoute:',
+    isBlankRoute,
+  )
+
+  if (isBlankRoute) {
+    console.log('Loading blank route without authentication')
+    return (
+      <ErrorBoundary>
+        <RouterWrapper />
+      </ErrorBoundary>
+    )
+  }
+
+  console.log('Loading authenticated route with AuthProvider')
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <RouterWrapper />
+        <AuthenticatedRouterWrapper />
       </AuthProvider>
     </ErrorBoundary>
   )

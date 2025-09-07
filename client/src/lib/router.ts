@@ -5,14 +5,7 @@ import { routeTree } from '@/routeTree.gen'
 export const router = createRouter({
   routeTree,
   context: {
-    authentication: {
-      user: null,
-      isAuthenticated: false,
-      isLoading: true,
-      login: () => {},
-      logout: async () => {},
-      refetch: () => {},
-    },
+    authentication: undefined,
   } as RouterContext,
 })
 

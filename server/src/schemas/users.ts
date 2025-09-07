@@ -13,4 +13,5 @@ export const users = pgTable('users', {
   viewCount: varchar().notNull(),
   twitchId: varchar().notNull().unique(),
   twitchCreatedAt: timestamp({ withTimezone: true }).notNull(),
+  streamIntegrationToken: varchar().notNull().unique(),
 })

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Edit2, Eye, Loader2, Save, Trash2, X } from 'lucide-react'
+import { Edit2, Eye, FileText, Loader2, Save, Trash2, X } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import type { TemplateWithCreator } from 'shared'
 import { z } from 'zod'
@@ -260,7 +260,13 @@ function TemplatesPage() {
   return (
     <ErrorBoundary>
       <div className="p-4 w-full">
-        <h1 className="text-2xl font-bold mb-4">Templates</h1>
+        <div className="space-y-2 mb-6">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <FileText className="h-8 w-8" />
+            Templates
+          </h1>
+          <p className="text-muted-foreground">Manage your bingo templates</p>
+        </div>
         {errorMsg && (
           <div className="mb-2 text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2">
             {errorMsg}

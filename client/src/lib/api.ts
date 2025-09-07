@@ -317,6 +317,77 @@ class ApiClient {
     return this.handleResponse<GameWithCreator>(response)
   }
 
+  async setDisplayOnStream(
+    gameId: string,
+    displayOnStream: boolean,
+  ): Promise<GameWithCreator> {
+    const headers = await this.getAuthHeaderWithRefresh()
+    const response = await this.fetchWithRetry(
+      `${API_BASE}/games/${gameId}/display_on_stream`,
+      {
+        method: 'PATCH',
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ displayOnStream }),
+      },
+    )
+
+    return this.handleResponse<GameWithCreator>(response)
+  }
+
+  async getUser(): Promise<User> {
+    const headers = await this.getAuthHeaderWithRefresh()
+    const response = await this.fetchWithRetry(`${API_BASE}/users/me`, {
+      headers,
+    })
+
+    return this.handleResponse<User>(response)
+  }
+
+  async generateStreamToken(): Promise<{
+    success: boolean
+    token?: string
+    error?: string
+  }> {
+    const headers = await this.getAuthHeaderWithRefresh()
+    const response = await this.fetchWithRetry(
+      `${API_BASE}/users/stream_integration/generate_token`,
+      {
+        method: 'POST',
+        headers,
+      },
+    )
+
+    return this.handleResponse<{
+      success: boolean
+      token?: string
+      error?: string
+    }>(response)
+  }
+
+  async rollStreamToken(): Promise<{
+    success: boolean
+    token?: string
+    error?: string
+  }> {
+    const headers = await this.getAuthHeaderWithRefresh()
+    const response = await this.fetchWithRetry(
+      `${API_BASE}/users/stream_integration/roll_token`,
+      {
+        method: 'POST',
+        headers,
+      },
+    )
+
+    return this.handleResponse<{
+      success: boolean
+      token?: string
+      error?: string
+    }>(response)
+  }
+
   async getCells(): Promise<Cell[]> {
     const headers = await this.getAuthHeaderWithRefresh()
     const response = await this.fetchWithRetry(`${API_BASE}/cells`, { headers })

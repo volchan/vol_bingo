@@ -254,7 +254,7 @@ export class TwitchAuthService {
 
   private formatUserData(
     userData: TwitchUserData,
-  ): Omit<User, 'id' | 'createdAt' | 'updatedAt'> {
+  ): Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'streamIntegrationToken'> {
     return {
       login: userData.login,
       displayName: userData.display_name,
@@ -271,7 +271,10 @@ export class TwitchAuthService {
 
   private async getUserData(
     accessToken: string,
-  ): Promise<Omit<User, 'id' | 'createdAt' | 'updatedAt'> | null> {
+  ): Promise<Omit<
+    User,
+    'id' | 'createdAt' | 'updatedAt' | 'streamIntegrationToken'
+  > | null> {
     try {
       const response = await fetch(`${this.config.apiUrl}/users`, {
         headers: {

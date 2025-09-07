@@ -1,6 +1,6 @@
+import { Link } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
 import type * as React from 'react'
-
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -45,15 +45,15 @@ export function NavSecondary({
                 onClick={() => handleItemClick(item)}
               >
                 {item.url === '/logout' ? (
-                  <div className="flex items-center gap-2 cursor-pointer">
-                    <item.icon />
+                  <div className="flex items-center gap-2">
+                    <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
                   </div>
                 ) : (
-                  <a href={item.url}>
+                  <Link to={item.url}>
                     <item.icon />
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 )}
               </SidebarMenuButton>
             </SidebarMenuItem>
