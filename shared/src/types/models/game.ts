@@ -5,7 +5,6 @@ export interface Game {
   updatedAt: Date | null
   creatorId: string
   friendlyId: string
-  winnerId?: string | null
   status: 'draft' | 'ready' | 'playing' | 'completed'
   currentTemplateId?: string | null
   displayOnStream: boolean

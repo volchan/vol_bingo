@@ -9,6 +9,7 @@ import { wsManager } from '@server/websocket/websocket-manager'
 import type { StreamBingoMessage } from '@shared/types/websocket'
 import { Hono } from 'hono'
 import { upgradeWebSocket } from 'hono/bun'
+import { checkBingoPattern } from 'shared'
 
 const app = new Hono()
 
@@ -18,13 +19,6 @@ interface BingoResult {
   playerName: string
   bingoCount: number
   isMegaBingo: boolean
-}
-
-interface PlayerBoardCellForBingo {
-  position: number
-  gameCell?: {
-    marked?: boolean
-  } | null
 }
 
 async function broadcastPlayersList(gameId: string) {
@@ -63,7 +57,10 @@ const checkForBingo = async (gameId: string, size: number = 5) => {
   for (const playerBoard of playerBoards) {
     if (!playerBoard.playerBoardCells) continue
 
-    const cells = playerBoard.playerBoardCells
+    const cells = playerBoard.playerBoardCells.map((cell) => ({
+      position: cell.position,
+      marked: cell.gameCell?.marked || false,
+    }))
     const result = checkBingoPattern(cells, size)
 
     if (result.hasBingo) {
@@ -91,9 +88,12 @@ const checkForBingoBefore = async (
   for (const playerBoard of playerBoards) {
     if (!playerBoard.playerBoardCells) continue
 
-    const cellsWithoutCurrent = playerBoard.playerBoardCells.filter(
-      (cell) => cell.gameCellId !== excludeGameCellId,
-    )
+    const cellsWithoutCurrent = playerBoard.playerBoardCells
+      .filter((cell) => cell.gameCellId !== excludeGameCellId)
+      .map((cell) => ({
+        position: cell.position,
+        marked: cell.gameCell?.marked || false,
+      }))
 
     const result = checkBingoPattern(cellsWithoutCurrent, size)
 
@@ -133,53 +133,6 @@ const getNewBingos = (
   }
 
   return newBingos
-}
-
-const checkBingoPattern = (
-  cells: PlayerBoardCellForBingo[],
-  size: number = 5,
-) => {
-  const grid = Array(size)
-    .fill(null)
-    .map(() => Array(size).fill(false))
-
-  cells.forEach((cell) => {
-    const row = Math.floor(cell.position / size)
-    const col = cell.position % size
-    if (row >= 0 && row < size && col >= 0 && col < size && grid[row]) {
-      grid[row][col] = cell.gameCell?.marked || false
-    }
-  })
-
-  let bingoCount = 0
-
-  for (let row = 0; row < size; row++) {
-    if (grid[row] && grid[row]!.every((cell) => cell)) {
-      bingoCount++
-    }
-  }
-
-  for (let col = 0; col < size; col++) {
-    if (grid.every((row) => row?.[col])) {
-      bingoCount++
-    }
-  }
-
-  if (grid.every((row, i) => row?.[i])) {
-    bingoCount++
-  }
-
-  if (grid.every((row, i) => row?.[size - 1 - i])) {
-    bingoCount++
-  }
-
-  const isMegaBingo = grid.every((row) => row?.every((cell) => cell))
-
-  return {
-    hasBingo: bingoCount > 0,
-    bingoCount,
-    isMegaBingo,
-  }
 }
 
 function getDisconnectReason(code: number, reason: string): string {
@@ -375,13 +328,26 @@ app.get(
                 )
               }
 
+              const currentBingoResults = await checkForBingo(game.id)
+              const allPlayerBoards =
+                await playerBoardsRepository.getAllForGame(game.id)
+
+              for (const playerBoard of allPlayerBoards) {
+                const playerHasBingo = currentBingoResults.some(
+                  (result) => result.playerId === playerBoard.playerId,
+                )
+                await playerBoardsRepository.updateBingoStatus(
+                  playerBoard.playerId,
+                  game.id,
+                  playerHasBingo,
+                )
+              }
+
               if (marked) {
                 const previousBingoResults = await checkForBingoBefore(
                   game.id,
                   gameCellId,
                 )
-                const currentBingoResults = await checkForBingo(game.id)
-
                 const newBingos = getNewBingos(
                   previousBingoResults,
                   currentBingoResults,

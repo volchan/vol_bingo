@@ -91,15 +91,10 @@ const usersRepository = {
                 id: true,
               },
             },
-            winner: {
-              columns: {
-                displayName: true,
-                id: true,
-              },
-            },
             playerBoards: {
               columns: {
                 id: true,
+                hasBingo: true,
               },
               with: {
                 player: {
@@ -117,13 +112,18 @@ const usersRepository = {
 
     return boards.map((board) => {
       const game = board.game
+      const userPlayerBoard = game.playerBoards.find(
+        (pb) => pb.player.id === userId,
+      )
+      const userHasBingo = userPlayerBoard?.hasBingo || false
+
       return {
         id: game.id,
         title: game.title,
         friendlyId: game.friendlyId,
         status: game.status,
         creator: game.creator,
-        winner: game.winner,
+        userHasBingo,
         players: game.playerBoards.map((board) => board.player),
         createdAt: game.createdAt,
         updatedAt: game.updatedAt,

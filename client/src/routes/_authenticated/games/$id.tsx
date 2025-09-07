@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Copy, Edit, Gamepad2, Loader2, Play, Tv } from 'lucide-react'
+import { Check, Copy, Edit, Gamepad2, Loader2, Play, Tv } from 'lucide-react'
 import { useState } from 'react'
 import { BingoDialog } from '@/components/bingo-dialog'
 import { BingoGrid } from '@/components/bingo-grid'
@@ -10,6 +10,7 @@ import {
   ServerError,
   UnauthorizedError,
 } from '@/components/error-pages'
+import { GameRankings } from '@/components/game-rankings'
 import { PlayerBingoGrid } from '@/components/player-bingo-grid'
 import { PlayersList } from '@/components/players-list'
 import { Button } from '@/components/ui/button'
@@ -22,8 +23,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import {
+  useCompleteGame,
   useEditGame,
   useGame,
+  useGameRankings,
   useReadyGame,
   useSetDisplayOnStream,
   useStartGame,
@@ -44,10 +47,17 @@ function RouteComponent() {
   const readyGameMutation = useReadyGame()
   const startGameMutation = useStartGame()
   const editGameMutation = useEditGame()
+  const completeGameMutation = useCompleteGame()
   const setDisplayOnStreamMutation = useSetDisplayOnStream()
   const { data: playerBoard } = usePlayerBoard(
     params.id,
-    game?.status === 'ready' || game?.status === 'playing',
+    game?.status === 'ready' ||
+      game?.status === 'playing' ||
+      game?.status === 'completed',
+  )
+  const { data: rankings } = useGameRankings(
+    params.id,
+    game?.status === 'completed',
   )
   const [isCopied, setIsCopied] = useState(false)
   const websocket = useGameWebSocket(params.id)
@@ -124,6 +134,8 @@ function RouteComponent() {
         return 'bg-blue-500'
       case 'playing':
         return 'bg-green-500'
+      case 'completed':
+        return 'bg-green-500'
       default:
         return 'bg-gray-500'
     }
@@ -137,8 +149,10 @@ function RouteComponent() {
         return 'Ready to Play'
       case 'playing':
         return 'Game in Progress'
-      default:
+      case 'completed':
         return 'Game Completed'
+      default:
+        return 'Unknown Status'
     }
   }
 
@@ -170,6 +184,12 @@ function RouteComponent() {
     if (!game || !user) return
 
     editGameMutation.mutate(game.friendlyId)
+  }
+
+  const handleCompleteGame = () => {
+    if (!game || !user) return
+
+    completeGameMutation.mutate(game.friendlyId)
   }
 
   const handleDisplayOnStreamToggle = async (checked: boolean) => {
@@ -322,6 +342,29 @@ function RouteComponent() {
               </>
             )}
 
+            {isGameCreator && game.status === 'playing' && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handleCompleteGame}
+                disabled={completeGameMutation.isPending}
+                className="flex items-center gap-2"
+              >
+                {completeGameMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Completing...
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} />
+                    Complete Game
+                  </>
+                )}
+              </Button>
+            )}
+
             <TooltipProvider>
               <Tooltip open={isCopied}>
                 <TooltipTrigger asChild>
@@ -371,6 +414,16 @@ function RouteComponent() {
             </div>
           )}
 
+          {game.status === 'completed' && (
+            <div className="bg-green-50 dark:bg-green-950 rounded-md p-3 flex items-center gap-3">
+              <Check className="w-5 h-5 text-green-500" />
+              <p className="text-sm text-green-700 dark:text-green-300 flex flex-col">
+                <span>Game completed! 🎉</span>
+                <span>Thanks for playing!</span>
+              </p>
+            </div>
+          )}
+
           {isGameCreator &&
             user &&
             user.streamIntegrationToken &&
@@ -416,14 +469,24 @@ function RouteComponent() {
         </div>
       </div>
 
+      {game.status === 'completed' && rankings && rankings.length > 0 && (
+        <div className="bg-card border rounded-lg p-6 mb-6">
+          <GameRankings rankings={rankings} />
+        </div>
+      )}
+
       <div className="flex gap-6">
-        {(game.status === 'ready' || game.status === 'playing') && (
+        {(game.status === 'ready' ||
+          game.status === 'playing' ||
+          game.status === 'completed') && (
           <div className="w-64 flex-shrink-0">
-            <PlayersList
-              creator={game.creator}
-              connectedPlayers={websocket.connectedPlayers}
-              currentUserId={user?.id}
-            />
+            <div className="bg-card border rounded-lg p-4">
+              <PlayersList
+                creator={game.creator}
+                connectedPlayers={websocket.connectedPlayers}
+                currentUserId={user?.id}
+              />
+            </div>
           </div>
         )}
         {isGameCreator && game.status === 'draft' && (
@@ -466,7 +529,9 @@ function RouteComponent() {
               </div>
               <BingoGrid items={bingoItems} disabled={true} />
             </div>
-          ) : (game.status === 'ready' || game.status === 'playing') &&
+          ) : (game.status === 'ready' ||
+              game.status === 'playing' ||
+              game.status === 'completed') &&
             playerBoard ? (
             <PlayerBingoGrid
               playerBoard={playerBoard}
@@ -475,7 +540,9 @@ function RouteComponent() {
               canShuffle={game.status === 'ready'}
               onMarkCell={websocket.markCell}
             />
-          ) : (game.status === 'ready' || game.status === 'playing') &&
+          ) : (game.status === 'ready' ||
+              game.status === 'playing' ||
+              game.status === 'completed') &&
             !playerBoard ? (
             <div className="w-full max-w-2xl mx-auto">
               <div className="text-center p-8 bg-muted/30 rounded-lg border-2 border-dashed border-muted-foreground/30">

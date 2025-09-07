@@ -44,6 +44,7 @@ export const Route = createFileRoute('/_authenticated/stream/integration')({
 function RouteComponent() {
   const { user, refetch: refetchUser } = useAuth()
   const [isCopied, setIsCopied] = useState(false)
+  const [isUrlCopied, setIsUrlCopied] = useState(false)
   const [showRollConfirm, setShowRollConfirm] = useState(false)
 
   const rollStreamToken = useRollStreamToken()
@@ -246,18 +247,29 @@ function RouteComponent() {
                 {user.streamIntegrationToken}
               </code>
             </div>
-            <Button
-              size="sm"
-              onClick={() => {
-                navigator.clipboard.writeText(
-                  `${window.location.origin}/stream/display?token=${user.streamIntegrationToken}`,
-                )
-              }}
-              className="w-full"
-            >
-              <Copy className="h-4 w-4 mr-2" />
-              Copy Display URL
-            </Button>
+            <TooltipProvider>
+              <Tooltip open={isUrlCopied}>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        `${window.location.origin}/stream/display?token=${user.streamIntegrationToken}`,
+                      )
+                      setIsUrlCopied(true)
+                      setTimeout(() => setIsUrlCopied(false), 2000)
+                    }}
+                    className="w-full"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Display URL
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Copied to clipboard!</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
           <div className="space-y-2 mt-4">

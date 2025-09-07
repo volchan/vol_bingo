@@ -4,6 +4,7 @@ export interface PlayerBoard {
   gameId: string
   createdAt: Date
   updatedAt: Date
+  hasBingo: boolean
   playerBoardCells?: PlayerBoardCellWithGameCell[]
 }
 

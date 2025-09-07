@@ -6,7 +6,7 @@ import type { DbTransaction } from './utils'
 
 export type CreatePlayerBoardData = Omit<
   PlayerBoard,
-  'id' | 'createdAt' | 'updatedAt' | 'status'
+  'id' | 'createdAt' | 'updatedAt' | 'status' | 'hasBingo'
 >
 
 const playerBoardsRepository = {
@@ -186,8 +186,6 @@ const playerBoardsRepository = {
         .delete(playerBoardCells)
         .where(eq(playerBoardCells.playerBoardId, playerBoard.id))
     }
-
-    console.log(`Cleared player board cells for game ${gameId}`)
   },
 
   async setPlayerConnected(
@@ -237,6 +235,27 @@ const playerBoardsRepository = {
     tx?: DbTransaction,
   ) => {
     return playerBoardsRepository.getPlayerBoardWithCells(playerId, gameId, tx)
+  },
+
+  updateBingoStatus: async (
+    playerId: string,
+    gameId: string,
+    hasBingo: boolean,
+    tx?: DbTransaction,
+  ) => {
+    const executor = tx || db
+    const [updatedPlayerBoard] = await executor
+      .update(playerBoards)
+      .set({ hasBingo })
+      .where(
+        and(
+          eq(playerBoards.playerId, playerId),
+          eq(playerBoards.gameId, gameId),
+        ),
+      )
+      .returning()
+
+    return updatedPlayerBoard
   },
 }
 

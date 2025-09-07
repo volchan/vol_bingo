@@ -26,7 +26,6 @@ export const games = pgTable(
       .references(() => users.id)
       .notNull(),
     friendlyId: varchar().notNull().unique(),
-    winnerId: uuid().references(() => users.id),
     status: statusEnum().default('draft').notNull(),
     currentTemplateId: uuid(),
     displayOnStream: boolean().default(false).notNull(),
