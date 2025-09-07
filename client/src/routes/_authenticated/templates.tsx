@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Edit2, Eye, FileText, Loader2, Save, Trash2, X } from 'lucide-react'
+import { Edit2, Eye, FileText, Loader2, Save, Trash2 } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import type { TemplateWithCreator } from 'shared'
 import { z } from 'zod'
@@ -48,8 +48,8 @@ function TemplatesPage() {
   const { mutate: updateTemplateMutation, isPending: isUpdating } =
     useUpdateTemplate()
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null)
   const [viewingId, setViewingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState<string>('')
   const [editingDescription, setEditingDescription] = useState<string>('')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -60,6 +60,15 @@ function TemplatesPage() {
   const handleDelete = (id: string) => {
     setDeletingId(id)
     deleteTemplateMutation(id, {
+      onError: (error: unknown) => {
+        const message =
+          typeof error === 'object' && error !== null && 'message' in error
+            ? (error as { message?: string }).message
+            : undefined
+        setErrorMsg(message || 'Failed to delete template.')
+        if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
+        errorTimeoutRef.current = setTimeout(() => setErrorMsg(null), 4000)
+      },
       onSettled: () => setDeletingId(null),
     })
   }
@@ -75,8 +84,10 @@ function TemplatesPage() {
 
   const editingTemplate = useTemplate(editingId || '', !!editingId)
 
-  const handleEditSave = (id: string) => {
-    const template = templates.find((t) => t.id === id)
+  const handleEditSave = () => {
+    if (!editingId) return
+
+    const template = templates.find((t) => t.id === editingId)
     if (!template) return
 
     const existingCellIds =
@@ -86,7 +97,7 @@ function TemplatesPage() {
 
     updateTemplateMutation(
       {
-        templateId: id,
+        templateId: editingId,
         data: {
           name: editingName,
           description: editingDescription.trim() || undefined,
@@ -103,7 +114,7 @@ function TemplatesPage() {
           if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
           errorTimeoutRef.current = setTimeout(() => setErrorMsg(null), 4000)
         },
-        onSettled: () => {
+        onSuccess: () => {
           setEditingId(null)
           setEditingName('')
           setEditingDescription('')
@@ -114,8 +125,10 @@ function TemplatesPage() {
 
   const handleEditCancel = () => {
     setEditingId(null)
-    setEditingName('')
-    setEditingDescription('')
+    setTimeout(() => {
+      setEditingName('')
+      setEditingDescription('')
+    }, 150)
   }
 
   const handleView = (id: string) => {
@@ -128,6 +141,8 @@ function TemplatesPage() {
     onEdit: handleEditInit,
     onView: handleView,
     isDeleting: deletingId === template.id,
+    canDelete: template.canDelete !== false,
+    canEdit: template.canEdit !== false,
   }))
 
   const columns = [
@@ -135,61 +150,16 @@ function TemplatesPage() {
       id: 'name',
       header: 'Name',
       accessorKey: 'name',
-      cell: ({ row }: { row: { original: TemplateTableData } }) => {
-        const isEditingRow = editingId === row.original.id
-        if (isEditingRow) {
-          return (
-            <div className="space-y-2">
-              <Input
-                value={editingName}
-                onChange={(e) => setEditingName(e.target.value)}
-                disabled={isUpdating}
-                placeholder="Template name"
-              />
-              <Input
-                value={editingDescription}
-                onChange={(e) => setEditingDescription(e.target.value)}
-                disabled={isUpdating}
-                placeholder="Description (optional)"
-              />
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleEditSave(row.original.id)}
-                  disabled={isUpdating || !editingName.trim()}
-                >
-                  {isUpdating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  Save
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleEditCancel}
-                  disabled={isUpdating}
-                >
-                  <X className="h-4 w-4" />
-                  Cancel
-                </Button>
-              </div>
+      cell: ({ row }: { row: { original: TemplateTableData } }) => (
+        <div>
+          <div className="font-medium">{row.original.name}</div>
+          {row.original.description && (
+            <div className="text-sm text-muted-foreground">
+              {row.original.description}
             </div>
-          )
-        }
-        return (
-          <div>
-            <div className="font-medium">{row.original.name}</div>
-            {row.original.description && (
-              <div className="text-sm text-muted-foreground">
-                {row.original.description}
-              </div>
-            )}
-          </div>
-        )
-      },
+          )}
+        </div>
+      ),
     },
     {
       id: 'createdAt',
@@ -227,7 +197,6 @@ function TemplatesPage() {
             size="sm"
             onClick={() => row.original.onEdit(row.original.id)}
             className="text-orange-600 hover:text-orange-700"
-            disabled={editingId === row.original.id}
           >
             <Edit2 className="h-4 w-4" />
           </Button>
@@ -304,7 +273,6 @@ function TemplatesPage() {
           }}
         />
 
-        {/* View Template Dialog */}
         <Dialog
           open={!!viewingId}
           onOpenChange={(open) => !open && setViewingId(null)}
@@ -378,6 +346,83 @@ function TemplatesPage() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={!!editingId}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleEditCancel()
+            }
+          }}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Template</DialogTitle>
+              <DialogDescription>
+                Update template name and description
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {errorMsg && (
+                <div className="text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2 text-sm">
+                  {errorMsg}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label htmlFor="template-name" className="text-sm font-medium">
+                  Name
+                </label>
+                <Input
+                  id="template-name"
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  disabled={isUpdating}
+                  placeholder="Template name"
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="template-description"
+                  className="text-sm font-medium"
+                >
+                  Description (optional)
+                </label>
+                <Input
+                  id="template-description"
+                  value={editingDescription}
+                  onChange={(e) => setEditingDescription(e.target.value)}
+                  disabled={isUpdating}
+                  placeholder="Description"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="ghost"
+                  onClick={handleEditCancel}
+                  disabled={isUpdating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleEditSave}
+                  disabled={isUpdating || !editingName.trim()}
+                >
+                  {isUpdating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Save Changes
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

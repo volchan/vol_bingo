@@ -187,9 +187,8 @@ export const templateRepository = {
     const result = await db
       .delete(templates)
       .where(and(eq(templates.id, templateId), eq(templates.creatorId, userId)))
-      .returning()
 
-    return result.length > 0
+    return (result.rowCount ?? 0) > 0
   },
 
   async applyToGame(
