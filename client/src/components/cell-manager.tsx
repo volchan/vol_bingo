@@ -21,7 +21,6 @@ import {
 } from '@/hooks/api/cells.hooks'
 import {
   useApplyTemplate,
-  useCheckTemplateName,
   useCreateTemplate,
   useTemplate,
   useTemplates,
@@ -80,12 +79,12 @@ export function CellManager({
   // Check if current template was deleted
   const templateDeleted = currentTemplateId && templateError
 
-  // Check if template name already exists
-  const { data: nameCheck } = useCheckTemplateName(
-    templateName,
-    currentTemplateId || undefined,
-    !!templateName.trim() && templateName.length > 0,
-  )
+  const nameExists = useMemo(() => {
+    if (!templateName.trim()) return false
+    return templates.some(
+      (template) => template.name.toLowerCase() === templateName.toLowerCase(),
+    )
+  }, [templateName, templates])
 
   // Extract linked cell IDs for quick lookup
   const linkedCellIds = useMemo(
@@ -241,7 +240,7 @@ export function CellManager({
   }
 
   const handleCreateTemplate = async () => {
-    if (!templateName.trim() || totalCells !== 25 || nameCheck?.exists) return
+    if (!templateName.trim() || totalCells !== 25 || nameExists) return
 
     try {
       const cellIds = gameCells.map((gc) => gc.cellId)
@@ -488,12 +487,10 @@ export function CellManager({
                     }
                     maxLength={100}
                     className={
-                      nameCheck?.exists
-                        ? 'border-red-500 focus:border-red-500'
-                        : ''
+                      nameExists ? 'border-red-500 focus:border-red-500' : ''
                     }
                   />
-                  {nameCheck?.exists && (
+                  {nameExists && (
                     <p className="text-xs text-red-500">
                       Template name already exists
                     </p>
@@ -532,7 +529,7 @@ export function CellManager({
                     disabled={
                       !templateName.trim() ||
                       createTemplateMutation.isPending ||
-                      nameCheck?.exists ||
+                      nameExists ||
                       totalCells !== 25
                     }
                     className="flex-1"

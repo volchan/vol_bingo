@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Edit2, Eye, FileText, Loader2, Save, Trash2 } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { TemplateWithCreator } from 'shared'
 import { z } from 'zod'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -52,23 +52,16 @@ function TemplatesPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState<string>('')
   const [editingDescription, setEditingDescription] = useState<string>('')
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string
+    description?: string
+  }>({})
 
   const { data: viewingTemplate } = useTemplate(viewingId || '', !!viewingId)
 
   const handleDelete = (id: string) => {
     setDeletingId(id)
     deleteTemplateMutation(id, {
-      onError: (error: unknown) => {
-        const message =
-          typeof error === 'object' && error !== null && 'message' in error
-            ? (error as { message?: string }).message
-            : undefined
-        setErrorMsg(message || 'Failed to delete template.')
-        if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
-        errorTimeoutRef.current = setTimeout(() => setErrorMsg(null), 4000)
-      },
       onSettled: () => setDeletingId(null),
     })
   }
@@ -106,13 +99,34 @@ function TemplatesPage() {
       },
       {
         onError: (error: unknown) => {
-          const message =
-            typeof error === 'object' && error !== null && 'message' in error
-              ? (error as { message?: string }).message
-              : undefined
-          setErrorMsg(message || 'Failed to update template.')
-          if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
-          errorTimeoutRef.current = setTimeout(() => setErrorMsg(null), 4000)
+          setFieldErrors({})
+
+          if (typeof error === 'object' && error !== null) {
+            const errorObj = error as Record<string, unknown>
+
+            if (Array.isArray(errorObj.issues)) {
+              const newFieldErrors: { name?: string; description?: string } = {}
+
+              errorObj.issues.forEach((issue: Record<string, unknown>) => {
+                if (Array.isArray(issue.path) && issue.path.length > 0) {
+                  const field = issue.path[0]
+                  if (field === 'name' || field === 'description') {
+                    newFieldErrors[field as keyof typeof newFieldErrors] =
+                      String(issue.message || 'Invalid value')
+                  }
+                }
+              })
+
+              setFieldErrors(newFieldErrors)
+            } else if (errorObj.message) {
+              const message = String(errorObj.message)
+              setFieldErrors({ name: message })
+            } else {
+              setFieldErrors({ name: 'Failed to update template.' })
+            }
+          } else {
+            setFieldErrors({ name: 'Failed to update template.' })
+          }
         },
         onSuccess: () => {
           setEditingId(null)
@@ -125,6 +139,7 @@ function TemplatesPage() {
 
   const handleEditCancel = () => {
     setEditingId(null)
+    setFieldErrors({})
     setTimeout(() => {
       setEditingName('')
       setEditingDescription('')
@@ -236,11 +251,6 @@ function TemplatesPage() {
           </h1>
           <p className="text-muted-foreground">Manage your bingo templates</p>
         </div>
-        {errorMsg && (
-          <div className="mb-2 text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2">
-            {errorMsg}
-          </div>
-        )}
         <DataTable
           columns={columns}
           data={tableData}
@@ -366,12 +376,6 @@ function TemplatesPage() {
             </DialogHeader>
 
             <div className="space-y-4">
-              {errorMsg && (
-                <div className="text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2 text-sm">
-                  {errorMsg}
-                </div>
-              )}
-
               <div className="space-y-2">
                 <label htmlFor="template-name" className="text-sm font-medium">
                   Name
@@ -383,7 +387,15 @@ function TemplatesPage() {
                   disabled={isUpdating}
                   placeholder="Template name"
                   autoFocus
+                  className={
+                    fieldErrors.name
+                      ? 'border-red-500 focus-visible:ring-red-500'
+                      : ''
+                  }
                 />
+                {fieldErrors.name && (
+                  <p className="text-sm text-red-600">{fieldErrors.name}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -399,7 +411,17 @@ function TemplatesPage() {
                   onChange={(e) => setEditingDescription(e.target.value)}
                   disabled={isUpdating}
                   placeholder="Description"
+                  className={
+                    fieldErrors.description
+                      ? 'border-red-500 focus-visible:ring-red-500'
+                      : ''
+                  }
                 />
+                {fieldErrors.description && (
+                  <p className="text-sm text-red-600">
+                    {fieldErrors.description}
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-4">

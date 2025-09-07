@@ -72,31 +72,6 @@ templates.get('/', async (c) => {
   }
 })
 
-const checkNameSchema = z.object({
-  name: z.string().min(1),
-  excludeId: z.string().optional(),
-})
-
-templates.get(
-  '/check-name',
-  zValidator('query', checkNameSchema),
-  async (c) => {
-    const user = c.get('currentUser')
-    const { name, excludeId } = c.req.valid('query')
-
-    try {
-      const exists = await templateRepository.existsByName(
-        name,
-        user.id,
-        excludeId,
-      )
-      return c.json({ exists })
-    } catch (_error) {
-      return c.json({ message: 'Failed to check template name' }, 500)
-    }
-  },
-)
-
 templates.get('/:id', async (c) => {
   const user = c.get('currentUser')
   const templateId = c.req.param('id')
@@ -132,7 +107,51 @@ templates.put('/:id', zValidator('form', updateTemplateSchema), async (c) => {
       return c.json({ message: 'Template not found' }, 404)
     }
     return c.json(updated)
-  } catch (_error) {
+  } catch (error) {
+    console.error('Update template error:', error)
+
+    if (error instanceof Error) {
+      const cause = (
+        error as Error & { cause?: { code?: string; constraint?: string } }
+      ).cause
+      if (
+        cause &&
+        (cause.code === '23505' ||
+          cause.constraint === 'templates_name_creator_unique')
+      ) {
+        return c.json(
+          {
+            issues: [
+              {
+                path: ['name'],
+                message: 'You already have a template with this name',
+              },
+            ],
+          },
+          400,
+        )
+      }
+
+      if (
+        error.message.includes(
+          'duplicate key value violates unique constraint',
+        ) &&
+        error.message.includes('templates_name_creator_unique')
+      ) {
+        return c.json(
+          {
+            issues: [
+              {
+                path: ['name'],
+                message: 'You already have a template with this name',
+              },
+            ],
+          },
+          400,
+        )
+      }
+    }
+
     return c.json({ message: 'Failed to update template' }, 500)
   }
 })

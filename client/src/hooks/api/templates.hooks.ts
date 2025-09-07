@@ -15,21 +15,6 @@ export function useTemplates() {
   })
 }
 
-// Check if template name exists
-export function useCheckTemplateName(
-  name: string,
-  excludeId?: string,
-  enabled = true,
-) {
-  return useQuery({
-    queryKey: ['templates', 'check-name', name, excludeId],
-    queryFn: (): Promise<{ exists: boolean }> =>
-      apiClient.checkTemplateName(name, excludeId),
-    enabled: enabled && !!name.trim(),
-    staleTime: 1000, // 1 second
-  })
-}
-
 // Get template with cells
 export function useTemplate(templateId: string, enabled = true) {
   return useQuery({

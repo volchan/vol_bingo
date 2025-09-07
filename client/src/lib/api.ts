@@ -32,13 +32,25 @@ class ApiClient {
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      const errorMessage = await this.getErrorMessage(response)
+      const errorData = await this.getErrorData(response)
 
       if (isAuthenticationError(response.status)) {
-        throw new AuthError(response.status, response.statusText, errorMessage)
+        throw new AuthError(
+          response.status,
+          response.statusText,
+          String(errorData.message || ''),
+        )
       }
 
-      throw new ApiError(response.status, response.statusText, errorMessage)
+      // For validation errors, throw the entire error data
+      const error = new ApiError(
+        response.status,
+        response.statusText,
+        String(errorData.message || ''),
+      )
+      // Preserve the full error data (including issues array) on the error object
+      Object.assign(error, errorData)
+      throw error
     }
 
     try {
@@ -56,12 +68,14 @@ class ApiClient {
     }
   }
 
-  private async getErrorMessage(response: Response): Promise<string> {
+  private async getErrorData(
+    response: Response,
+  ): Promise<Record<string, unknown>> {
     try {
       const data = await response.json()
-      return data.message || data.error || `HTTP ${response.status}`
+      return data
     } catch {
-      return `HTTP ${response.status}: ${response.statusText}`
+      return { message: `HTTP ${response.status}: ${response.statusText}` }
     }
   }
 
@@ -511,26 +525,6 @@ class ApiClient {
 
     const data = await this.handleResponse<TemplateWithCreator[]>(response)
     return data || []
-  }
-
-  async checkTemplateName(
-    name: string,
-    excludeId?: string,
-  ): Promise<{ exists: boolean }> {
-    const headers = await this.getAuthHeaderWithRefresh()
-    const params = new URLSearchParams()
-    params.append('name', name)
-    if (excludeId) params.append('excludeId', excludeId)
-
-    const response = await this.fetchWithRetry(
-      `${API_BASE}/templates/check-name?${params}`,
-      {
-        method: 'GET',
-        headers,
-      },
-    )
-
-    return this.handleResponse<{ exists: boolean }>(response)
   }
 
   async getTemplate(templateId: string): Promise<TemplateWithCells> {
