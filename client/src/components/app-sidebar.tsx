@@ -1,7 +1,14 @@
 import { BlockGameIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
-import { Blocks, FileText, LayoutDashboard, LogOut } from 'lucide-react'
+import {
+  Blocks,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Tv,
+} from 'lucide-react'
 import type * as React from 'react'
 import { NavMain } from '@/components/nav-main'
 import { NavProjects } from '@/components/nav-projects'
@@ -26,6 +33,11 @@ const data = {
       icon: LayoutDashboard,
     },
     {
+      title: 'Stream Integration',
+      url: '/stream/integration',
+      icon: Tv,
+    },
+    {
       title: 'Cells',
       url: '/cells',
       icon: Blocks,
@@ -37,6 +49,11 @@ const data = {
     },
   ],
   navSecondary: [
+    {
+      title: 'Settings',
+      url: '/settings',
+      icon: Settings,
+    },
     {
       title: 'Log Out',
       url: '/logout',

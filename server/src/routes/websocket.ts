@@ -6,6 +6,7 @@ import playerBoardsRepository from '@server/repositories/player-boards'
 import usersRepository from '@server/repositories/users'
 import { verifyJWT } from '@server/utils/jwt'
 import { wsManager } from '@server/websocket/websocket-manager'
+import type { StreamBingoMessage } from '@shared/types/websocket'
 import { Hono } from 'hono'
 import { upgradeWebSocket } from 'hono/bun'
 
@@ -360,6 +361,20 @@ app.get(
                 },
               })
 
+              console.log(
+                `Game ${game.id} displayOnStream: ${game.displayOnStream}`,
+              )
+              if (game.displayOnStream) {
+                console.log(
+                  `Calling broadcastGameUpdateToStream for game ${game.id}`,
+                )
+                await broadcastGameUpdateToStream(game.creatorId, game.id)
+              } else {
+                console.log(
+                  `Game ${game.id} not set to display on stream, skipping broadcast`,
+                )
+              }
+
               if (marked) {
                 const previousBingoResults = await checkForBingoBefore(
                   game.id,
@@ -377,15 +392,21 @@ app.get(
                     (player) => player.isMegaBingo,
                   )
 
-                  wsManager.broadcastToGame(game.id, {
-                    type: 'bingo_achieved',
+                  const bingoMessage = {
+                    type: 'bingo_achieved' as const,
                     data: {
                       gameId: game.id,
                       bingoPlayers: currentBingoResults,
                       newBingoPlayers: newBingos,
                       isMegaBingo: hasMegaBingo,
                     },
-                  })
+                  }
+
+                  wsManager.broadcastToGame(game.id, bingoMessage)
+
+                  if (game.displayOnStream) {
+                    await broadcastBingoToStream(game.creatorId, bingoMessage)
+                  }
                 }
               }
             } catch (error) {
@@ -406,7 +427,7 @@ app.get(
               const payload = await verifyJWT(data.token)
               const userId = payload.userId as string
 
-              const _user = await usersRepository.findById(userId)
+              await usersRepository.findById(userId)
 
               const connectionId = `${gameId}-${userId}-${Date.now()}`
               currentConnectionId = connectionId
@@ -550,5 +571,399 @@ app.get(
     }
   }),
 )
+
+app.get(
+  '/stream_integration',
+  upgradeWebSocket(async () => {
+    let userId: string | null = null
+    let connectionId: string | null = null
+
+    return {
+      onOpen(_event, _ws) {
+        wsLogger.connectionOpened('stream-integration', 'pending-auth')
+      },
+
+      async onMessage(event, ws) {
+        try {
+          const data = JSON.parse(event.data.toString())
+
+          if (data.type === 'authenticate_stream' && data.token) {
+            try {
+              const user = await db.query.users.findFirst({
+                where: (table, { eq }) =>
+                  eq(table.streamIntegrationToken, data.token),
+              })
+
+              if (!user) {
+                ws.send(
+                  JSON.stringify({
+                    type: 'error',
+                    data: { message: 'Invalid stream token' },
+                  }),
+                )
+                ws.close()
+                return
+              }
+
+              userId = user.id
+              connectionId = `stream-${userId}-${Date.now()}`
+
+              wsManager.addConnection(connectionId, 'stream', userId, ws)
+              wsLogger.connectionAuthenticated(
+                connectionId,
+                userId,
+                'stream-integration',
+              )
+
+              ws.send(
+                JSON.stringify({
+                  type: 'authenticated',
+                  data: { userId, connectionId },
+                }),
+              )
+
+              const streamGame = await db.query.games.findFirst({
+                where: (table, { and, eq }) =>
+                  and(
+                    eq(table.creatorId, user.id),
+                    eq(table.displayOnStream, true),
+                  ),
+                with: {
+                  creator: {
+                    columns: {
+                      displayName: true,
+                    },
+                  },
+                },
+              })
+
+              if (streamGame) {
+                const playerBoard = await db.query.playerBoards.findFirst({
+                  where: (table, { and, eq }) =>
+                    and(
+                      eq(table.gameId, streamGame.id),
+                      eq(table.playerId, user.id),
+                    ),
+                  with: {
+                    playerBoardCells: {
+                      with: {
+                        gameCell: {
+                          with: {
+                            cell: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                })
+
+                ws.send(
+                  JSON.stringify({
+                    type: 'stream_game_update',
+                    data: {
+                      gameId: streamGame.id,
+                      gameTitle: streamGame.title,
+                      playerBoard,
+                    },
+                  }),
+                )
+              } else {
+                ws.send(
+                  JSON.stringify({
+                    type: 'no_stream_game',
+                  }),
+                )
+              }
+            } catch (error) {
+              wsLogger.error(
+                connectionId || undefined,
+                'Stream authentication failed',
+                error as Error,
+              )
+              ws.send(
+                JSON.stringify({
+                  type: 'error',
+                  data: { message: 'Authentication failed' },
+                }),
+              )
+              ws.close()
+            }
+          }
+        } catch (error) {
+          wsLogger.error(
+            connectionId || undefined,
+            'Error processing stream WebSocket message',
+            error as Error,
+          )
+        }
+      },
+
+      async onClose(_event, _ws) {
+        if (connectionId) {
+          wsManager.removeConnection(connectionId)
+          wsLogger.connectionClosed(connectionId, 'stream_integration_close')
+        }
+      },
+
+      async onError(event, _ws) {
+        wsLogger.error(
+          connectionId || undefined,
+          'Stream WebSocket error',
+          event as unknown as Error,
+        )
+        if (connectionId) {
+          wsManager.removeConnection(connectionId)
+        }
+      },
+    }
+  }),
+)
+
+app.get(
+  '/stream',
+  upgradeWebSocket(async (c) => {
+    const searchParams = new URL(c.req.url).searchParams
+    const token = searchParams.get('token')
+
+    if (!token) {
+      return {
+        onOpen(_event, ws) {
+          ws.send(
+            JSON.stringify({
+              type: 'error',
+              data: { message: 'Token required' },
+            }),
+          )
+          ws.close()
+        },
+        onMessage() {},
+        onClose() {},
+        onError() {},
+      }
+    }
+
+    let userId: string | null = null
+    let connectionId: string | null = null
+
+    return {
+      async onOpen(_event, ws) {
+        try {
+          const user = await db.query.users.findFirst({
+            where: (table, { eq }) => eq(table.streamIntegrationToken, token),
+          })
+
+          if (!user) {
+            ws.send(
+              JSON.stringify({
+                type: 'error',
+                data: { message: 'Invalid stream token' },
+              }),
+            )
+            ws.close()
+            return
+          }
+
+          userId = user.id
+          connectionId = `stream-display-${userId}-${Date.now()}`
+
+          wsManager.addConnection(connectionId, 'stream-display', userId, ws)
+
+          ws.send(
+            JSON.stringify({
+              type: 'authenticated',
+              data: { userId, connectionId },
+            }),
+          )
+
+          const streamGame = await db.query.games.findFirst({
+            where: (table, { and, eq }) =>
+              and(
+                eq(table.creatorId, user.id),
+                eq(table.displayOnStream, true),
+              ),
+            with: {
+              creator: {
+                columns: {
+                  displayName: true,
+                },
+              },
+            },
+          })
+
+          if (streamGame) {
+            const playerBoard = await db.query.playerBoards.findFirst({
+              where: (table, { and, eq }) =>
+                and(
+                  eq(table.gameId, streamGame.id),
+                  eq(table.playerId, user.id),
+                ),
+              with: {
+                playerBoardCells: {
+                  with: {
+                    gameCell: {
+                      with: {
+                        cell: true,
+                      },
+                    },
+                  },
+                },
+              },
+            })
+
+            ws.send(
+              JSON.stringify({
+                type: 'stream_game_update',
+                data: {
+                  gameId: streamGame.id,
+                  gameTitle: streamGame.title,
+                  playerBoard,
+                },
+              }),
+            )
+          } else {
+            ws.send(
+              JSON.stringify({
+                type: 'no_stream_game',
+              }),
+            )
+          }
+        } catch {
+          ws.send(
+            JSON.stringify({
+              type: 'error',
+              data: { message: 'Authentication failed' },
+            }),
+          )
+          ws.close()
+        }
+      },
+
+      async onMessage(_event, _ws) {},
+
+      async onClose(_event, _ws) {
+        if (connectionId) {
+          wsManager.removeConnection(connectionId)
+        }
+      },
+
+      async onError(_event, _ws) {
+        if (connectionId) {
+          wsManager.removeConnection(connectionId)
+        }
+      },
+    }
+  }),
+)
+
+async function broadcastGameUpdateToStream(creatorId: string, gameId: string) {
+  try {
+    const game = await db.query.games.findFirst({
+      where: (table, { and, eq }) =>
+        and(
+          eq(table.id, gameId),
+          eq(table.creatorId, creatorId),
+          eq(table.displayOnStream, true),
+        ),
+      with: {
+        creator: {
+          columns: {
+            displayName: true,
+          },
+        },
+      },
+    })
+
+    if (!game) {
+      return
+    }
+
+    const playerBoard = await db.query.playerBoards.findFirst({
+      where: (table, { and, eq }) =>
+        and(eq(table.gameId, gameId), eq(table.playerId, creatorId)),
+      with: {
+        playerBoardCells: {
+          with: {
+            gameCell: {
+              with: {
+                cell: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (!playerBoard) {
+      return
+    }
+
+    const allConnections = wsManager.getAllConnectionsArray()
+    const streamConnections = allConnections.filter(
+      (connection) =>
+        connection.gameId === 'stream-display' &&
+        connection.userId === creatorId,
+    )
+
+    const updateMessage = {
+      type: 'stream_game_update',
+      data: {
+        gameId: game.id,
+        gameTitle: game.title,
+        playerBoard,
+      },
+    }
+
+    streamConnections.forEach((connection) => {
+      try {
+        connection.ws.send(JSON.stringify(updateMessage))
+      } catch {}
+    })
+  } catch {}
+}
+
+async function broadcastBingoToStream(
+  creatorId: string,
+  bingoMessage: StreamBingoMessage,
+) {
+  try {
+    const streamConnections = wsManager
+      .getAllConnectionsArray()
+      .filter(
+        (connection) =>
+          connection.gameId === 'stream-display' &&
+          connection.userId === creatorId,
+      )
+
+    streamConnections.forEach((connection) => {
+      try {
+        connection.ws.send(JSON.stringify(bingoMessage))
+      } catch {}
+    })
+  } catch {}
+}
+
+async function broadcastNoGameToStream(creatorId: string) {
+  try {
+    const streamConnections = wsManager
+      .getAllConnectionsArray()
+      .filter(
+        (connection) =>
+          connection.gameId === 'stream-display' &&
+          connection.userId === creatorId,
+      )
+
+    const noGameMessage = {
+      type: 'no_stream_game',
+    }
+
+    streamConnections.forEach((connection) => {
+      try {
+        connection.ws.send(JSON.stringify(noGameMessage))
+      } catch {}
+    })
+  } catch {}
+}
+
+export { broadcastGameUpdateToStream, broadcastNoGameToStream }
 
 export default app

@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import confetti from 'canvas-confetti'
-import { Copy, Edit, Loader2, Play, Trophy } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Copy, Edit, Gamepad2, Loader2, Play, Tv } from 'lucide-react'
+import { useState } from 'react'
+import { BingoDialog } from '@/components/bingo-dialog'
 import { BingoGrid } from '@/components/bingo-grid'
 import { CellManager } from '@/components/cell-manager'
 import {
@@ -13,13 +13,8 @@ import {
 import { PlayerBingoGrid } from '@/components/player-bingo-grid'
 import { PlayersList } from '@/components/players-list'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import {
   Tooltip,
   TooltipContent,
@@ -30,6 +25,7 @@ import {
   useEditGame,
   useGame,
   useReadyGame,
+  useSetDisplayOnStream,
   useStartGame,
 } from '@/hooks/api/games.hooks'
 import { usePlayerBoard } from '@/hooks/api/player-boards.hooks'
@@ -48,6 +44,7 @@ function RouteComponent() {
   const readyGameMutation = useReadyGame()
   const startGameMutation = useStartGame()
   const editGameMutation = useEditGame()
+  const setDisplayOnStreamMutation = useSetDisplayOnStream()
   const { data: playerBoard } = usePlayerBoard(
     params.id,
     game?.status === 'ready' || game?.status === 'playing',
@@ -55,118 +52,9 @@ function RouteComponent() {
   const [isCopied, setIsCopied] = useState(false)
   const websocket = useGameWebSocket(params.id)
 
-  useEffect(() => {
-    if (websocket.showBingoDialog) {
-      const isMegaBingo = websocket.isMegaBingo
-      const duration = isMegaBingo ? 5000 : 2000
-      const animationEnd = Date.now() + duration
-
-      const runConfetti = () => {
-        const timeLeft = animationEnd - Date.now()
-
-        if (timeLeft <= 0) return
-
-        const dialogElement = document.querySelector('[role="dialog"]')
-        let originY = 0.5
-        let originX = 0.5
-
-        if (dialogElement) {
-          const dialogRect = dialogElement.getBoundingClientRect()
-          const centerX = dialogRect.left + dialogRect.width / 2
-          const topY = dialogRect.top + 20
-
-          originX = centerX / window.innerWidth
-          originY = topY / window.innerHeight
-        }
-
-        if (isMegaBingo) {
-          confetti({
-            particleCount: 100,
-            startVelocity: 60,
-            spread: 80,
-            angle: 90,
-            origin: { x: originX - 0.2, y: originY },
-            colors: [
-              '#FFD700',
-              '#FFA500',
-              '#FF6347',
-              '#32CD32',
-              '#1E90FF',
-              '#9932CC',
-            ],
-          })
-          confetti({
-            particleCount: 100,
-            startVelocity: 60,
-            spread: 80,
-            angle: 90,
-            origin: { x: originX + 0.2, y: originY },
-            colors: [
-              '#FFD700',
-              '#FFA500',
-              '#FF6347',
-              '#32CD32',
-              '#1E90FF',
-              '#9932CC',
-            ],
-          })
-          confetti({
-            particleCount: 150,
-            startVelocity: 70,
-            spread: 90,
-            angle: 90,
-            origin: { x: originX, y: originY - 0.02 },
-            colors: [
-              '#FFD700',
-              '#FFA500',
-              '#FF6347',
-              '#32CD32',
-              '#1E90FF',
-              '#9932CC',
-            ],
-          })
-          setTimeout(() => requestAnimationFrame(runConfetti), 100)
-        } else {
-          confetti({
-            particleCount: 30,
-            startVelocity: 40,
-            spread: 70,
-            angle: 90,
-            origin: {
-              x: originX,
-              y: originY,
-            },
-            colors: [
-              '#FFD700',
-              '#FFA500',
-              '#FF6347',
-              '#32CD32',
-              '#1E90FF',
-              '#9932CC',
-            ],
-          })
-          setTimeout(() => requestAnimationFrame(runConfetti), 200)
-        }
-      }
-
-      runConfetti()
-
-      // Auto-close timer
-      const timer = setTimeout(() => {
-        websocket.setShowBingoDialog(false)
-      }, 10000)
-
-      return () => clearTimeout(timer)
-    }
-  }, [
-    websocket.showBingoDialog,
-    websocket.setShowBingoDialog,
-    websocket.isMegaBingo,
-  ])
-
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4 space-y-6">
+      <div className="p-4">
         <div className="text-center">
           <div className="animate-pulse">
             <div className="h-8 bg-muted rounded w-64 mx-auto mb-2"></div>
@@ -215,7 +103,7 @@ function RouteComponent() {
 
   if (!game) {
     return (
-      <div className="container mx-auto p-4 space-y-6">
+      <div className="p-4">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">Loading...</h1>
         </div>
@@ -284,6 +172,20 @@ function RouteComponent() {
     editGameMutation.mutate(game.friendlyId)
   }
 
+  const handleDisplayOnStreamToggle = async (checked: boolean) => {
+    if (!game || !user) return
+
+    try {
+      await setDisplayOnStreamMutation.mutateAsync({
+        gameId: game.id,
+        displayOnStream: checked,
+      })
+      refetch()
+    } catch (error) {
+      console.error('Failed to toggle display on stream:', error)
+    }
+  }
+
   const isGameCreator = !!(
     user &&
     game &&
@@ -292,16 +194,19 @@ function RouteComponent() {
   )
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <div className="text-left">
-        <h1 className="text-3xl font-bold tracking-tight">{game.title}</h1>
+    <div className="p-4">
+      <div className="space-y-2 mb-6">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <Gamepad2 className="h-8 w-8" />
+          {game.title}
+        </h1>
         <p className="text-muted-foreground">
           Created by {game.creator?.displayName || 'Unknown'} • Game ID:{' '}
           {game.friendlyId}
         </p>
       </div>
 
-      <div className="border rounded-lg p-6 bg-card">
+      <div className="border rounded-lg p-6 bg-card mb-6">
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -466,6 +371,36 @@ function RouteComponent() {
             </div>
           )}
 
+          {isGameCreator &&
+            user &&
+            user.streamIntegrationToken &&
+            game.status !== 'draft' && (
+              <div className="bg-card border rounded-md p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Tv className="h-5 w-5 text-primary" />
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="display-on-stream"
+                        className="text-sm font-medium"
+                      >
+                        Display on Stream
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Show this game on your stream integration page
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="display-on-stream"
+                    checked={game.displayOnStream}
+                    onCheckedChange={handleDisplayOnStreamToggle}
+                    disabled={setDisplayOnStreamMutation.isPending}
+                  />
+                </div>
+              </div>
+            )}
+
           {isGameCreator && game.status === 'draft' && (
             <div className="text-center">
               <span className="text-sm text-muted-foreground">
@@ -572,124 +507,13 @@ function RouteComponent() {
         </div>
       </div>
 
-      {/* Server-driven Bingo Dialog */}
-      <Dialog
+      <BingoDialog
         open={websocket.showBingoDialog}
         onOpenChange={websocket.setShowBingoDialog}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-100 dark:bg-yellow-900/20">
-              <Trophy className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
-            </div>
-            <DialogTitle className="text-center text-2xl font-bold">
-              {websocket.isMegaBingo ? '🎆 MEGA BINGO! 🎆' : '🎉 BINGO! 🎉'}
-            </DialogTitle>
-            <DialogDescription className="text-center text-lg">
-              {websocket.isMegaBingo ? (
-                <span className="space-y-2 block">
-                  <span className="text-xl font-bold text-yellow-600 dark:text-yellow-400 block">
-                    ENTIRE GRID COMPLETED!
-                  </span>
-                  <span className="block">
-                    Ultimate bingo achievement unlocked! 🏆
-                  </span>
-                </span>
-              ) : (
-                <span className="space-y-3 block">
-                  {/* Show who got NEW bingos (not in mega bingo) */}
-                  {websocket.newBingoPlayers.length === 1 ? (
-                    <span className="block text-green-600 dark:text-green-400 font-bold">
-                      🎉{' '}
-                      <strong>
-                        {websocket.newBingoPlayers[0]?.playerName}
-                      </strong>{' '}
-                      just got a new bingo!
-                    </span>
-                  ) : websocket.newBingoPlayers.length > 1 ? (
-                    <span className="space-y-1 block">
-                      {websocket.newBingoPlayers.length <= 5 ? (
-                        <>
-                          <span className="block text-green-600 dark:text-green-400 font-bold">
-                            🎉 New bingos achieved by:
-                          </span>
-                          {websocket.newBingoPlayers
-                            .sort((a, b) =>
-                              a.playerName.localeCompare(b.playerName),
-                            )
-                            .map((player) => (
-                              <span
-                                key={`${player.playerId}-${player.playerBoardId}`}
-                                className="block text-green-600 dark:text-green-400 font-semibold"
-                              >
-                                <strong>{player.playerName}</strong>
-                              </span>
-                            ))}
-                        </>
-                      ) : (
-                        <span className="block text-green-600 dark:text-green-400 font-bold">
-                          🎉 {websocket.newBingoPlayers.length} players just got
-                          new bingos!
-                        </span>
-                      )}
-                    </span>
-                  ) : null}
-
-                  {/* Show current bingo status */}
-                  {websocket.bingoPlayers.length === 1 ? (
-                    <span className="block">
-                      <strong>{websocket.bingoPlayers[0]?.playerName}</strong>{' '}
-                      has{' '}
-                      {websocket.bingoPlayers[0]?.bingoCount > 1 ? (
-                        <span className="text-yellow-600 dark:text-yellow-400 font-bold">
-                          {websocket.bingoPlayers[0]?.bingoCount} bingos
-                        </span>
-                      ) : (
-                        'a bingo'
-                      )}
-                      !
-                    </span>
-                  ) : websocket.bingoPlayers.length > 1 ? (
-                    <span className="space-y-1 block">
-                      <span className="block">
-                        {websocket.bingoPlayers.length <= 5
-                          ? 'Current bingo standings:'
-                          : 'Top 5 bingo leaders:'}
-                      </span>
-                      {websocket.bingoPlayers
-                        .sort((a, b) => b.bingoCount - a.bingoCount)
-                        .slice(0, 5)
-                        .map((player) => (
-                          <span
-                            key={`${player.playerId}-${player.playerBoardId}`}
-                            className="font-semibold block"
-                          >
-                            <strong>{player.playerName}</strong>{' '}
-                            {player.bingoCount > 1 ? (
-                              <span className="text-yellow-600 dark:text-yellow-400">
-                                ({player.bingoCount} bingos)
-                              </span>
-                            ) : (
-                              '(1 bingo)'
-                            )}
-                          </span>
-                        ))}
-                      {websocket.bingoPlayers.length > 5 && (
-                        <span className="block text-sm text-muted-foreground">
-                          ...and {websocket.bingoPlayers.length - 5} more
-                          players
-                        </span>
-                      )}
-                    </span>
-                  ) : (
-                    <span className="block">Someone achieved a bingo!</span>
-                  )}
-                </span>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+        bingoPlayers={websocket.bingoPlayers}
+        newBingoPlayers={websocket.newBingoPlayers}
+        isMegaBingo={websocket.isMegaBingo}
+      />
     </div>
   )
 }

@@ -179,6 +179,10 @@ class WebSocketManager {
     return this.connections.size
   }
 
+  getAllConnectionsArray(): GameConnection[] {
+    return Array.from(this.connections.values())
+  }
+
   private async cleanupAbandonedConnections() {
     const now = Date.now()
     const abandonedTimeout = 2 * 60 * 1000 // Reduce from 15 minutes to 2 minutes

@@ -5,6 +5,10 @@ import gamesRepository, {
   type CreateGameData,
 } from '@server/repositories/games'
 import playerBoardsRepository from '@server/repositories/player-boards'
+import {
+  broadcastGameUpdateToStream,
+  broadcastNoGameToStream,
+} from '@server/routes/websocket'
 import { wsManager } from '@server/websocket/websocket-manager'
 import type { Game } from '@shared/types'
 import { Hono } from 'hono'
@@ -247,6 +251,61 @@ app.patch(
     })
 
     return c.json(updatedGame, 200)
+  },
+)
+
+const DisplayOnStreamSchema = z.object({
+  displayOnStream: z.boolean(),
+})
+
+const GameIdSchema = z.object({
+  gameId: z.string(),
+})
+
+app.patch(
+  '/:gameId/display_on_stream',
+  zValidator('param', GameIdSchema),
+  zValidator('json', DisplayOnStreamSchema),
+  async (c) => {
+    const { gameId } = c.req.valid('param')
+    const { displayOnStream } = c.req.valid('json')
+    const user = c.get('currentUser')
+
+    const game = await gamesRepository.getById(gameId)
+    if (!game) {
+      return c.json({ error: 'Game not found' }, 404)
+    }
+
+    if (game.creatorId !== user.id) {
+      return c.json(
+        { error: 'Only the game creator can change stream settings' },
+        403,
+      )
+    }
+
+    if (game.status === 'draft') {
+      return c.json({ error: 'Cannot display draft games on stream' }, 400)
+    }
+
+    try {
+      const updatedGame = await gamesRepository.setDisplayOnStream(
+        gameId,
+        user.id,
+        displayOnStream,
+      )
+
+      // Broadcast to stream integration
+      if (displayOnStream) {
+        await broadcastGameUpdateToStream(user.id, gameId)
+      } else {
+        await broadcastNoGameToStream(user.id)
+      }
+
+      return c.json(updatedGame, 200)
+    } catch (error) {
+      console.error('Error setting display on stream:', error)
+      return c.json({ error: 'Failed to update stream settings' }, 500)
+    }
   },
 )
 

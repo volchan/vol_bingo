@@ -1,6 +1,7 @@
 import { jwtAuth } from '@server/middlewares/jwt-auth'
 import gamesRepository from '@server/repositories/games'
 import playerBoardsRepository from '@server/repositories/player-boards'
+import { broadcastGameUpdateToStream } from '@server/routes/websocket'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from './utils'
@@ -49,6 +50,11 @@ app.patch(
 
       if (!updatedPlayerBoard) {
         return c.json({ error: 'Player board not found after shuffle' }, 404)
+      }
+
+      // Broadcast to stream if game is displayed on stream
+      if (game.displayOnStream) {
+        await broadcastGameUpdateToStream(game.creatorId, game.id)
       }
 
       return c.json(updatedPlayerBoard, 200)

@@ -1,13 +1,26 @@
 import db from '@server/config/database'
+import { generateSecureHexToken } from '@server/config/security-utils'
 import { playerBoards, users } from '@server/schemas'
 import type { User } from '@shared/types/models/user'
 import { eq } from 'drizzle-orm'
 
 const usersRepository = {
   async create(
-    data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>,
+    data: Omit<
+      User,
+      'id' | 'createdAt' | 'updatedAt' | 'streamIntegrationToken'
+    >,
   ): Promise<User> {
-    const [user] = await db.insert(users).values(data).returning()
+    // Auto-generate unique stream integration token
+    const streamIntegrationToken = await this.generateUniqueStreamToken()
+
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...data,
+        streamIntegrationToken,
+      })
+      .returning()
     if (!user) throw new Error('Failed to create user')
     return user
   },
@@ -36,7 +49,10 @@ const usersRepository = {
 
   async update(
     id: string,
-    data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>,
+    data: Omit<
+      User,
+      'id' | 'createdAt' | 'updatedAt' | 'streamIntegrationToken'
+    >,
   ): Promise<User> {
     const [user] = await db
       .update(users)
@@ -113,6 +129,79 @@ const usersRepository = {
         updatedAt: game.updatedAt,
       }
     })
+  },
+
+  async generateUniqueStreamToken(): Promise<string> {
+    let token: string
+    let isUnique = false
+    let attempts = 0
+    const maxAttempts = 10
+
+    do {
+      token = generateSecureHexToken(16) // 32 character hex string
+      const existing = await db.query.users.findFirst({
+        where: eq(users.streamIntegrationToken, token),
+      })
+      isUnique = !existing
+      attempts++
+    } while (!isUnique && attempts < maxAttempts)
+
+    if (!isUnique) {
+      throw new Error('Failed to generate unique stream integration token')
+    }
+
+    return token
+  },
+
+  async generateStreamIntegrationToken(userId: string): Promise<string> {
+    // Check if user already has a token
+    const existingUser = await this.findById(userId)
+    if (existingUser?.streamIntegrationToken) {
+      return existingUser.streamIntegrationToken
+    }
+
+    const token = await this.generateUniqueStreamToken()
+
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        streamIntegrationToken: token,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning()
+
+    if (!updatedUser) {
+      throw new Error('Failed to update user with stream integration token')
+    }
+
+    return token
+  },
+
+  async rollStreamIntegrationToken(userId: string): Promise<string> {
+    const token = await this.generateUniqueStreamToken()
+
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        streamIntegrationToken: token,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning()
+
+    if (!updatedUser) {
+      throw new Error('Failed to update user with stream integration token')
+    }
+
+    return token
+  },
+
+  async findByStreamToken(token: string): Promise<User | null> {
+    const user = await db.query.users.findFirst({
+      where: eq(users.streamIntegrationToken, token),
+    })
+    return user ?? null
   },
 }
 

@@ -12,4 +12,5 @@ export interface User {
   twitchCreatedAt: Date
   createdAt: Date
   updatedAt: Date | null
+  streamIntegrationToken: string
 }

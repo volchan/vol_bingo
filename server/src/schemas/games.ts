@@ -1,4 +1,11 @@
-import { foreignKey, pgEnum, pgTable, uuid, varchar } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  foreignKey,
+  pgEnum,
+  pgTable,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core'
 import baseFields from './base'
 import { templates } from './templates'
 import { users } from './users'
@@ -22,6 +29,7 @@ export const games = pgTable(
     winnerId: uuid().references(() => users.id),
     status: statusEnum().default('draft').notNull(),
     currentTemplateId: uuid().references(() => templates.id),
+    displayOnStream: boolean().default(false).notNull(),
   },
   (table) => [
     foreignKey({

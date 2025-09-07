@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { LayoutDashboard } from 'lucide-react'
 import { Suspense } from 'react'
 import { GameList } from '@/components/dashboard/game-list'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -23,7 +24,13 @@ function RouteComponent() {
   return (
     <ErrorBoundary>
       <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+        <div className="space-y-2 mb-6">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <LayoutDashboard className="h-8 w-8" />
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground">Create and join bingo games</p>
+        </div>
         <div className="flex gap-5 mb-5 flex-col md:flex-row">
           <NewGameForm />
           <JoinGameForm />

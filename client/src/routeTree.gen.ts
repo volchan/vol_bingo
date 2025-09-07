@@ -10,18 +10,26 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as BlankRouteImport } from './routes/_blank'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthenticatedTestErrorsRouteImport } from './routes/_authenticated/test-errors'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCellsRouteImport } from './routes/_authenticated/cells'
+import { Route as BlankStreamDisplayRouteImport } from './routes/_blank/stream/display'
+import { Route as AuthenticatedStreamIntegrationRouteImport } from './routes/_authenticated/stream/integration'
 import { Route as AuthenticatedGamesIdRouteImport } from './routes/_authenticated/games/$id'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlankRoute = BlankRouteImport.update({
+  id: '/_blank',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -48,6 +56,11 @@ const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
   path: '/templates',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -58,6 +71,17 @@ const AuthenticatedCellsRoute = AuthenticatedCellsRouteImport.update({
   path: '/cells',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const BlankStreamDisplayRoute = BlankStreamDisplayRouteImport.update({
+  id: '/stream/display',
+  path: '/stream/display',
+  getParentRoute: () => BlankRoute,
+} as any)
+const AuthenticatedStreamIntegrationRoute =
+  AuthenticatedStreamIntegrationRouteImport.update({
+    id: '/stream/integration',
+    path: '/stream/integration',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedGamesIdRoute = AuthenticatedGamesIdRouteImport.update({
   id: '/games/$id',
   path: '/games/$id',
@@ -69,32 +93,42 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/cells': typeof AuthenticatedCellsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/test-errors': typeof AuthenticatedTestErrorsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/games/$id': typeof AuthenticatedGamesIdRoute
+  '/stream/integration': typeof AuthenticatedStreamIntegrationRoute
+  '/stream/display': typeof BlankStreamDisplayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cells': typeof AuthenticatedCellsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/test-errors': typeof AuthenticatedTestErrorsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/games/$id': typeof AuthenticatedGamesIdRoute
+  '/stream/integration': typeof AuthenticatedStreamIntegrationRoute
+  '/stream/display': typeof BlankStreamDisplayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_blank': typeof BlankRouteWithChildren
   '/about': typeof AboutRoute
   '/_authenticated/cells': typeof AuthenticatedCellsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/test-errors': typeof AuthenticatedTestErrorsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/games/$id': typeof AuthenticatedGamesIdRoute
+  '/_authenticated/stream/integration': typeof AuthenticatedStreamIntegrationRoute
+  '/_blank/stream/display': typeof BlankStreamDisplayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -103,36 +137,47 @@ export interface FileRouteTypes {
     | '/about'
     | '/cells'
     | '/dashboard'
+    | '/settings'
     | '/templates'
     | '/test-errors'
     | '/auth/callback'
     | '/games/$id'
+    | '/stream/integration'
+    | '/stream/display'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/cells'
     | '/dashboard'
+    | '/settings'
     | '/templates'
     | '/test-errors'
     | '/auth/callback'
     | '/games/$id'
+    | '/stream/integration'
+    | '/stream/display'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/_blank'
     | '/about'
     | '/_authenticated/cells'
     | '/_authenticated/dashboard'
+    | '/_authenticated/settings'
     | '/_authenticated/templates'
     | '/_authenticated/test-errors'
     | '/auth/callback'
     | '/_authenticated/games/$id'
+    | '/_authenticated/stream/integration'
+    | '/_blank/stream/display'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  BlankRoute: typeof BlankRouteWithChildren
   AboutRoute: typeof AboutRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
@@ -144,6 +189,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_blank': {
+      id: '/_blank'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof BlankRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -181,6 +233,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -193,6 +252,20 @@ declare module '@tanstack/react-router' {
       path: '/cells'
       fullPath: '/cells'
       preLoaderRoute: typeof AuthenticatedCellsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_blank/stream/display': {
+      id: '/_blank/stream/display'
+      path: '/stream/display'
+      fullPath: '/stream/display'
+      preLoaderRoute: typeof BlankStreamDisplayRouteImport
+      parentRoute: typeof BlankRoute
+    }
+    '/_authenticated/stream/integration': {
+      id: '/_authenticated/stream/integration'
+      path: '/stream/integration'
+      fullPath: '/stream/integration'
+      preLoaderRoute: typeof AuthenticatedStreamIntegrationRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/games/$id': {
@@ -208,26 +281,41 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedCellsRoute: typeof AuthenticatedCellsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedTestErrorsRoute: typeof AuthenticatedTestErrorsRoute
   AuthenticatedGamesIdRoute: typeof AuthenticatedGamesIdRoute
+  AuthenticatedStreamIntegrationRoute: typeof AuthenticatedStreamIntegrationRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCellsRoute: AuthenticatedCellsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedTestErrorsRoute: AuthenticatedTestErrorsRoute,
   AuthenticatedGamesIdRoute: AuthenticatedGamesIdRoute,
+  AuthenticatedStreamIntegrationRoute: AuthenticatedStreamIntegrationRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface BlankRouteChildren {
+  BlankStreamDisplayRoute: typeof BlankStreamDisplayRoute
+}
+
+const BlankRouteChildren: BlankRouteChildren = {
+  BlankStreamDisplayRoute: BlankStreamDisplayRoute,
+}
+
+const BlankRouteWithChildren = BlankRoute._addFileChildren(BlankRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  BlankRoute: BlankRouteWithChildren,
   AboutRoute: AboutRoute,
   AuthCallbackRoute: AuthCallbackRoute,
 }

@@ -10,7 +10,7 @@ export interface AuthenticationContext {
 }
 
 export interface RouterContext {
-  authentication: AuthenticationContext
+  authentication?: AuthenticationContext
 }
 
 export function validateAuth(): {

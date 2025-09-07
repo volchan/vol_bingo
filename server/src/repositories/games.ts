@@ -133,6 +133,82 @@ const gamesRepository = {
 
     return gameWithCreator
   },
+
+  async setDisplayOnStream(
+    gameId: string,
+    userId: string,
+    displayOnStream: boolean,
+    tx?: DbTransaction,
+  ): Promise<Game> {
+    const executor = tx || db
+
+    if (displayOnStream) {
+      console.log(
+        `Setting displayOnStream=true for game ${gameId}, turning off all other games for creator ${userId}`,
+      )
+
+      // First, set all other games by this creator to displayOnStream = false
+      const result = await executor
+        .update(games)
+        .set({ displayOnStream: false, updatedAt: new Date() })
+        .where(eq(games.creatorId, userId))
+
+      console.log(
+        `Turned off displayOnStream for ${result.rowCount || 0} games`,
+      )
+    } else {
+      console.log(`Setting displayOnStream=false for game ${gameId}`)
+    }
+
+    // Then set the target game's displayOnStream value
+    const [updatedGame] = await executor
+      .update(games)
+      .set({ displayOnStream, updatedAt: new Date() })
+      .where(eq(games.id, gameId))
+      .returning()
+
+    if (!updatedGame) {
+      throw new Error('Failed to update game display on stream status')
+    }
+
+    // Fetch the complete game with relations
+    const gameWithCreator = await executor.query.games.findFirst({
+      where: (table, { eq }) => eq(table.id, updatedGame.id),
+      with: {
+        creator: {
+          columns: { displayName: true, id: true },
+        },
+        gameCells: {
+          with: {
+            cell: true,
+          },
+        },
+      },
+    })
+
+    if (!gameWithCreator) throw new Error('Failed to fetch updated game')
+
+    return gameWithCreator
+  },
+
+  async getDisplayOnStreamGame(userId: string): Promise<Game | null> {
+    const game = await db.query.games.findFirst({
+      where: (table, { eq, and }) =>
+        and(eq(table.creatorId, userId), eq(table.displayOnStream, true)),
+      with: {
+        creator: {
+          columns: { displayName: true, id: true },
+        },
+        gameCells: {
+          with: {
+            cell: true,
+          },
+        },
+      },
+    })
+
+    return game || null
+  },
 }
 
 export default gamesRepository

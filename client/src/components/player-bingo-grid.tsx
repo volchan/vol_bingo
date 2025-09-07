@@ -11,6 +11,7 @@ interface PlayerBingoGridProps {
   readonly disabled?: boolean
   readonly canMark?: boolean
   readonly canShuffle?: boolean
+  readonly streamMode?: boolean
   readonly onMarkCell?: (gameCellId: string, marked: boolean) => void
 }
 
@@ -28,6 +29,7 @@ const PlayerBingoGridComponent = ({
   disabled = false,
   canMark = false,
   canShuffle = false,
+  streamMode = false,
   onMarkCell,
 }: PlayerBingoGridProps) => {
   const totalCells = size * size
@@ -113,8 +115,13 @@ const PlayerBingoGridComponent = ({
   }, [canShuffle, shuffleMutation, playerBoard.id, totalCells])
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-4">
-      {canShuffle && (
+    <div
+      className={cn(
+        'w-full h-full flex flex-col',
+        streamMode ? 'max-w-none max-h-none' : 'max-w-2xl mx-auto space-y-4',
+      )}
+    >
+      {canShuffle && !streamMode && (
         <div className="text-center">
           <Button
             variant="outline"
@@ -131,10 +138,13 @@ const PlayerBingoGridComponent = ({
 
       <div
         className={cn(
-          'grid gap-2 w-full aspect-square',
+          'grid w-full',
           size === 3 && 'grid-cols-3',
           size === 5 && 'grid-cols-5',
           size === 7 && 'grid-cols-7',
+          streamMode
+            ? 'gap-[2vmin] aspect-square h-full max-h-[100vh] max-w-[100vh] mx-auto'
+            : 'gap-2 aspect-square',
         )}
       >
         {localCells.map((cell, index) => {
@@ -155,10 +165,13 @@ const PlayerBingoGridComponent = ({
               showMuted={false}
               className={cn(
                 'aspect-square',
-                size === 3 && 'text-sm sm:text-base',
-                size === 5 && 'text-xs sm:text-sm',
-                size === 7 && 'text-xs',
+                size === 3 &&
+                  (streamMode ? 'text-[3vmin]' : 'text-sm sm:text-base'),
+                size === 5 &&
+                  (streamMode ? 'text-[2vmin]' : 'text-xs sm:text-sm'),
+                size === 7 && (streamMode ? 'text-[1.5vmin]' : 'text-xs'),
                 !isClickable && 'cursor-default',
+                streamMode && 'font-medium', // Bold text for stream mode
               )}
             />
           )

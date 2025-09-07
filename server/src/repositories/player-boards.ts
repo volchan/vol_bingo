@@ -230,6 +230,14 @@ const playerBoardsRepository = {
 
     return playerBoardsList
   },
+
+  getByGameAndPlayer: async (
+    gameId: string,
+    playerId: string,
+    tx?: DbTransaction,
+  ) => {
+    return playerBoardsRepository.getPlayerBoardWithCells(playerId, gameId, tx)
+  },
 }
 
 export default playerBoardsRepository

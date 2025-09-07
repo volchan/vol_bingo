@@ -176,3 +176,40 @@ export function useEditGame() {
     },
   })
 }
+
+export function useSetDisplayOnStream() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      gameId,
+      displayOnStream,
+    }: {
+      gameId: string
+      displayOnStream: boolean
+    }) => apiClient.setDisplayOnStream(gameId, displayOnStream),
+    onSuccess: (updatedGame) => {
+      try {
+        // Update the individual game cache with the complete data
+        queryClient.setQueryData(
+          authKeys.detail(updatedGame.friendlyId),
+          updatedGame,
+        )
+        // Invalidate the games list to refresh it
+        queryClient.invalidateQueries({
+          queryKey: authKeys.played(),
+          exact: true,
+        })
+      } catch (_error) {
+        // Fallback to invalidating all game queries
+        queryClient.invalidateQueries({ queryKey: authKeys.all })
+      }
+    },
+    onError: (_error) => {
+      try {
+        // Invalidate all games on error
+        queryClient.invalidateQueries({ queryKey: authKeys.all })
+      } catch (_error) {}
+    },
+  })
+}
