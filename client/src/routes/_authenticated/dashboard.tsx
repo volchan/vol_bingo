@@ -46,11 +46,16 @@ function RouteComponent() {
 function DashboardContent() {
   const listGamesQuery = usePlayedGames()
   const { user } = useAuth()
-  const totalGames = listGamesQuery.data?.length || 0
-  const wins =
-    listGamesQuery.data?.filter((game) => game.winner?.id === user!.id)
-      .length || 0
-  const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0
+  const completedGames =
+    listGamesQuery.data?.filter((game) => game.status === 'completed') || []
+  const totalCompletedGames = completedGames.length
+  const gamesWithBingo = completedGames.filter(
+    (game) => game.userHasBingo,
+  ).length
+  const bingoRate =
+    totalCompletedGames > 0
+      ? Math.round((gamesWithBingo / totalCompletedGames) * 100)
+      : 0
 
   return (
     <div>
@@ -74,25 +79,25 @@ function DashboardContent() {
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {totalGames}
+                    {totalCompletedGames}
                   </div>
-                  <div className="text-sm text-gray-600">Total Games</div>
+                  <div className="text-sm text-gray-600">Completed Games</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {wins}
+                    {gamesWithBingo}
                   </div>
-                  <div className="text-sm text-gray-600">Games Won</div>
+                  <div className="text-sm text-gray-600">Games with Bingo</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {winRate}%
+                    {bingoRate}%
                   </div>
-                  <div className="text-sm text-gray-600">Win Rate</div>
+                  <div className="text-sm text-gray-600">Bingo Rate</div>
                 </CardContent>
               </Card>
             </>

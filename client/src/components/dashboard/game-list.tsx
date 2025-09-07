@@ -9,8 +9,8 @@ interface GameListProps {
   readonly games: PlayedGame[]
 }
 
-export function GameList({ currentUser, games }: GameListProps) {
-  const isWinner = (game: PlayedGame) => game.winner?.id === currentUser.id
+export function GameList({ games }: GameListProps) {
+  const hasBingo = (game: PlayedGame) => game.userHasBingo
   const badgeVariants = (game: PlayedGame) => {
     switch (game.status) {
       case 'draft':
@@ -33,7 +33,7 @@ export function GameList({ currentUser, games }: GameListProps) {
             <li
               key={game.friendlyId}
               className={`p-4 rounded-lg border-2 transition-all flex-1/4 ${
-                isWinner(game)
+                hasBingo(game)
                   ? 'border-green-200 bg-green-50 hover:bg-green-100 hover:shadow-md hover:shadow-green-200 hover:border-green-300 transition-all'
                   : 'border-gray-200 bg-card hover:bg-gray-100 hover:shadow-md hover:shadow-gray-200 hover:border-gray-300 transition-all'
               }`}

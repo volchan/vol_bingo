@@ -12,6 +12,7 @@ import {
 import { wsManager } from '@server/websocket/websocket-manager'
 import type { Game } from '@shared/types'
 import { Hono } from 'hono'
+import { checkBingoPattern } from 'shared'
 import { z } from 'zod'
 import { zValidator } from './utils'
 
@@ -254,6 +255,52 @@ app.patch(
   },
 )
 
+app.patch(
+  '/:friendlyId/complete',
+  zValidator('param', GameDetailSchema),
+  async (c) => {
+    const { friendlyId } = c.req.valid('param')
+    const user = c.get('currentUser')
+    const game = await gamesRepository.getByFriendlyId(friendlyId, user.id)
+
+    if (!game) {
+      return c.json({ error: 'Game not found' }, 404)
+    }
+
+    if (game.creatorId !== user.id) {
+      return c.json(
+        { error: 'Only the game creator can complete the game' },
+        403,
+      )
+    }
+
+    if (game.status !== 'playing') {
+      return c.json({ error: 'Only playing games can be completed' }, 400)
+    }
+
+    const updatedGame = await gamesRepository.update({
+      ...game,
+      status: 'completed',
+    })
+
+    if (!updatedGame) {
+      return c.json({ error: 'Failed to complete game' }, 500)
+    }
+
+    wsManager.broadcastToGame(game.id, {
+      type: 'game_state_change',
+      data: {
+        gameId: game.id,
+        friendlyId: game.friendlyId,
+        status: 'completed',
+      },
+      timestamp: Date.now(),
+    })
+
+    return c.json(updatedGame, 200)
+  },
+)
+
 const DisplayOnStreamSchema = z.object({
   displayOnStream: z.boolean(),
 })
@@ -340,6 +387,67 @@ app.get(
       })),
       200,
     )
+  },
+)
+
+app.get(
+  '/:friendlyId/rankings',
+  zValidator('param', GameDetailSchema),
+  async (c) => {
+    const { friendlyId } = c.req.valid('param')
+    const game = await gamesRepository.getByFriendlyId(friendlyId)
+
+    if (!game) {
+      return c.json({ error: 'Game not found' }, 404)
+    }
+
+    if (game.status !== 'completed') {
+      return c.json({ error: 'Game must be completed to view rankings' }, 400)
+    }
+
+    const players = await db.query.playerBoards.findMany({
+      where: (table, { eq }) => eq(table.gameId, game.id),
+      with: {
+        player: {
+          columns: {
+            id: true,
+            displayName: true,
+          },
+        },
+        playerBoardCells: {
+          with: {
+            gameCell: {
+              columns: {
+                marked: true,
+              },
+            },
+          },
+          columns: {
+            position: true,
+          },
+        },
+      },
+    })
+
+    const rankings = players.map((pb) => ({
+      id: pb.player.id,
+      displayName: pb.player.displayName,
+      bingoCount: checkBingoPattern(
+        (pb.playerBoardCells || []).map((cell) => ({
+          position: cell.position,
+          marked: cell.gameCell?.marked || false,
+        })),
+      ).bingoCount,
+    }))
+
+    rankings.sort((a, b) => {
+      if (b.bingoCount !== a.bingoCount) {
+        return b.bingoCount - a.bingoCount
+      }
+      return a.displayName.localeCompare(b.displayName)
+    })
+
+    return c.json(rankings, 200)
   },
 )
 

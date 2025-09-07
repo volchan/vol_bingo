@@ -8,6 +8,8 @@ export const authKeys = {
     [...authKeys.all, 'game', friendlyId] as const,
   players: (friendlyId: string) =>
     [...authKeys.all, 'game', friendlyId, 'players'] as const,
+  rankings: (friendlyId: string) =>
+    [...authKeys.all, 'game', friendlyId, 'rankings'] as const,
   create: () => [...authKeys.all, 'game'] as const,
 }
 
@@ -177,6 +179,40 @@ export function useEditGame() {
   })
 }
 
+export function useCompleteGame() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (friendlyId: string) => apiClient.completeGame(friendlyId),
+    onSuccess: (updatedGame) => {
+      try {
+        // Update the individual game cache with the complete data
+        queryClient.setQueryData(
+          authKeys.detail(updatedGame.friendlyId),
+          updatedGame,
+        )
+        // Invalidate the games list to refresh it
+        queryClient.invalidateQueries({
+          queryKey: authKeys.played(),
+          exact: true,
+        })
+      } catch (_error) {
+        // Fallback to invalidating all game queries
+        queryClient.invalidateQueries({ queryKey: authKeys.all })
+      }
+    },
+    onError: (_error, friendlyId) => {
+      try {
+        // Only invalidate the specific game query on error
+        queryClient.invalidateQueries({
+          queryKey: authKeys.detail(friendlyId),
+          exact: true,
+        })
+      } catch (_error) {}
+    },
+  })
+}
+
 export function useSetDisplayOnStream() {
   const queryClient = useQueryClient()
 
@@ -210,6 +246,20 @@ export function useSetDisplayOnStream() {
         // Invalidate all games on error
         queryClient.invalidateQueries({ queryKey: authKeys.all })
       } catch (_error) {}
+    },
+  })
+}
+
+export function useGameRankings(friendlyId: string, enabled: boolean = true) {
+  return useQuery({
+    queryKey: authKeys.rankings(friendlyId),
+    queryFn: () => apiClient.getGameRankings(friendlyId),
+    enabled: enabled && !!friendlyId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: (failureCount, error) => {
+      if (error?.message.includes('Unauthorized')) return false
+      return failureCount < 2
     },
   })
 }

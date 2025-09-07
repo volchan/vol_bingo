@@ -38,10 +38,6 @@ export const gameRelations = relations(games, ({ many, one }) => ({
   }),
   gameCells: many(gameCells),
   playerBoards: many(playerBoards),
-  winner: one(users, {
-    fields: [games.winnerId],
-    references: [users.id],
-  }),
 }))
 
 export const playerBoardCellRelations = relations(

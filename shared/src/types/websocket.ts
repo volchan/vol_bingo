@@ -6,6 +6,7 @@ export interface WebSocketPlayerBoard {
   updatedAt: Date | string | null
   connected: boolean
   status: string
+  hasBingo: boolean
   playerBoardCells?: Array<{
     id: string
     createdAt: Date | string

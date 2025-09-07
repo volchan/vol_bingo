@@ -31,10 +31,7 @@ export interface PlayedGame {
     displayName: string
     id: string
   }
-  winner?: {
-    displayName: string
-    id: string
-  } | null
+  userHasBingo: boolean
   players: {
     displayName: string
     id: string

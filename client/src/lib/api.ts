@@ -331,6 +331,19 @@ class ApiClient {
     return this.handleResponse<GameWithCreator>(response)
   }
 
+  async completeGame(friendlyId: string): Promise<GameWithCreator> {
+    const headers = await this.getAuthHeaderWithRefresh()
+    const response = await this.fetchWithRetry(
+      `${API_BASE}/games/${friendlyId}/complete`,
+      {
+        method: 'PATCH',
+        headers,
+      },
+    )
+
+    return this.handleResponse<GameWithCreator>(response)
+  }
+
   async setDisplayOnStream(
     gameId: string,
     displayOnStream: boolean,
@@ -501,6 +514,20 @@ class ApiClient {
     )
 
     return this.handleResponse<PlayerBoard>(response)
+  }
+
+  async getGameRankings(
+    friendlyId: string,
+  ): Promise<{ id: string; displayName: string; bingoCount: number }[]> {
+    const headers = await this.getAuthHeaderWithRefresh()
+    const response = await this.fetchWithRetry(
+      `${API_BASE}/games/${friendlyId}/rankings`,
+      { headers },
+    )
+
+    return this.handleResponse<
+      { id: string; displayName: string; bingoCount: number }[]
+    >(response)
   }
 
   async shufflePlayerBoard(playerBoardId: string): Promise<PlayerBoard> {
