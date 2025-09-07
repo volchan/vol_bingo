@@ -144,11 +144,19 @@ templates.delete('/:id', async (c) => {
   try {
     const deleted = await templateRepository.delete(templateId, user.id)
     if (!deleted) {
-      return c.json({ message: 'Template not found' }, 404)
+      return c.json(
+        {
+          message:
+            'Template not found or you do not have permission to delete it',
+        },
+        404,
+      )
     }
     return c.json({ message: 'Template deleted successfully' })
-  } catch (_error) {
-    return c.json({ message: 'Failed to delete template' }, 500)
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Failed to delete template'
+    return c.json({ message }, 400)
   }
 })
 

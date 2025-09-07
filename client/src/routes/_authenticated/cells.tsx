@@ -1,11 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Blocks, Edit2, Loader2, Save, Trash2, X } from 'lucide-react'
+import { Blocks, Edit2, Loader2, Save, Trash2 } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { z } from 'zod'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Button } from '@/components/ui/button'
 import type { Cell } from '@/components/ui/columns'
 import { DataTable } from '@/components/ui/data-table'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import {
   useDeleteCell,
@@ -47,9 +54,11 @@ function CellsPage() {
     setEditingValue(value)
   }
 
-  const handleEditSave = (id: string) => {
+  const handleEditSave = () => {
+    if (!editingId) return
+
     updateCellMutation(
-      { id, value: editingValue },
+      { id: editingId, value: editingValue },
       {
         onError: (error: unknown) => {
           const message =
@@ -60,7 +69,7 @@ function CellsPage() {
           if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current)
           errorTimeoutRef.current = setTimeout(() => setErrorMsg(null), 4000)
         },
-        onSettled: () => {
+        onSuccess: () => {
           setEditingId(null)
           setEditingValue('')
         },
@@ -70,7 +79,9 @@ function CellsPage() {
 
   const handleEditCancel = () => {
     setEditingId(null)
-    setEditingValue('')
+    setTimeout(() => {
+      setEditingValue('')
+    }, 150)
   }
 
   const tableData = cells.map((cell) => ({
@@ -89,50 +100,11 @@ function CellsPage() {
       id: 'value',
       header: 'Value',
       accessorKey: 'value',
-      cell: ({ row }: { row: { original: Cell } }) => {
-        const isEditingRow = editingId === row.original.id
-        if (isEditingRow) {
-          return (
-            <div className="space-y-2">
-              <Input
-                value={editingValue}
-                onChange={(e) => setEditingValue(e.target.value)}
-                disabled={isUpdating}
-                placeholder="Cell value"
-              />
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleEditSave(row.original.id)}
-                  disabled={isUpdating || !editingValue.trim()}
-                >
-                  {isUpdating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  Save
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleEditCancel}
-                  disabled={isUpdating}
-                >
-                  <X className="h-4 w-4" />
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )
-        }
-        return (
-          <div>
-            <div className="font-medium">{row.original.value}</div>
-          </div>
-        )
-      },
+      cell: ({ row }: { row: { original: Cell } }) => (
+        <div>
+          <div className="font-medium">{row.original.value}</div>
+        </div>
+      ),
     },
     {
       id: 'createdAt',
@@ -166,7 +138,7 @@ function CellsPage() {
                 ? 'text-orange-600 hover:text-orange-700'
                 : 'text-muted-foreground'
             }
-            disabled={editingId === row.original.id || !row.original.canEdit}
+            disabled={!row.original.canEdit}
           >
             <Edit2
               className={`h-4 w-4 ${!row.original.canEdit ? 'opacity-50' : ''}`}
@@ -245,6 +217,65 @@ function CellsPage() {
             ),
           }}
         />
+
+        <Dialog
+          open={!!editingId}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleEditCancel()
+            }
+          }}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Cell</DialogTitle>
+              <DialogDescription>Update the cell value</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {errorMsg && (
+                <div className="text-red-600 bg-red-100 border border-red-300 rounded px-3 py-2 text-sm">
+                  {errorMsg}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label htmlFor="cell-value" className="text-sm font-medium">
+                  Value
+                </label>
+                <Input
+                  id="cell-value"
+                  value={editingValue}
+                  onChange={(e) => setEditingValue(e.target.value)}
+                  disabled={isUpdating}
+                  placeholder="Cell value"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="ghost"
+                  onClick={handleEditCancel}
+                  disabled={isUpdating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleEditSave}
+                  disabled={isUpdating || !editingValue.trim()}
+                >
+                  {isUpdating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </ErrorBoundary>
   )

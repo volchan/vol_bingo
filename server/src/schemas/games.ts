@@ -28,7 +28,7 @@ export const games = pgTable(
     friendlyId: varchar().notNull().unique(),
     winnerId: uuid().references(() => users.id),
     status: statusEnum().default('draft').notNull(),
-    currentTemplateId: uuid().references(() => templates.id),
+    currentTemplateId: uuid(),
     displayOnStream: boolean().default(false).notNull(),
   },
   (table) => [
