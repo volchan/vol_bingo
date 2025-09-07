@@ -1,5 +1,5 @@
 {
-  "id": "3b3ccfe3-472c-4bb4-a791-a4f4ca126905",
+  "id": "59b6c21f-d868-45f8-b8b5-a50cccac9fe4",
   "prevId": "d437028a-cfad-41ca-a0c9-be9b5140823d",
   "version": "7",
   "dialect": "postgresql",
@@ -1042,7 +1042,7 @@
           "name": "stream_integration_token",
           "type": "varchar",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         }
       },
       "indexes": {},
