@@ -1,6 +1,6 @@
 import { useDebouncedValue } from '@tanstack/react-pacer'
 import { FileText, Plus, Save, Search, Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { Cell, GameCell } from 'shared'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -55,6 +55,9 @@ export function CellManager({
   const [showTemplateUpdateOptions, setShowTemplateUpdateOptions] =
     useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const templateNameId = useId()
+  const templateDescriptionId = useId()
 
   // Debounce search query using TanStack Pacer
   const [debouncedQuery] = useDebouncedValue(searchQuery, { wait: 300 })
@@ -473,13 +476,13 @@ export function CellManager({
               <div className="space-y-3 p-3 border rounded-md bg-muted/50">
                 <div className="space-y-2">
                   <Label
-                    htmlFor="inline-template-name"
+                    htmlFor={templateNameId}
                     className="text-xs font-medium"
                   >
                     Template Name *
                   </Label>
                   <Input
-                    id="inline-template-name"
+                    id={templateNameId}
                     placeholder="e.g., Streaming Essentials"
                     value={templateName}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -498,13 +501,13 @@ export function CellManager({
                 </div>
                 <div className="space-y-2">
                   <Label
-                    htmlFor="inline-template-description"
+                    htmlFor={templateDescriptionId}
                     className="text-xs font-medium"
                   >
                     Description
                   </Label>
                   <Input
-                    id="inline-template-description"
+                    id={templateDescriptionId}
                     placeholder="Optional description..."
                     value={templateDescription}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>

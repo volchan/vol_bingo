@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Blocks, Edit2, Loader2, Save, Trash2 } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useId, useState } from 'react'
 import { z } from 'zod'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Button } from '@/components/ui/button'
@@ -42,6 +42,8 @@ function CellsPage() {
   const [fieldErrors, setFieldErrors] = useState<{
     value?: string
   }>({})
+
+  const cellValueId = useId()
 
   const handleDelete = (id: string) => {
     setDeletingId(id)
@@ -253,11 +255,11 @@ function CellsPage() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="cell-value" className="text-sm font-medium">
+                <label htmlFor={cellValueId} className="text-sm font-medium">
                   Value
                 </label>
                 <Input
-                  id="cell-value"
+                  id={cellValueId}
                   value={editingValue}
                   onChange={(e) => setEditingValue(e.target.value)}
                   disabled={isUpdating}
