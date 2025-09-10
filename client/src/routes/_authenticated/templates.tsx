@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Edit2, Eye, FileText, Loader2, Save, Trash2 } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useId, useState } from 'react'
 import type { TemplateWithCreator } from 'shared'
 import { z } from 'zod'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -58,6 +58,9 @@ function TemplatesPage() {
   }>({})
 
   const { data: viewingTemplate } = useTemplate(viewingId || '', !!viewingId)
+
+  const templateNameId = useId()
+  const templateDescriptionId = useId()
 
   const handleDelete = (id: string) => {
     setDeletingId(id)
@@ -377,11 +380,11 @@ function TemplatesPage() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="template-name" className="text-sm font-medium">
+                <label htmlFor={templateNameId} className="text-sm font-medium">
                   Name
                 </label>
                 <Input
-                  id="template-name"
+                  id={templateNameId}
                   value={editingName}
                   onChange={(e) => setEditingName(e.target.value)}
                   disabled={isUpdating}
@@ -400,13 +403,13 @@ function TemplatesPage() {
 
               <div className="space-y-2">
                 <label
-                  htmlFor="template-description"
+                  htmlFor={templateDescriptionId}
                   className="text-sm font-medium"
                 >
                   Description (optional)
                 </label>
                 <Input
-                  id="template-description"
+                  id={templateDescriptionId}
                   value={editingDescription}
                   onChange={(e) => setEditingDescription(e.target.value)}
                   disabled={isUpdating}
