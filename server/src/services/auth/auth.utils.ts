@@ -26,7 +26,9 @@ class InMemoryStateManager implements StateManager {
     if (this.states.size > this.maxStates) {
       const statesArray = Array.from(this.states)
       this.states.clear()
-      statesArray.slice(-100).forEach((state) => this.states.add(state))
+      for (const state of statesArray.slice(-100)) {
+        this.states.add(state)
+      }
     }
   }
 }

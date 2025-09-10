@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Check, Copy, Edit, Gamepad2, Loader2, Play, Tv } from 'lucide-react'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { BingoDialog } from '@/components/bingo-dialog'
 import { BingoGrid } from '@/components/bingo-grid'
 import { CellManager } from '@/components/cell-manager'
@@ -61,6 +61,8 @@ function RouteComponent() {
   )
   const [isCopied, setIsCopied] = useState(false)
   const websocket = useGameWebSocket(params.id)
+
+  const displayOnStreamId = useId()
 
   if (isLoading) {
     return (
@@ -445,7 +447,7 @@ function RouteComponent() {
                     </div>
                   </div>
                   <Switch
-                    id="display-on-stream"
+                    id={displayOnStreamId}
                     checked={game.displayOnStream}
                     onCheckedChange={handleDisplayOnStreamToggle}
                     disabled={setDisplayOnStreamMutation.isPending}

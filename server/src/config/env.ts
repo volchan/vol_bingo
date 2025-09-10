@@ -15,7 +15,9 @@ const missingEnvVars = requiredEnvVars.filter((varName) => !Bun.env[varName])
 
 if (missingEnvVars.length > 0) {
   console.log(`Missing required environment variables:`)
-  missingEnvVars.forEach((varName) => console.log(`- ${varName}`))
+  for (const varName of missingEnvVars) {
+    console.log(`- ${varName}`)
+  }
 
   process.exit(1)
 }
