@@ -1,4 +1,5 @@
-import type { AuthTokens, User } from 'shared'
+import type { User } from 'shared'
+import { tokenManager } from '@/lib/token-manager'
 
 export interface AuthenticationContext {
   user: User | null
@@ -17,33 +18,15 @@ export function validateAuth(): {
   user: User | null
   isAuthenticated: boolean
 } {
-  try {
-    const stored = localStorage.getItem('auth_tokens')
-    if (!stored) {
-      return { user: null, isAuthenticated: false }
-    }
-
-    let parsedTokens: AuthTokens
-    try {
-      parsedTokens = JSON.parse(stored)
-    } catch {
-      localStorage.removeItem('auth_tokens')
-      return { user: null, isAuthenticated: false }
-    }
-
-    if (!parsedTokens?.access_token) {
-      localStorage.removeItem('auth_tokens')
-      return { user: null, isAuthenticated: false }
-    }
-
-    // Just check if we have valid tokens, don't make another API call
-    // The AuthContext will handle the actual user fetching
-    return {
-      user: null, // Will be populated by AuthContext
-      isAuthenticated: true,
-    }
-  } catch {
-    localStorage.removeItem('auth_tokens')
+  const tokens = tokenManager.getTokens()
+  if (!tokens?.access_token) {
     return { user: null, isAuthenticated: false }
+  }
+
+  // Just check if we have valid tokens, don't make another API call
+  // The AuthContext will handle the actual user fetching
+  return {
+    user: null, // Will be populated by AuthContext
+    isAuthenticated: true,
   }
 }

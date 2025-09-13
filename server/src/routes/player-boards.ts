@@ -1,4 +1,4 @@
-import { jwtAuth } from '@server/middlewares/jwt-auth'
+import { authMiddleware } from '@server/middlewares'
 import gamesRepository from '@server/repositories/games'
 import playerBoardsRepository from '@server/repositories/player-boards'
 import { broadcastGameUpdateToStream } from '@server/routes/websocket'
@@ -8,7 +8,7 @@ import { zValidator } from './utils'
 
 const app = new Hono()
 
-app.use('*', jwtAuth)
+app.use('*', authMiddleware)
 
 const PlayerBoardIdSchema = z.object({
   id: z.string().uuid(),

@@ -1,4 +1,4 @@
-import { jwtAuth } from '@server/middlewares/jwt-auth'
+import { authMiddleware } from '@server/middlewares'
 import cellsRepository from '@server/repositories/cells'
 import gameCellRepository from '@server/repositories/game-cells'
 import { wsManager } from '@server/websocket/websocket-manager'
@@ -8,7 +8,7 @@ import { zValidator } from './utils'
 
 const app = new Hono()
 
-app.use('*', jwtAuth)
+app.use('*', authMiddleware)
 
 app.get('/', async (c) => {
   const user = c.get('currentUser')

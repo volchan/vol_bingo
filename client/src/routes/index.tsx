@@ -3,6 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { TwitchButton } from '@/components/twitch-button'
 import UnauthenticatedLayout from '@/layouts/UnauthenticatedLayout'
+import { tokenManager } from '@/lib/token-manager'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -14,19 +15,11 @@ export const Route = createFileRoute('/')({
       sessionStorage.setItem('auth_redirect', search.redirect as string)
     }
 
-    const tokensFromStorage = localStorage.getItem('auth_tokens')
-    if (tokensFromStorage) {
-      try {
-        const tokens = JSON.parse(tokensFromStorage)
-        if (tokens?.access_token) {
-          const redirectTo =
-            sessionStorage.getItem('auth_redirect') || '/dashboard'
-          sessionStorage.removeItem('auth_redirect')
-          return redirect({ to: redirectTo })
-        }
-      } catch {
-        localStorage.removeItem('auth_tokens')
-      }
+    const tokens = tokenManager.getTokens()
+    if (tokens?.access_token) {
+      const redirectTo = sessionStorage.getItem('auth_redirect') || '/dashboard'
+      sessionStorage.removeItem('auth_redirect')
+      return redirect({ to: redirectTo })
     }
   },
 })

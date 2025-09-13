@@ -1,10 +1,10 @@
-import { jwtAuth } from '@server/middlewares'
+import { authMiddleware } from '@server/middlewares'
 import usersRepository from '@server/repositories/users'
 import { Hono } from 'hono'
 
 const app = new Hono()
 
-app.use('*', jwtAuth)
+app.use('*', authMiddleware)
 
 app.get('/games/played', async (c) => {
   const currentUser = c.get('currentUser')

@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { isApiError, isAuthError } from '@/lib/errors'
 import { setQueryUtils } from '@/lib/query-utils'
 import { router } from '@/lib/router'
+import { tokenManager } from '@/lib/token-manager'
 import { AuthProvider } from '@/providers/auth-provider'
 
 const queryClient = new QueryClient({
@@ -23,7 +24,7 @@ const queryClient = new QueryClient({
       networkMode: 'offlineFirst',
       throwOnError: (error) => {
         if (isAuthError(error)) {
-          localStorage.removeItem('auth_tokens')
+          tokenManager.clear()
           queryClient.removeQueries({ queryKey: ['auth'] })
         }
         return false
@@ -37,7 +38,7 @@ const queryClient = new QueryClient({
       networkMode: 'offlineFirst',
       onError: (error) => {
         if (isAuthError(error)) {
-          localStorage.removeItem('auth_tokens')
+          tokenManager.clear()
           queryClient.removeQueries({ queryKey: ['auth'] })
         }
       },

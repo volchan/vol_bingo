@@ -242,8 +242,7 @@ function RouteComponent() {
                 className={`w-1.5 h-1.5 rounded-full ${
                   websocket.isConnected
                     ? 'bg-green-500'
-                    : websocket.connectionStatus === 'reconnecting' ||
-                        websocket.connectionStatus === 'refreshing_token'
+                    : websocket.connectionStatus === 'reconnecting'
                       ? 'bg-yellow-500 animate-pulse'
                       : 'bg-red-500'
                 }`}
@@ -253,16 +252,12 @@ function RouteComponent() {
                   ? 'Connected'
                   : websocket.connectionStatus === 'reconnecting'
                     ? `Reconnecting... (${websocket.reconnectAttempts}/${websocket.maxReconnectAttempts})`
-                    : websocket.connectionStatus === 'refreshing_token'
-                      ? 'Refreshing authentication...'
-                      : websocket.connectionStatus === 'error'
-                        ? 'Connection Error'
-                        : 'Disconnected'}
+                    : websocket.connectionStatus === 'error'
+                      ? 'Connection Error'
+                      : 'Disconnected'}
               </span>
               {!websocket.isConnected &&
-                !['reconnecting', 'refreshing_token'].includes(
-                  websocket.connectionStatus,
-                ) && (
+                websocket.connectionStatus !== 'reconnecting' && (
                   <Button
                     variant="ghost"
                     size="sm"

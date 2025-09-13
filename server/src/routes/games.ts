@@ -1,5 +1,5 @@
 import db from '@server/config/database'
-import { jwtAuth } from '@server/middlewares/jwt-auth'
+import { authMiddleware } from '@server/middlewares'
 import gameCellRepository from '@server/repositories/game-cells'
 import gamesRepository, {
   type CreateGameData,
@@ -18,7 +18,7 @@ import { zValidator } from './utils'
 
 const app = new Hono()
 
-app.use('*', jwtAuth)
+app.use('*', authMiddleware)
 
 app.get('/', async (c) => {
   const games = await gamesRepository.getAll(c.get('currentUser').id)
