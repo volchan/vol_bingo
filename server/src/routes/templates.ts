@@ -2,7 +2,7 @@ import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import db from '../config/database'
-import { jwtAuth } from '../middlewares/jwt-auth'
+import { authMiddleware } from '../middlewares'
 import { gameCellRepository } from '../repositories/game-cells'
 import gameRepository from '../repositories/games'
 import { templateRepository } from '../repositories/templates'
@@ -20,7 +20,7 @@ const applyTemplateSchema = z.object({
   templateId: z.string(),
 })
 
-templates.use(jwtAuth)
+templates.use(authMiddleware)
 
 templates.post('/', zValidator('form', createTemplateSchema), async (c) => {
   const user = c.get('currentUser')

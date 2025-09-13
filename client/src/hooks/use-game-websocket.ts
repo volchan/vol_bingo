@@ -174,10 +174,9 @@ export function useGameWebSocket(friendlyId: string) {
     [queryClient, friendlyId, lastUpdateTimestamp],
   )
 
-  const websocket = useWebSocket<GameWebSocketMessage>(
-    friendlyId,
-    handleMessage,
-  )
+  const websocket = useWebSocket<GameWebSocketMessage>(friendlyId, {
+    onMessage: handleMessage,
+  })
 
   // Store websocket reference for cleanup
   websocketRef.current = websocket

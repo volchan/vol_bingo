@@ -1,4 +1,4 @@
-import { jwtAuth } from '@server/middlewares/jwt-auth'
+import { authMiddleware } from '@server/middlewares'
 import gameCellRepository from '@server/repositories/game-cells'
 import { wsManager } from '@server/websocket/websocket-manager'
 import { Hono } from 'hono'
@@ -11,7 +11,7 @@ const CellLinkSchema = z.object({
   id: z.string(),
 })
 
-app.use('*', jwtAuth)
+app.use('*', authMiddleware)
 
 app.delete('/:id', zValidator('param', CellLinkSchema), async (c) => {
   const { id } = c.req.valid('param')

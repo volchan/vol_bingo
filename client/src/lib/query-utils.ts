@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { authKeys } from '@/hooks/api/auth.hooks'
+import { tokenManager } from '@/lib/token-manager'
 
 export class QueryUtils {
   constructor(private readonly queryClient: QueryClient) {}
@@ -7,7 +8,7 @@ export class QueryUtils {
   clearAuthData() {
     this.queryClient.removeQueries({ queryKey: authKeys.all })
     this.queryClient.setQueryData(authKeys.user(), null)
-    localStorage.removeItem('auth_tokens')
+    tokenManager.clear()
   }
 
   invalidateAuthData() {

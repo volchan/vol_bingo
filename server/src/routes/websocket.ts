@@ -388,6 +388,55 @@ app.get(
                 }),
               )
             }
+          } else if (data.type === 'refresh_token' && data.token) {
+            try {
+              if (!currentConnectionId) {
+                ws.send(
+                  JSON.stringify({
+                    type: 'error',
+                    data: { message: 'Not authenticated' },
+                  }),
+                )
+                return
+              }
+
+              const payload = await verifyJWT(data.token)
+              const userId = payload.userId as string
+
+              const connection = wsManager.getConnection(currentConnectionId)
+              if (!connection || connection.userId !== userId) {
+                ws.send(
+                  JSON.stringify({
+                    type: 'error',
+                    data: { message: 'Invalid token refresh request' },
+                  }),
+                )
+                return
+              }
+
+              ws.send(
+                JSON.stringify({
+                  type: 'token_refreshed',
+                  data: { success: true },
+                }),
+              )
+
+              console.log(
+                `Token refreshed successfully for connection ${currentConnectionId}`,
+              )
+            } catch (error) {
+              wsLogger.error(
+                currentConnectionId || undefined,
+                'Token refresh failed',
+                error as Error,
+              )
+              ws.send(
+                JSON.stringify({
+                  type: 'error',
+                  data: { message: 'Token refresh failed' },
+                }),
+              )
+            }
           } else if (data.type === 'authenticate' && data.token) {
             try {
               const payload = await verifyJWT(data.token)

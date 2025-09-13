@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
+import { tokenManager } from '@/lib/token-manager'
 
 export const authKeys = {
   all: ['auth'] as const,
@@ -11,7 +12,7 @@ export function useUser() {
   return useQuery({
     queryKey: authKeys.user(),
     queryFn: () => apiClient.getCurrentUser(),
-    enabled: !!localStorage.getItem('auth_tokens'),
+    enabled: !!tokenManager.getTokens()?.access_token,
     retry: (failureCount, error) => {
       if (error?.message.includes('Unauthorized')) return false
       return failureCount < 2
@@ -32,7 +33,7 @@ export function useLogout() {
     },
     onError: () => {
       queryClient.removeQueries({ queryKey: authKeys.all })
-      localStorage.removeItem('auth_tokens')
+      tokenManager.clear()
     },
   })
 }
@@ -47,7 +48,7 @@ export function useRefreshToken() {
     },
     onError: () => {
       queryClient.removeQueries({ queryKey: authKeys.all })
-      localStorage.removeItem('auth_tokens')
+      tokenManager.clear()
     },
   })
 }

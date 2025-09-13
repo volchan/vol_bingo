@@ -18,7 +18,7 @@ import {
   isAuthenticationError,
   NetworkError,
 } from '@/lib/errors'
-import { isJwtExpired } from '@/lib/jwt'
+import { tokenManager } from '@/lib/token-manager'
 
 const API_BASE = import.meta.env.VITE_API_URL
 const AUTH_BASE = import.meta.env.VITE_AUTH_URL
@@ -118,56 +118,22 @@ class ApiClient {
   }
 
   private async getAuthHeaderWithRefresh(): Promise<Record<string, string>> {
-    const tokens = this.getStoredTokens()
-    if (!tokens?.access_token) return {}
-
-    if (isJwtExpired(tokens.access_token, 60)) {
-      const refreshed = await this.tryRefreshToken()
-      if (!refreshed) {
-        return {
-          Authorization: `Bearer ${tokens.access_token}`,
-        }
-      }
-      const newTokens = this.getStoredTokens()
-      if (!newTokens?.access_token) return {}
-
-      return {
-        Authorization: `Bearer ${newTokens.access_token}`,
-      }
-    }
+    const token = await tokenManager.getValidToken()
+    if (!token) return {}
 
     return {
-      Authorization: `Bearer ${tokens.access_token}`,
+      Authorization: `Bearer ${token}`,
     }
   }
 
   private getAuthHeader(): Record<string, string> {
-    const tokens = this.getStoredTokens()
-    if (!tokens?.access_token) return {}
-
-    if (isJwtExpired(tokens.access_token, 60)) {
+    const tokens = tokenManager.getTokens()
+    if (!tokens?.access_token || tokenManager.isTokenExpired()) {
       return {}
     }
 
     return {
       Authorization: `Bearer ${tokens.access_token}`,
-    }
-  }
-
-  private getStoredTokens(): AuthTokens | null {
-    try {
-      const stored = localStorage.getItem('auth_tokens')
-      return stored ? JSON.parse(stored) : null
-    } catch {
-      return null
-    }
-  }
-
-  private storeTokens(tokens: AuthTokens | null) {
-    if (tokens) {
-      localStorage.setItem('auth_tokens', JSON.stringify(tokens))
-    } else {
-      localStorage.removeItem('auth_tokens')
     }
   }
 
@@ -181,54 +147,11 @@ class ApiClient {
   }
 
   async refreshToken(): Promise<AuthTokens> {
-    const currentTokens = this.getStoredTokens()
-    if (!currentTokens?.access_token) {
-      throw new AuthError(
-        401,
-        'Unauthorized',
-        'No access token available for refresh',
-      )
+    const refreshed = await tokenManager.refreshToken()
+    if (!refreshed) {
+      throw new AuthError(401, 'Unauthorized', 'Failed to refresh token')
     }
-
-    const response = await this.fetchWithRetry(`${AUTH_BASE}/auth/refresh`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${currentTokens.access_token}`,
-      },
-    })
-
-    const serverTokens = await this.handleResponse<{
-      accessToken: string
-      refreshToken: string
-      expiresIn: number
-    }>(response)
-
-    const tokens: AuthTokens = {
-      access_token: serverTokens.accessToken,
-      refresh_token: serverTokens.refreshToken,
-      expires_in: serverTokens.expiresIn,
-    }
-
-    this.storeTokens(tokens)
-    return tokens
-  }
-
-  private async tryRefreshToken(): Promise<boolean> {
-    try {
-      const currentTokens = this.getStoredTokens()
-      if (!currentTokens?.access_token) return false
-
-      await this.refreshToken()
-      return true
-    } catch (error) {
-      if (
-        error instanceof AuthError &&
-        (error.status === 401 || error.status === 403)
-      ) {
-        this.storeTokens(null)
-      }
-      return false
-    }
+    return refreshed
   }
 
   async logout(): Promise<void> {
@@ -240,7 +163,7 @@ class ApiClient {
       })
     } catch {
     } finally {
-      this.storeTokens(null)
+      tokenManager.clear()
       this.queryClient?.removeQueries({ queryKey: ['auth'] })
     }
   }

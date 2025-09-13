@@ -1,8 +1,8 @@
 import {
-  jwtAuth,
-  jwtAuthWithTwitchSync,
-  jwtRefreshAuth,
-} from '@server/middlewares/jwt-auth'
+  authMiddleware,
+  authWithTwitchSync,
+  refreshAuthMiddleware,
+} from '@server/middlewares'
 import { Hono } from 'hono'
 import env from '../config/env'
 import { authService } from '../services/auth/auth.service'
@@ -38,12 +38,12 @@ app.get('/twitch', async (c) => {
   return c.json({ error: result.error }, 400)
 })
 
-app.get('/me', jwtAuthWithTwitchSync, async (c) => {
+app.get('/me', authWithTwitchSync, async (c) => {
   const user = c.get('currentUser')
   return c.json(user, 200)
 })
 
-app.post('/refresh', jwtRefreshAuth, async (c) => {
+app.post('/refresh', refreshAuthMiddleware, async (c) => {
   try {
     const refreshToken = c.get('refreshToken')
     const tokenPair = await authService.refreshTokenPair(refreshToken)
@@ -63,7 +63,7 @@ app.post('/refresh', jwtRefreshAuth, async (c) => {
   }
 })
 
-app.post('/logout', jwtAuth, async (c) => {
+app.post('/logout', authMiddleware, async (c) => {
   try {
     const refreshToken = c.get('refreshToken')
 

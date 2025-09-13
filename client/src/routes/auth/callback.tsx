@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { tokenManager } from '@/lib/token-manager'
 
 export const Route = createFileRoute('/auth/callback')({
   component: RouteComponent,
@@ -34,7 +35,7 @@ function RouteComponent() {
             refresh_token: refreshToken,
             expires_in: Number.parseInt(expiresIn, 10),
           }
-          localStorage.setItem('auth_tokens', JSON.stringify(tokens))
+          tokenManager.setTokens(tokens)
 
           refetch()
 
