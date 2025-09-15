@@ -11,6 +11,7 @@ interface BingoGridProps {
 interface BingoCell {
   id: string
   text: string
+  originalText: string
   isMarked: boolean
 }
 
@@ -27,9 +28,15 @@ export function BingoGrid({
     const cells: BingoCell[] = []
 
     for (let i = 0; i < totalCells; i++) {
+      const originalText = items[i] || ''
+      const truncatedText =
+        originalText.length > 70
+          ? `${originalText.slice(0, 70)}...`
+          : originalText
       cells.push({
         id: `cell-${i}`,
-        text: items[i] || '',
+        text: truncatedText,
+        originalText,
         isMarked: false,
       })
     }
@@ -173,13 +180,53 @@ function BingoCell({
   disabled = false,
   className,
 }: BingoCellProps) {
+  const isTruncated = cell.originalText.length > 70
+
+  if (isTruncated) {
+    return (
+      <div className="relative w-full h-full group">
+        <Button
+          variant="outline"
+          onClick={onClick}
+          disabled={disabled}
+          className={cn(
+            'h-full w-full p-2 text-center hyphens-auto transition-all duration-200 flex items-center justify-center',
+            !disabled &&
+              'hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg',
+            disabled && 'opacity-50 cursor-not-allowed',
+            cell.isMarked &&
+              !isCenter &&
+              'bg-green-500 text-white hover:bg-green-600 hover:text-white',
+            cell.isMarked &&
+              isCenter &&
+              'bg-yellow-500 text-white hover:bg-yellow-600 hover:text-white',
+            className,
+          )}
+        >
+          <span
+            className="leading-tight min-w-0 w-full text-center block break-words text-wrap"
+            style={{ overflowWrap: 'anywhere', wordBreak: 'break-all' }}
+          >
+            {cell.text}
+          </span>
+        </Button>
+
+        {/* Custom tooltip for disabled buttons */}
+        <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none max-w-sm whitespace-pre-wrap break-words">
+          {cell.originalText}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <Button
       variant="outline"
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'h-full w-full p-2 text-center hyphens-auto transition-all duration-200',
+        'h-full w-full p-2 text-center hyphens-auto transition-all duration-200 flex items-center justify-center',
         !disabled && 'hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg',
         disabled && 'opacity-50 cursor-not-allowed',
         cell.isMarked &&
@@ -191,7 +238,12 @@ function BingoCell({
         className,
       )}
     >
-      <span className="leading-tight text-wrap">{cell.text}</span>
+      <span
+        className="leading-tight min-w-0 w-full text-center block break-words text-wrap"
+        style={{ overflowWrap: 'anywhere', wordBreak: 'break-all' }}
+      >
+        {cell.text}
+      </span>
     </Button>
   )
 }
