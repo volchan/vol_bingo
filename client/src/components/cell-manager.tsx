@@ -28,6 +28,45 @@ import {
 } from '@/hooks/api/templates.hooks'
 import { cn } from '@/lib/utils'
 
+interface TruncatedTextProps {
+  text: string
+  className?: string
+}
+
+function TruncatedText({ text, className }: TruncatedTextProps) {
+  const textRef = useRef<HTMLSpanElement>(null)
+  const [isOverflowing, setIsOverflowing] = useState(false)
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      const element = textRef.current
+      if (element) {
+        setIsOverflowing(element.scrollWidth > element.clientWidth)
+      }
+    }
+
+    checkOverflow()
+
+    // Check on resize
+    window.addEventListener('resize', checkOverflow)
+    return () => window.removeEventListener('resize', checkOverflow)
+  }, [])
+
+  return (
+    <div className={cn('flex-1 relative group min-w-0', className)}>
+      <span ref={textRef} className="truncate block">
+        {text}
+      </span>
+      {isOverflowing && (
+        <div className="absolute z-50 bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none max-w-sm whitespace-pre-wrap break-words">
+          {text}
+          <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface CellManagerProps {
   readonly gameId: string
   readonly gameCells: GameCell[]
@@ -656,7 +695,7 @@ export function CellManager({
                             'cursor-not-allowed',
                         )}
                       >
-                        <span className="flex-1">{cell.value}</span>
+                        <TruncatedText text={cell.value} />
                         {cell.isLinked && (
                           <span className="text-xs text-muted-foreground ml-2">
                             Already linked
@@ -687,7 +726,7 @@ export function CellManager({
                 key={cell.gameCellId}
                 className="flex items-center justify-between p-2 text-xs rounded bg-muted/50"
               >
-                <span className="truncate flex-1">{cell.value}</span>
+                <TruncatedText text={cell.value} />
                 <Button
                   size="sm"
                   variant="ghost"

@@ -2,6 +2,11 @@ import { Shuffle } from 'lucide-react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PlayerBoard } from 'shared'
 import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { useShufflePlayerBoard } from '@/hooks/api/player-boards.hooks'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +24,7 @@ interface PlayerBingoCell {
   id: string
   gameCellId: string
   text: string
+  originalText: string
   isMarked: boolean
   position: number
 }
@@ -41,19 +47,28 @@ const PlayerBingoGridComponent = ({
 
   // Use useMemo to compute cells and only update when actually needed
   const computedCells = useMemo(() => {
-    const gridCells = (playerBoard.playerBoardCells || []).map((pbc) => ({
-      id: pbc.id,
-      gameCellId: pbc.gameCellId,
-      text: pbc.gameCell?.cell?.value || '',
-      isMarked: pbc.gameCell?.marked || false,
-      position: pbc.position,
-    }))
+    const gridCells = (playerBoard.playerBoardCells || []).map((pbc) => {
+      const originalText = pbc.gameCell?.cell?.value || ''
+      const truncatedText =
+        originalText.length > 70
+          ? `${originalText.slice(0, 70)}...`
+          : originalText
+      return {
+        id: pbc.id,
+        gameCellId: pbc.gameCellId,
+        text: truncatedText,
+        originalText,
+        isMarked: pbc.gameCell?.marked || false,
+        position: pbc.position,
+      }
+    })
 
     while (gridCells.length < totalCells) {
       gridCells.push({
         id: `empty-${gridCells.length}`,
         gameCellId: '',
         text: '',
+        originalText: '',
         isMarked: false,
         position: gridCells.length,
       })
@@ -90,13 +105,21 @@ const PlayerBingoGridComponent = ({
         playerBoard.id,
       )
       const gridCells = (updatedPlayerBoard.playerBoardCells || []).map(
-        (pbc) => ({
-          id: pbc.id,
-          gameCellId: pbc.gameCellId,
-          text: pbc.gameCell?.cell?.value || '',
-          isMarked: pbc.gameCell?.marked || false,
-          position: pbc.position,
-        }),
+        (pbc) => {
+          const originalText = pbc.gameCell?.cell?.value || ''
+          const truncatedText =
+            originalText.length > 70
+              ? `${originalText.slice(0, 70)}...`
+              : originalText
+          return {
+            id: pbc.id,
+            gameCellId: pbc.gameCellId,
+            text: truncatedText,
+            originalText,
+            isMarked: pbc.gameCell?.marked || false,
+            position: pbc.position,
+          }
+        },
       )
 
       while (gridCells.length < totalCells) {
@@ -104,6 +127,7 @@ const PlayerBingoGridComponent = ({
           id: `empty-${gridCells.length}`,
           gameCellId: '',
           text: '',
+          originalText: '',
           isMarked: false,
           position: gridCells.length,
         })
@@ -205,13 +229,15 @@ const PlayerBingoCell = memo(
     showMuted = false,
     className,
   }: PlayerBingoCellProps) => {
-    return (
+    const isTruncated = cell.originalText.length > 70
+
+    const cellContent = (
       <Button
         variant="outline"
         onClick={onClick}
         disabled={disabled || loading}
         className={cn(
-          'h-full w-full p-2 text-center hyphens-auto transition-all duration-200',
+          'h-full w-full p-2 text-center hyphens-auto transition-all duration-200 flex items-center justify-center',
           !disabled &&
             !loading &&
             'hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg',
@@ -227,9 +253,29 @@ const PlayerBingoCell = memo(
           className,
         )}
       >
-        <span className="leading-tight text-clip">{cell.text}</span>
+        <span
+          className="leading-tight min-w-0 w-full text-center block break-words text-wrap"
+          style={{ overflowWrap: 'anywhere', wordBreak: 'break-all' }}
+        >
+          {cell.text}
+        </span>
       </Button>
     )
+
+    if (isTruncated) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>{cellContent}</TooltipTrigger>
+          <TooltipContent side="top" className="max-w-sm">
+            <p className="break-words whitespace-pre-wrap">
+              {cell.originalText}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      )
+    }
+
+    return cellContent
   },
 )
 
