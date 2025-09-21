@@ -74,7 +74,7 @@
       "dependencies": {
         "@hono/zod-validator": "^0.7.2",
         "drizzle-orm": "^0.44.5",
-        "hono": "^4.9.6",
+        "hono": "^4.9.8",
         "pg": "^8.16.3",
         "shared": "workspace:*",
       },
@@ -568,7 +568,7 @@
 
     "graceful-fs": ["graceful-fs@4.2.11", "", {}, "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="],
 
-    "hono": ["hono@4.9.6", "", {}, "sha512-doVjXhSFvYZ7y0dNokjwwSahcrAfdz+/BCLvAMa/vHLzjj8+CFyV5xteThGUsKdkaasgN+gF2mUxao+SGLpUeA=="],
+    "hono": ["hono@4.9.8", "", {}, "sha512-JW8Bb4RFWD9iOKxg5PbUarBYGM99IcxFl2FPBo2gSJO11jjUDqlP1Bmfyqt8Z/dGhIQ63PMA9LdcLefXyIasyg=="],
 
     "is-binary-path": ["is-binary-path@2.1.0", "", { "dependencies": { "binary-extensions": "^2.0.0" } }, "sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw=="],
 
