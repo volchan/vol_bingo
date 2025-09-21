@@ -19,4 +19,8 @@ export default defineConfig({
       '@ui': path.resolve(__dirname, './src/components/ui'),
     },
   },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+  },
 })

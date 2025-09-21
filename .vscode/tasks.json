@@ -1,0 +1,76 @@
+{
+  "version": "2.0.0",
+  "presentation": {
+    "echo": false,
+    "reveal": "always",
+    "focus": false,
+    "panel": "dedicated",
+    "showReuseMessage": false
+  },
+  "tasks": [
+    {
+      "label": "dev",
+      "type": "shell",
+      "command": "bun",
+      "args": ["run", "dev"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Create terminals",
+      "dependsOn": ["general", "dev-server"],
+      "group": {
+        "kind": "build"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "general",
+      "type": "process",
+      "command": "/usr/bin/zsh",
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "group": "terminals",
+        "echo": false,
+        "focus": false,
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "dev-server",
+      "type": "process",
+      "command": "/usr/bin/zsh",
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "DEV_TERMINAL": "true"
+        }
+      },
+      "presentation": {
+        "group": "terminals",
+        "echo": false,
+        "focus": false,
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    }
+  ]
+}
