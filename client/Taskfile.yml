@@ -1,0 +1,10 @@
+version: "3"
+
+tasks:
+  env:init:
+    desc: Initialize .env file from example
+    status:
+      - test -f .env
+    cmd: |
+      cp .env.example .env
+      echo "✅ Created .env from example"

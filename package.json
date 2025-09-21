@@ -5,7 +5,7 @@
   "author": "Steve Simkins",
   "license": "MIT",
   "homepage": "https://github.com/stevedylandev/bhvr",
-  "packageManager": "bun@1.2.21",
+  "packageManager": "bun@1.2.22",
   "workspaces": [
     "./server",
     "./client",
@@ -20,10 +20,13 @@
     "build:server": "turbo build --filter=server",
     "lint": "biome lint .",
     "lint:fix": "biome lint . --write",
+    "lint:fix:unsafe": "biome lint . --write --unsafe",
     "format": "biome format .",
     "format:fix": "biome format . --write",
+    "format:fix:unsafe": "biome format . --write --unsafe",
     "check": "biome check .",
     "check:fix": "biome check . --write",
+    "check:fix:unsafe": "biome check . --write --unsafe",
     "type-check": "turbo type-check",
     "test": "turbo test",
     "postinstall": "turbo build --filter=shared --filter=server"
