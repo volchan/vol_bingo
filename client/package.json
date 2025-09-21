@@ -47,7 +47,7 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
-    "@tanstack/router-plugin": "^1.131.36",
+    "@tanstack/router-plugin": "^1.131.49",
     "@types/canvas-confetti": "^1.9.0",
     "@types/js-cookie": "^3.0.6",
     "@types/luxon": "^3.7.1",
