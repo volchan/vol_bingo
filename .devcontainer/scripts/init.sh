@@ -1,32 +1,5 @@
 #!/bin/bash
 
-echo "🔄 Updating project from git..."
-current_branch=$(git branch --show-current)
-default_branch=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
-
-has_changes=false
-if ! git diff-index --quiet HEAD --; then
-    has_changes=true
-    echo "📦 Stashing local changes..."
-    git stash push -m "Auto-stash during devcontainer init at $(date)"
-fi
-
-git switch "$default_branch"
-git fetch --prune
-git branch -vv | grep ': gone]' | awk '{print $1}' | xargs --no-run-if-empty git branch -D
-
-if [[ "$current_branch" != "$default_branch" ]] && git show-ref --verify --quiet "refs/heads/$current_branch"; then
-    git switch "$current_branch"
-    if [[ "$has_changes" == true ]]; then
-        echo "📤 Restoring stashed changes..."
-        git stash pop
-    fi
-elif [[ "$has_changes" == true ]]; then
-    echo "⚠️  Original branch was deleted, staying on $default_branch"
-    echo "📤 Restoring stashed changes..."
-    git stash pop
-fi
-
 echo "🔧 VSCode Extensions Setup"
 
 # Check if jq is installed, install if missing
