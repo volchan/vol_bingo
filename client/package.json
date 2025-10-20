@@ -35,7 +35,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "js-cookie": "^3.0.5",
-    "lucide-react": "^0.543.0",
+    "lucide-react": "^0.546.0",
     "luxon": "^3.7.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
